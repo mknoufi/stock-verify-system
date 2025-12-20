@@ -16,20 +16,18 @@ async def test_get_sessions_endpoint(async_client, authenticated_headers, test_u
     assert response.status_code == 200
     data = response.json()
 
-    # Check structure (PaginatedResponse)
-    # Based on debug output, the structure is nested: {'items': [], 'pagination': {...}}
+    # Check structure: items list + nested pagination object
     assert "items" in data
-    if "pagination" in data:
-        assert "page" in data["pagination"]
-        assert "page_size" in data["pagination"]
-        assert "total" in data["pagination"]
-    else:
-        # Fallback to flat structure if it changes back
-        assert "total" in data
-        assert "page" in data
-        assert "page_size" in data
-
     assert isinstance(data["items"], list)
+    assert "pagination" in data
+
+    pagination = data["pagination"]
+    assert "page" in pagination
+    assert "page_size" in pagination
+    assert "total" in pagination
+    assert "total_pages" in pagination
+    assert "has_next" in pagination
+    assert "has_prev" in pagination
 
 
 @pytest.mark.asyncio
@@ -57,11 +55,7 @@ async def test_get_sessions_pagination(async_client, authenticated_headers):
     )
     assert response.status_code == 200
     data = response.json()
-    print(f"DEBUG: response data: {data}")
-
-    if "pagination" in data:
-        assert data["pagination"]["page"] == 1
-        assert data["pagination"]["page_size"] == 5
-    else:
-        assert data["page"] == 1
-        assert data["page_size"] == 5
+    assert "pagination" in data
+    pagination = data["pagination"]
+    assert pagination["page"] == 1
+    assert pagination["page_size"] == 5

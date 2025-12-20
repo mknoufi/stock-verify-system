@@ -22,7 +22,7 @@ jobs:
         working-directory: frontend
         env:
           SKIP_POSTINSTALL: "true"
-        run: npm ci --ignore-scripts
+        run: npm install --ignore-scripts --legacy-peer-deps
 
       - name: Lint
         working-directory: frontend

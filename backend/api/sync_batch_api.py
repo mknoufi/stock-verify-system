@@ -76,6 +76,16 @@ class SyncError(BaseModel):
     message: str
 
 
+class SyncResult(BaseModel):
+    """Per-record sync result for backward compatibility"""
+
+    id: str = Field(..., description="Client record identifier")
+    success: bool = Field(..., description="Whether the record synced successfully")
+    message: Optional[str] = Field(
+        None, description="Optional error or conflict message for the record"
+    )
+
+
 class BatchSyncResponse(BaseModel):
     """Batch sync response"""
 
@@ -89,6 +99,10 @@ class BatchSyncResponse(BaseModel):
     batch_id: Optional[str] = Field(None, description="Batch ID from request")
     processing_time_ms: float = Field(..., description="Server processing time")
     total_records: int = Field(..., description="Total records in batch")
+    results: list[SyncResult] = Field(
+        default_factory=list,
+        description="Backward compatible per-record results (id/success/message)",
+    )
 
 
 # Sync Logic
@@ -343,6 +357,21 @@ async def sync_batch(
         f"({processing_time:.2f}ms)"
     )
 
+    # Build per-record results for legacy clients that expect flat success flags
+    results = [SyncResult(id=record_id, success=True) for record_id in ok_records]
+
+    results.extend(
+        SyncResult(
+            id=conflict.client_record_id, success=False, message=conflict.message
+        )
+        for conflict in conflicts
+    )
+
+    results.extend(
+        SyncResult(id=error.client_record_id, success=False, message=error.message)
+        for error in errors
+    )
+
     return BatchSyncResponse(
         ok=ok_records,
         conflicts=conflicts,
@@ -350,6 +379,7 @@ async def sync_batch(
         batch_id=request.batch_id,
         processing_time_ms=processing_time,
         total_records=len(request.records),
+        results=results,
     )
 
 

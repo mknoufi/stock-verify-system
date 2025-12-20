@@ -536,6 +536,17 @@ class SQLServerConnector:
         Supports both Windows Authentication and SQL Server Authentication
         Automatically tries multiple connection methods if initial attempt fails
         """
+        # Cache provided configuration so background services can retry later if needed
+        self.config = {
+            "host": host,
+            "port": port,
+            "database": database,
+        }
+        if user:
+            self.config["user"] = user
+        if password:
+            self.config["password"] = password
+
         methods_to_try = self._build_connection_methods(
             host, port, database, user, password
         )

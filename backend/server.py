@@ -542,37 +542,41 @@ async def lifespan(app: FastAPI):  # noqa: C901
     # Initialize auto-sync manager (monitors SQL Server and auto-syncs when available)
     global auto_sync_manager
     try:
+        sql_configured = bool(getattr(sql_connector, "config", None))
         auto_sync_manager = AutoSyncManager(
             sql_connector=sql_connector,
             mongo_db=db,
             sync_interval=getattr(settings, "ERP_SYNC_INTERVAL", 3600),
             check_interval=30,  # Check connection every 30 seconds
-            enabled=True,
+            enabled=sql_configured,
         )
 
-        # Set callbacks for admin notifications
-        async def on_connection_restored():
-            logger.info(
-                "📢 SQL Server connection restored - sync will start automatically"
+        if sql_configured:
+            # Set callbacks for admin notifications
+            async def on_connection_restored():
+                logger.info(
+                    "📢 SQL Server connection restored - sync will start automatically"
+                )
+                # Could send notification to admin panel here
+
+            async def on_connection_lost():
+                logger.warning("📢 SQL Server connection lost - sync paused")
+                # Could send notification to admin panel here
+
+            async def on_sync_complete():
+                logger.info("📢 Sync completed successfully")
+                # Could send notification to admin panel here
+
+            auto_sync_manager.set_callbacks(
+                on_connection_restored=on_connection_restored,
+                on_connection_lost=on_connection_lost,
+                on_sync_complete=on_sync_complete,
             )
-            # Could send notification to admin panel here
 
-        async def on_connection_lost():
-            logger.warning("📢 SQL Server connection lost - sync paused")
-            # Could send notification to admin panel here
-
-        async def on_sync_complete():
-            logger.info("📢 Sync completed successfully")
-            # Could send notification to admin panel here
-
-        auto_sync_manager.set_callbacks(
-            on_connection_restored=on_connection_restored,
-            on_connection_lost=on_connection_lost,
-            on_sync_complete=on_sync_complete,
-        )
-
-        await auto_sync_manager.start()
-        logger.info("✅ Auto-sync manager started")
+            await auto_sync_manager.start()
+            logger.info("✅ Auto-sync manager started")
+        else:
+            logger.info("Auto-sync manager disabled: SQL Server not configured")
 
         # Register with API router
         set_auto_sync_manager(auto_sync_manager)

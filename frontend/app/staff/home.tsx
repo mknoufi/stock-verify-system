@@ -281,14 +281,9 @@ export default function StaffHome() {
   };
 
   const handleOpenFloorPicker = () => {
-    console.log("handleOpenFloorPicker called");
     if (Platform.OS !== "web") Haptics.selectionAsync();
     setShowFloorPicker(true);
   };
-
-  useEffect(() => {
-    console.log("showFloorPicker state:", showFloorPicker);
-  }, [showFloorPicker]);
 
   // Computed booleans for location type checks (avoids JSX string comparison issues)
   const isShowroomSelected = locationType === "showroom";
@@ -759,53 +754,40 @@ export default function StaffHome() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
 
-      {/* Floor Picker Modal */}
-      <Modal
-        visible={showFloorPicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFloorPicker(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: theme.colors.surface },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text
+          {showFloorPicker && (
+            <View style={styles.floorPickerOverlay} pointerEvents="box-none">
+              <TouchableOpacity
+                style={[styles.modalBackdrop, styles.floorPickerBackdrop]}
+                activeOpacity={1}
+                onPress={() => setShowFloorPicker(false)}
+              />
+              <View
                 style={[
-                  styles.modalTitle,
-                  { color: theme.colors.text, flex: 1 },
+                  styles.modalContent,
+                  styles.floorPickerContent,
+                  { backgroundColor: theme.colors.surface },
                 ]}
-                numberOfLines={1}
               >
-                Select {locationType === "showroom" ? "Floor" : "Area"}
-              </Text>
-              <TouchableOpacity onPress={() => setShowFloorPicker(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
-              </TouchableOpacity>
-            </View>
-            {!locationType && (
-              <View style={styles.modalBody}>
-                <Text
-                  style={[
-                    styles.cardSubtitle,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  Select a location type above to see available options.
-                </Text>
-              </View>
-            )}
-
-            {locationType && (
-              <>
-                {LOCATION_OPTIONS[locationType].floors.length === 0 ? (
+                <View style={styles.modalHeader}>
+                  <Text
+                    style={[
+                      styles.modalTitle,
+                      { color: theme.colors.text, flex: 1 },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    Select {locationType === "showroom" ? "Floor" : "Area"}
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowFloorPicker(false)}>
+                    <Ionicons
+                      name="close"
+                      size={24}
+                      color={theme.colors.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+                {!locationType && (
                   <View style={styles.modalBody}>
                     <Text
                       style={[
@@ -813,54 +795,72 @@ export default function StaffHome() {
                         { color: theme.colors.textSecondary },
                       ]}
                     >
-                      No {locationType === "showroom" ? "floors" : "areas"} have
-                      been configured yet.
+                      Select a location type above to see available options.
                     </Text>
                   </View>
-                ) : (
-                  <ScrollView>
-                    {LOCATION_OPTIONS[locationType].floors.map((floor) => (
-                      <TouchableOpacity
-                        key={floor}
-                        style={[
-                          styles.modalOption,
-                          selectedFloor === floor && {
-                            backgroundColor: `${theme.colors.accent}20`,
-                          },
-                        ]}
-                        onPress={() => {
-                          if (Platform.OS !== "web") Haptics.selectionAsync();
-                          setSelectedFloor(floor);
-                          setShowFloorPicker(false);
-                        }}
-                      >
+                )}
+
+                {locationType && (
+                  <>
+                    {LOCATION_OPTIONS[locationType].floors.length === 0 ? (
+                      <View style={styles.modalBody}>
                         <Text
                           style={[
-                            styles.modalOptionText,
-                            {
-                              color:
-                                selectedFloor === floor
-                                  ? theme.colors.accent
-                                  : theme.colors.text,
-                            },
+                            styles.cardSubtitle,
+                            { color: theme.colors.textSecondary },
                           ]}
                         >
-                          {floor}
+                          No {locationType === "showroom" ? "floors" : "areas"} have
+                          been configured yet.
                         </Text>
-                        {selectedFloor === floor && (
-                          <Ionicons
-                            name="checkmark"
-                            size={20}
-                            color={theme.colors.accent}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                      </View>
+                    ) : (
+                      <ScrollView>
+                        {LOCATION_OPTIONS[locationType].floors.map((floor) => (
+                          <TouchableOpacity
+                            key={floor}
+                            style={[
+                              styles.modalOption,
+                              selectedFloor === floor && {
+                                backgroundColor: `${theme.colors.accent}20`,
+                              },
+                            ]}
+                            onPress={() => {
+                              if (Platform.OS !== "web")
+                                Haptics.selectionAsync();
+                              setSelectedFloor(floor);
+                              setShowFloorPicker(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.modalOptionText,
+                                {
+                                  color:
+                                    selectedFloor === floor
+                                      ? theme.colors.accent
+                                      : theme.colors.text,
+                                },
+                              ]}
+                            >
+                              {floor}
+                            </Text>
+                            {selectedFloor === floor && (
+                              <Ionicons
+                                name="checkmark"
+                                size={20}
+                                color={theme.colors.accent}
+                              />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </View>
+              </View>
+            </View>
+          )}
         </View>
       </Modal>
     </ScreenContainer>
@@ -1100,6 +1100,19 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "flex-end",
   },
+  floorPickerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "flex-end",
+    zIndex: 10,
+  },
+  floorPickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
   modalBackdrop: {
     flex: 1,
   },
@@ -1116,6 +1129,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingBottom: 40,
+  },
+  floorPickerContent: {
+    maxHeight: "65%",
   },
   newSectionModalContent: {
     borderTopLeftRadius: 24,

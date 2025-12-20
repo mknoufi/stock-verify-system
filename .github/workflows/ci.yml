@@ -12,7 +12,7 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.11"
-  NODE_VERSION: "18.18.2"  # Enforce minimum Node 18.18 per migration plan
+  NODE_VERSION: "18.18.2" # Enforce minimum Node 18.18 per migration plan
 
 jobs:
   # Python Backend CI
@@ -89,10 +89,10 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./frontend/package-lock.json
 
-      - name: Install dependencies (deterministic)
+      - name: Install dependencies
         env:
           SKIP_POSTINSTALL: "true"
-        run: npm ci --ignore-scripts
+        run: npm install --ignore-scripts --legacy-peer-deps
       - name: Run ESLint
         run: npm run lint
 
