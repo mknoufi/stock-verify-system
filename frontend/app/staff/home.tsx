@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Pressable,
   Alert,
   StyleSheet,
   Platform,
@@ -11,7 +10,6 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { TouchableOpacity as GHTouchableOpacity } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -622,7 +620,7 @@ export default function StaffHome() {
                       Select {locationType === "showroom" ? "Floor" : "Area"}
                     </Text>
                   </View>
-                  <GHTouchableOpacity
+                  <TouchableOpacity
                     style={[
                       styles.dropdownButton,
                       {
@@ -676,7 +674,7 @@ export default function StaffHome() {
                         color={isDark ? "#8E8E93" : "#6B7280"}
                       />
                     </View>
-                  </GHTouchableOpacity>
+                  </TouchableOpacity>
                 </View>
               )}
 
