@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime
 from typing import Any, Optional
 
@@ -65,6 +66,17 @@ def get_connection(conn_string):
 
 
 # --- Endpoints ---
+
+
+def _safe_identifier(name: str) -> str:
+    """Validate and return a safe SQL identifier.
+
+    Allows letters, numbers, and underscores; must start with a letter or underscore.
+    Raises HTTPException(400) if invalid.
+    """
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name or ""):
+        raise HTTPException(status_code=400, detail=f"Invalid identifier: {name}")
+    return name
 
 
 @router.get("/tables")
@@ -159,16 +171,19 @@ async def test_mapping(
         conn = get_connection(conn_str)
         cursor = conn.cursor()
 
-        # Construct dynamic query
+        # Construct dynamic query (validate identifiers to avoid injection)
         table_name = config.tables.get("items")
         if not table_name:
             raise HTTPException(status_code=400, detail="No 'items' table mapped")
 
         schema = config.query_options.get("schema_name", "dbo")
+        schema = _safe_identifier(schema)
+        table_name = _safe_identifier(table_name)
 
         select_fields = []
         for app_field, mapping in config.columns.items():
-            select_fields.append(f"TOP 5 [{mapping.erp_column}] as {app_field}")
+            erp_col = _safe_identifier(mapping.erp_column)
+            select_fields.append(f"TOP 5 [{erp_col}] as {app_field}")
 
         # Basic check to ensure at least one column
         if not select_fields:
@@ -180,7 +195,13 @@ async def test_mapping(
         # Re-add TOP 5 at the start (a bit hacky string manipulation for simplicity)
         query = f"SELECT TOP 5 {query[7:]}"
 
-        logger.info(f"Testing mapping query: {query}")
+        # Log a sanitized summary (omit full query text to reduce risk)
+        logger.info(
+            "Testing mapping query for table '%s' in schema '%s' with %d columns",
+            table_name,
+            schema,
+            len(select_fields),
+        )
 
         cursor.execute(query)
         columns = [column[0] for column in cursor.description]

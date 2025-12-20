@@ -3,18 +3,18 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Pressable,
   Alert,
   StyleSheet,
-  ActivityIndicator,
   Platform,
   Dimensions,
   Modal,
-  TextInput,
+  ScrollView,
 } from "react-native";
+import { TouchableOpacity as GHTouchableOpacity } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeInUp } from "react-native-reanimated";
 
 import { useAuthStore } from "../../src/store/authStore";
 import { useScanSessionStore } from "../../src/store/scanSessionStore";
@@ -28,11 +28,11 @@ import { SessionType } from "../../src/types";
 import { auroraTheme } from "../../src/theme/auroraTheme";
 import { useThemeContext } from "../../src/theme/ThemeContext";
 import {
-  ModernCard,
   FloatingScanButton,
   SyncStatusPill,
   ScreenContainer,
 } from "../../src/components/ui";
+import { SectionLists } from "./components/SectionLists";
 
 const { width: _SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -282,6 +282,10 @@ export default function StaffHome() {
     setSelectedFloor(null); // Reset floor when location type changes
   };
 
+  // Computed booleans for location type checks (avoids JSX string comparison issues)
+  const isShowroomSelected = locationType === "showroom";
+  const isGodownSelected = locationType === "godown";
+
   // Render Helpers
   const _formatSyncTime = (date: Date | null): string => {
     if (!date) return "Never";
@@ -336,309 +340,22 @@ export default function StaffHome() {
         </View>
       }
     >
-      {/* SECTION 1: Select Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="layers" size={22} color={theme.colors.accent} />
-            <Text
-              style={[styles.sectionTitle, { color: theme.colors.text }]}
-            >
-              Select Section
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.addButtonSmall,
-              { backgroundColor: theme.colors.accent },
-            ]}
-            onPress={() => setShowNewSectionForm(true)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="add" size={20} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-        <Text
-          style={[
-            styles.sectionSubtitle,
-            { color: theme.colors.textSecondary },
-          ]}
-        >
-          Tap a section to continue scanning
-        </Text>
-
-        {isLoadingSessions ? (
-          <ActivityIndicator
-            color={theme.colors.accent}
-            style={{ marginTop: 20 }}
-          />
-        ) : activeSectionsList.length > 0 ? (
-          <View style={styles.listContainer}>
-            {activeSectionsList.map((session: any, index: number) => (
-              <Animated.View
-                key={session.id || session.session_id}
-                entering={FadeInUp.delay(100 + index * 80)}
-              >
-                <ModernCard
-                  variant="glass"
-                  onPress={() =>
-                    handleResumeSection(
-                      session.session_id || session.id,
-                      session.type,
-                    )
-                  }
-                  style={styles.activeSessionCard}
-                  contentStyle={styles.sessionCardContent}
-                >
-                  <View
-                    style={[
-                      styles.sessionIcon,
-                      { backgroundColor: `${theme.colors.accent}20` },
-                    ]}
-                  >
-                    <Ionicons
-                      name="layers"
-                      size={24}
-                      color={theme.colors.accent}
-                    />
-                  </View>
-                  <View style={styles.sessionInfo}>
-                    <Text
-                      style={[
-                        styles.sessionName,
-                        { color: theme.colors.text },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {session.warehouse}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.sessionMeta,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      {session.item_count || session.total_items || 0}{" "}
-                      items •{" "}
-                      {new Date(
-                        session.created_at || session.started_at,
-                      ).toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.resumeButton,
-                      { backgroundColor: theme.colors.accent },
-                    ]}
-                  >
-                    <Ionicons
-                      name="arrow-forward"
-                      size={18}
-                      color="#FFF"
-                    />
-                  </View>
-                </ModernCard>
-              </Animated.View>
-            ))}
-          </View>
-        ) : (
-          <ModernCard
-            variant="glass"
-            intensity={10}
-            style={styles.emptyState}
-          >
-            <View style={{ alignItems: "center" }}>
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={40}
-                color={theme.colors.success || theme.colors.accent}
-              />
-              <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                All Caught Up!
-              </Text>
-              <Text
-                style={[
-                  styles.emptyText,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                No active sections. Start a new one below.
-              </Text>
-            </View>
-          </ModernCard>
-        )}
-      </View>
-
-      {/* SECTION 2: Finished Sections with Search Toggle */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.sectionHeader}>
-            <Ionicons
-              name="checkmark-done-circle"
-              size={22}
-              color={theme.colors.success || "#22C55E"}
-            />
-            <Text
-              style={[styles.sectionTitle, { color: theme.colors.text }]}
-            >
-              Finished Sections
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.searchToggleButton,
-              {
-                backgroundColor: showFinishedSearch
-                  ? theme.colors.accent
-                  : isDark
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.05)",
-              },
-            ]}
-            onPress={() => {
-              setShowFinishedSearch(!showFinishedSearch);
-              if (showFinishedSearch) setFinishedSearchQuery("");
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="search"
-              size={18}
-              color={
-                showFinishedSearch ? "#FFF" : theme.colors.textSecondary
-              }
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Search Bar - Only visible when enabled */}
-        {showFinishedSearch && (
-          <View
-            style={[
-              styles.searchContainer,
-              {
-                backgroundColor: isDark
-                  ? "rgba(255,255,255,0.05)"
-                  : "rgba(0,0,0,0.03)",
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <Ionicons
-              name="search"
-              size={18}
-              color={theme.colors.textSecondary}
-            />
-            <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              placeholder="Search finished sections..."
-              placeholderTextColor={theme.colors.textSecondary}
-              value={finishedSearchQuery}
-              onChangeText={setFinishedSearchQuery}
-              autoFocus
-            />
-            {finishedSearchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setFinishedSearchQuery("")}>
-                <Ionicons
-                  name="close-circle"
-                  size={18}
-                  color={theme.colors.textSecondary}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
-        {finishedSections.length > 0 ? (
-          <View style={styles.listContainer}>
-            {finishedSections
-              .slice(0, 3)
-              .map((session: any, index: number) => (
-                <Animated.View
-                  key={session.id || session.session_id}
-                  entering={FadeInUp.delay(200 + index * 50)}
-                >
-                  <View
-                    style={[
-                      styles.finishedSessionCard,
-                      {
-                        backgroundColor: isDark
-                          ? "rgba(255,255,255,0.03)"
-                          : "rgba(0,0,0,0.02)",
-                        borderColor: theme.colors.border,
-                      },
-                    ]}
-                  >
-                    <View style={styles.sessionCardContent}>
-                      <View
-                        style={[
-                          styles.sessionIcon,
-                          {
-                            backgroundColor: `${theme.colors.success || "#22C55E"}15`,
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          name="checkmark-circle"
-                          size={24}
-                          color={theme.colors.success || "#22C55E"}
-                        />
-                      </View>
-                      <View style={styles.sessionInfo}>
-                        <Text
-                          style={[
-                            styles.sessionName,
-                            { color: theme.colors.text },
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {session.warehouse}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.sessionMeta,
-                            { color: theme.colors.textSecondary },
-                          ]}
-                        >
-                          {session.item_count || session.total_items || 0}{" "}
-                          items • Last used{" "}
-                          {getRelativeTime(
-                            session.closed_at ||
-                            session.updated_at ||
-                            session.created_at,
-                          )}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </Animated.View>
-              ))}
-            {finishedSections.length > 3 && (
-              <Text
-                style={[
-                  styles.moreText,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                +{finishedSections.length - 3} more sections
-              </Text>
-            )}
-          </View>
-        ) : (
-          <View style={styles.emptyStateSmall}>
-            <Text
-              style={[
-                styles.emptyTextSmall,
-                { color: theme.colors.textSecondary },
-              ]}
-            >
-              {finishedSearchQuery
-                ? "No matching sections found"
-                : "No finished sections yet"}
-            </Text>
-          </View>
-        )}
-      </View>
+      <SectionLists
+        theme={theme}
+        isDark={isDark}
+        activeSections={activeSectionsList}
+        finishedSections={finishedSections}
+        isLoading={isLoadingSessions}
+        showFinishedSearch={showFinishedSearch}
+        finishedSearchQuery={finishedSearchQuery}
+        onToggleSearch={() => {
+          setShowFinishedSearch(!showFinishedSearch);
+          if (showFinishedSearch) setFinishedSearchQuery("");
+        }}
+        onSearchQueryChange={setFinishedSearchQuery}
+        onStartNewSection={() => setShowNewSectionForm(true)}
+        onResumeSection={(sessionId, type) => handleResumeSection(sessionId, type)}
+      />
 
       {/* Bottom Spacer */}
       <View style={{ height: 100 }} />
@@ -650,175 +367,345 @@ export default function StaffHome() {
         animationType="slide"
         onRequestClose={() => setShowNewSectionForm(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowNewSectionForm(false)}
-        >
+        <View style={styles.modalOverlay}>
+          {/* Tap outside to close */}
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowNewSectionForm(false)}
+          />
           <View
             style={[
               styles.newSectionModalContent,
-              { backgroundColor: theme.colors.surface },
+              {
+                backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF",
+              },
             ]}
           >
+            {/* Drag Handle */}
+            <View style={styles.dragHandle} />
+
+            {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-                Start a New Section
-              </Text>
-              <TouchableOpacity onPress={() => setShowNewSectionForm(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
+              <View style={styles.modalHeaderLeft}>
+                <View
+                  style={[
+                    styles.headerIconContainer,
+                    { backgroundColor: "#3B82F620" },
+                  ]}
+                >
+                  <Ionicons name="add-circle" size={24} color="#3B82F6" />
+                </View>
+                <View>
+                  <Text
+                    style={[
+                      styles.modalTitle,
+                      { color: isDark ? "#FFFFFF" : "#1C1C1E" },
+                    ]}
+                  >
+                    New Section
+                  </Text>
+                  <Text
+                    style={[
+                      styles.modalSubtitle,
+                      { color: isDark ? "#8E8E93" : "#6B7280" },
+                    ]}
+                  >
+                    Set up your counting area
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.closeButton,
+                  { backgroundColor: isDark ? "#2C2C2E" : "#F3F4F6" },
+                ]}
+                onPress={() => setShowNewSectionForm(false)}
+              >
+                <Ionicons
+                  name="close"
+                  size={20}
+                  color={isDark ? "#8E8E93" : "#6B7280"}
+                />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalBody}>
-              <Text
-                style={[
-                  styles.cardSubtitle,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                Select location and rack to begin stock counting
-              </Text>
-
-              {/* Location Type Selector */}
-              <View style={styles.selectorSection}>
-                <Text
-                  style={[styles.label, { color: theme.colors.textSecondary }]}
-                >
-                  Location Type
-                </Text>
+            <ScrollView
+              style={styles.modalBody}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled={true}
+            >
+              {/* Step 1: Location Type */}
+              <View style={styles.stepContainer}>
+                <View style={styles.stepHeader}>
+                  <View
+                    style={[
+                      styles.stepNumber,
+                      { backgroundColor: "#3B82F6" },
+                    ]}
+                  >
+                    <Text style={styles.stepNumberText}>1</Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      { color: isDark ? "#FFFFFF" : "#1C1C1E" },
+                    ]}
+                  >
+                    Choose Location Type
+                  </Text>
+                </View>
                 <View style={styles.locationTypeRow}>
                   <TouchableOpacity
                     style={[
                       styles.locationTypeButton,
                       {
+                        backgroundColor:
+                          locationType === "showroom"
+                            ? "#3B82F615"
+                            : isDark
+                              ? "#2C2C2E"
+                              : "#F9FAFB",
                         borderColor:
                           locationType === "showroom"
-                            ? theme.colors.accent
-                            : theme.colors.border,
-                      },
-                      locationType === "showroom" && {
-                        backgroundColor: `${theme.colors.accent}20`,
+                            ? "#3B82F6"
+                            : isDark
+                              ? "#3A3A3C"
+                              : "#E5E7EB",
                       },
                     ]}
                     onPress={() => handleLocationTypeChange("showroom")}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons
-                      name="storefront"
-                      size={20}
-                      color={
-                        locationType === "showroom"
-                          ? theme.colors.accent
-                          : theme.colors.textSecondary
-                      }
-                    />
+                    <View
+                      style={[
+                        styles.locationIcon,
+                        {
+                          backgroundColor:
+                            locationType === "showroom"
+                              ? "#3B82F620"
+                              : isDark
+                                ? "#3A3A3C"
+                                : "#E5E7EB",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="storefront"
+                        size={24}
+                        color={
+                          locationType === "showroom"
+                            ? "#3B82F6"
+                            : isDark
+                              ? "#8E8E93"
+                              : "#6B7280"
+                        }
+                      />
+                    </View>
                     <Text
                       style={[
                         styles.locationTypeText,
                         {
                           color:
                             locationType === "showroom"
-                              ? theme.colors.accent
-                              : theme.colors.text,
+                              ? "#3B82F6"
+                              : isDark
+                                ? "#FFFFFF"
+                                : "#1C1C1E",
                         },
                       ]}
                     >
                       Showroom
                     </Text>
+                    {locationType === "showroom" ? (
+                      <View style={styles.checkBadge}>
+                        <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                      </View>
+                    ) : null}
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[
                       styles.locationTypeButton,
                       {
+                        backgroundColor:
+                          locationType === "godown"
+                            ? "#8B5CF615"
+                            : isDark
+                              ? "#2C2C2E"
+                              : "#F9FAFB",
                         borderColor:
                           locationType === "godown"
-                            ? theme.colors.accent
-                            : theme.colors.border,
-                      },
-                      locationType === "godown" && {
-                        backgroundColor: `${theme.colors.accent}20`,
+                            ? "#8B5CF6"
+                            : isDark
+                              ? "#3A3A3C"
+                              : "#E5E7EB",
                       },
                     ]}
                     onPress={() => handleLocationTypeChange("godown")}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons
-                      name="cube"
-                      size={20}
-                      color={
-                        locationType === "godown"
-                          ? theme.colors.accent
-                          : theme.colors.textSecondary
-                      }
-                    />
+                    <View
+                      style={[
+                        styles.locationIcon,
+                        {
+                          backgroundColor:
+                            locationType === "godown"
+                              ? "#8B5CF620"
+                              : isDark
+                                ? "#3A3A3C"
+                                : "#E5E7EB",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="cube"
+                        size={24}
+                        color={
+                          locationType === "godown"
+                            ? "#8B5CF6"
+                            : isDark
+                              ? "#8E8E93"
+                              : "#6B7280"
+                        }
+                      />
+                    </View>
                     <Text
                       style={[
                         styles.locationTypeText,
                         {
                           color:
                             locationType === "godown"
-                              ? theme.colors.accent
-                              : theme.colors.text,
+                              ? "#8B5CF6"
+                              : isDark
+                                ? "#FFFFFF"
+                                : "#1C1C1E",
                         },
                       ]}
                     >
                       Godown
                     </Text>
+                    {locationType === "godown" ? (
+                      <View
+                        style={[styles.checkBadge, { backgroundColor: "#8B5CF6" }]}
+                      >
+                        <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                      </View>
+                    ) : null}
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* Floor Selector */}
+              {/* Step 2: Floor/Area Selector */}
               {locationType && (
-                <View style={styles.selectorSection}>
-                  <Text
-                    style={[
-                      styles.label,
-                      { color: theme.colors.textSecondary },
-                    ]}
-                  >
-                    {locationType === "showroom" ? "Floor" : "Area"}
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.dropdownButton,
-                      {
-                        borderColor: theme.colors.border,
-                        backgroundColor: isDark
-                          ? "rgba(255,255,255,0.05)"
-                          : "rgba(0,0,0,0.03)",
-                      },
-                    ]}
-                    onPress={() => setShowFloorPicker(true)}
-                  >
-                    <Text
+                <View style={styles.stepContainer}>
+                  <View style={styles.stepHeader}>
+                    <View
                       style={[
-                        styles.dropdownText,
+                        styles.stepNumber,
                         {
-                          color: selectedFloor
-                            ? theme.colors.text
-                            : theme.colors.textSecondary,
+                          backgroundColor: selectedFloor
+                            ? "#10B981"
+                            : "#3B82F6",
                         },
                       ]}
                     >
-                      {selectedFloor ||
-                        `Select ${locationType === "showroom" ? "Floor" : "Area"
-                        }`}
+                      <Text style={styles.stepNumberText}>2</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.stepLabel,
+                        { color: isDark ? "#FFFFFF" : "#1C1C1E" },
+                      ]}
+                    >
+                      Select {locationType === "showroom" ? "Floor" : "Area"}
                     </Text>
-                    <Ionicons
-                      name="chevron-down"
-                      size={20}
-                      color={theme.colors.textSecondary}
-                    />
-                  </TouchableOpacity>
+                  </View>
+                  <GHTouchableOpacity
+                    style={[
+                      styles.dropdownButton,
+                      {
+                        backgroundColor: isDark ? "#2C2C2E" : "#F9FAFB",
+                        borderColor: selectedFloor
+                          ? "#10B981"
+                          : isDark
+                            ? "#3A3A3C"
+                            : "#E5E7EB",
+                      },
+                    ]}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      console.log("Floor picker pressed!");
+                      if (Platform.OS !== "web") Haptics.selectionAsync();
+                      setShowFloorPicker(true);
+                    }}
+                  >
+                    <View style={styles.dropdownContent} pointerEvents="none">
+                      <Ionicons
+                        name={locationType === "showroom" ? "layers" : "grid"}
+                        size={20}
+                        color={selectedFloor ? "#10B981" : "#8E8E93"}
+                      />
+                      <Text
+                        style={[
+                          styles.dropdownText,
+                          {
+                            color: selectedFloor
+                              ? isDark
+                                ? "#FFFFFF"
+                                : "#1C1C1E"
+                              : "#8E8E93",
+                          },
+                        ]}
+                      >
+                        {selectedFloor ||
+                          `Tap to select ${locationType === "showroom" ? "floor" : "area"}`}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.dropdownChevron,
+                        { backgroundColor: isDark ? "#3A3A3C" : "#E5E7EB" },
+                      ]}
+                      pointerEvents="none"
+                    >
+                      <Ionicons
+                        name="chevron-down"
+                        size={16}
+                        color={isDark ? "#8E8E93" : "#6B7280"}
+                      />
+                    </View>
+                  </GHTouchableOpacity>
                 </View>
               )}
 
-              {/* Rack Input */}
+              {/* Step 3: Rack Input */}
               {selectedFloor && (
-                <View style={styles.selectorSection}>
+                <View style={styles.stepContainer}>
+                  <View style={styles.stepHeader}>
+                    <View
+                      style={[
+                        styles.stepNumber,
+                        {
+                          backgroundColor: rackName.trim()
+                            ? "#10B981"
+                            : "#3B82F6",
+                        },
+                      ]}
+                    >
+                      <Text style={styles.stepNumberText}>3</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.stepLabel,
+                        { color: isDark ? "#FFFFFF" : "#1C1C1E" },
+                      ]}
+                    >
+                      Enter Rack / Shelf
+                    </Text>
+                  </View>
                   <PremiumInput
-                    label="Rack / Shelf"
                     placeholder="e.g. A1, B2, R1"
                     value={rackName}
                     onChangeText={setRackName}
@@ -827,21 +714,48 @@ export default function StaffHome() {
                 </View>
               )}
 
-              <PremiumButton
-                title="Start Section"
+              {/* Spacer */}
+              <View style={{ height: 16 }} />
+            </ScrollView>
+
+            {/* Start Button */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[
+                  styles.startSectionButton,
+                  {
+                    backgroundColor:
+                      locationType && selectedFloor && rackName.trim()
+                        ? "#3B82F6"
+                        : isDark
+                          ? "#2C2C2E"
+                          : "#E5E7EB",
+                  },
+                ]}
                 onPress={() => {
                   handleStartNewSection();
                   setShowNewSectionForm(false);
                 }}
-                loading={isCreatingSession}
-                variant="primary"
-                icon="play-circle-outline"
-                style={styles.startButton}
-                disabled={!locationType || !selectedFloor || !rackName.trim()}
-              />
+                disabled={
+                  !locationType ||
+                  !selectedFloor ||
+                  !rackName.trim() ||
+                  isCreatingSession
+                }
+                activeOpacity={0.8}
+              >
+                {isCreatingSession ? (
+                  <Text style={styles.startButtonText}>Creating...</Text>
+                ) : (
+                  <>
+                    <Ionicons name="play-circle" size={22} color="#FFFFFF" />
+                    <Text style={styles.startButtonText}>Start Section</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
 
       {/* Floor Picker Modal */}
@@ -851,11 +765,7 @@ export default function StaffHome() {
         animationType="slide"
         onRequestClose={() => setShowFloorPicker(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowFloorPicker(false)}
-        >
+        <View style={styles.modalOverlay}>
           <View
             style={[
               styles.modalContent,
@@ -863,53 +773,91 @@ export default function StaffHome() {
             ]}
           >
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              <Text
+                style={[
+                  styles.modalTitle,
+                  { color: theme.colors.text, flex: 1 },
+                ]}
+                numberOfLines={1}
+              >
                 Select {locationType === "showroom" ? "Floor" : "Area"}
               </Text>
               <TouchableOpacity onPress={() => setShowFloorPicker(false)}>
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            {locationType &&
-              LOCATION_OPTIONS[locationType].floors.map((floor) => (
-                <TouchableOpacity
-                  key={floor}
+            {!locationType && (
+              <View style={styles.modalBody}>
+                <Text
                   style={[
-                    styles.modalOption,
-                    selectedFloor === floor && {
-                      backgroundColor: `${theme.colors.accent}20`,
-                    },
+                    styles.cardSubtitle,
+                    { color: theme.colors.textSecondary },
                   ]}
-                  onPress={() => {
-                    if (Platform.OS !== "web") Haptics.selectionAsync();
-                    setSelectedFloor(floor);
-                    setShowFloorPicker(false);
-                  }}
                 >
-                  <Text
-                    style={[
-                      styles.modalOptionText,
-                      {
-                        color:
-                          selectedFloor === floor
-                            ? theme.colors.accent
-                            : theme.colors.text,
-                      },
-                    ]}
-                  >
-                    {floor}
-                  </Text>
-                  {selectedFloor === floor && (
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color={theme.colors.accent}
-                    />
-                  )}
-                </TouchableOpacity>
-              ))}
+                  Select a location type above to see available options.
+                </Text>
+              </View>
+            )}
+
+            {locationType && (
+              <>
+                {LOCATION_OPTIONS[locationType].floors.length === 0 ? (
+                  <View style={styles.modalBody}>
+                    <Text
+                      style={[
+                        styles.cardSubtitle,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      No {locationType === "showroom" ? "floors" : "areas"} have
+                      been configured yet.
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView>
+                    {LOCATION_OPTIONS[locationType].floors.map((floor) => (
+                      <TouchableOpacity
+                        key={floor}
+                        style={[
+                          styles.modalOption,
+                          selectedFloor === floor && {
+                            backgroundColor: `${theme.colors.accent}20`,
+                          },
+                        ]}
+                        onPress={() => {
+                          if (Platform.OS !== "web") Haptics.selectionAsync();
+                          setSelectedFloor(floor);
+                          setShowFloorPicker(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.modalOptionText,
+                            {
+                              color:
+                                selectedFloor === floor
+                                  ? theme.colors.accent
+                                  : theme.colors.text,
+                            },
+                          ]}
+                        >
+                          {floor}
+                        </Text>
+                        {selectedFloor === floor && (
+                          <Ionicons
+                            name="checkmark"
+                            size={20}
+                            color={theme.colors.accent}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+              </>
+            )}
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </ScreenContainer>
   );
@@ -1066,39 +1014,6 @@ const styles = StyleSheet.create({
   startButton: {
     marginTop: auroraTheme.spacing.sm,
   },
-  section: {
-    marginBottom: auroraTheme.spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: auroraTheme.typography.fontSize.lg,
-    fontWeight: auroraTheme.typography.fontWeight.semibold,
-    color: auroraTheme.colors.text.primary,
-    marginBottom: auroraTheme.spacing.xs,
-  },
-  sectionSubtitle: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.text.secondary,
-    marginBottom: auroraTheme.spacing.md,
-  },
-  listContainer: {
-    gap: auroraTheme.spacing.md,
-  },
-  emptyState: {
-    alignItems: "center",
-    padding: auroraTheme.spacing.xl,
-    gap: auroraTheme.spacing.sm,
-  },
-  emptyTitle: {
-    fontSize: auroraTheme.typography.fontSize.md,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
-    color: auroraTheme.colors.text.primary,
-    marginTop: auroraTheme.spacing.sm,
-  },
-  emptyText: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.text.secondary,
-    textAlign: "center",
-  },
   fabContainer: {
     position: "absolute",
     bottom: 32,
@@ -1112,190 +1027,184 @@ const styles = StyleSheet.create({
   },
   locationTypeRow: {
     flexDirection: "row",
-    gap: auroraTheme.spacing.md,
+    gap: 12,
   },
   locationTypeButton: {
     flex: 1,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: auroraTheme.spacing.sm,
-    paddingVertical: auroraTheme.spacing.md,
-    borderRadius: auroraTheme.borderRadius.lg,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     borderWidth: 2,
+    position: "relative",
+  },
+  locationIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
   },
   locationTypeText: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    fontWeight: auroraTheme.typography.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  checkBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+    justifyContent: "center",
   },
   dropdownButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: auroraTheme.spacing.md,
-    paddingVertical: auroraTheme.spacing.md,
-    borderRadius: auroraTheme.borderRadius.lg,
-    borderWidth: 1,
+    paddingLeft: 16,
+    paddingRight: 4,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  dropdownContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
   },
   dropdownText: {
-    fontSize: auroraTheme.typography.fontSize.md,
+    fontSize: 15,
+    flex: 1,
+  },
+  dropdownChevron: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "flex-end",
   },
+  modalBackdrop: {
+    flex: 1,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(128,128,128,0.4)",
+    alignSelf: "center",
+    marginTop: 8,
+    marginBottom: 8,
+  },
   modalContent: {
-    borderTopLeftRadius: auroraTheme.borderRadius.xl,
-    borderTopRightRadius: auroraTheme.borderRadius.xl,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingBottom: 40,
   },
   newSectionModalContent: {
-    borderTopLeftRadius: auroraTheme.borderRadius.xl,
-    borderTopRightRadius: auroraTheme.borderRadius.xl,
-    paddingBottom: 40,
-    maxHeight: "80%",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "85%",
   },
   modalBody: {
-    padding: auroraTheme.spacing.lg,
+    paddingHorizontal: 20,
+  },
+  modalFooter: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 34,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: auroraTheme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.1)",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  modalHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  headerIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalTitle: {
-    fontSize: auroraTheme.typography.fontSize.lg,
-    fontWeight: auroraTheme.typography.fontWeight.semibold,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepContainer: {
+    marginBottom: 20,
+  },
+  stepHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNumberText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  stepLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  startSectionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 14,
+  },
+  startButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
   modalOption: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: auroraTheme.spacing.lg,
-    paddingVertical: auroraTheme.spacing.md,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
   modalOptionText: {
-    fontSize: auroraTheme.typography.fontSize.md,
-  },
-  // New styles for reorganized UI
-  sectionHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: auroraTheme.spacing.xs,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: auroraTheme.spacing.sm,
-  },
-  addButtonSmall: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  searchToggleButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  activeSessionCard: {
-    borderRadius: auroraTheme.borderRadius.lg,
-    borderWidth: 2,
-    padding: auroraTheme.spacing.md,
-    marginBottom: auroraTheme.spacing.sm,
-  },
-  finishedSessionCard: {
-    borderRadius: auroraTheme.borderRadius.lg,
-    borderWidth: 1,
-    padding: auroraTheme.spacing.md,
-    marginBottom: auroraTheme.spacing.sm,
-  },
-  sessionCardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: auroraTheme.spacing.md,
-  },
-  sessionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: auroraTheme.borderRadius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sessionInfo: {
-    flex: 1,
-  },
-  sessionName: {
-    fontSize: auroraTheme.typography.fontSize.md,
-    fontWeight: auroraTheme.typography.fontWeight.semibold,
-    marginBottom: 2,
-  },
-  sessionMeta: {
-    fontSize: auroraTheme.typography.fontSize.xs,
-  },
-  resumeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: auroraTheme.spacing.sm,
-    paddingHorizontal: auroraTheme.spacing.md,
-    paddingVertical: auroraTheme.spacing.sm,
-    borderRadius: auroraTheme.borderRadius.lg,
-    borderWidth: 1,
-    marginBottom: auroraTheme.spacing.md,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: auroraTheme.typography.fontSize.md,
-    paddingVertical: 4,
-  },
-  emptyStateSmall: {
-    paddingVertical: auroraTheme.spacing.lg,
-    alignItems: "center",
-  },
-  emptyTextSmall: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    fontStyle: "italic",
-  },
-  moreText: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    textAlign: "center",
-    marginTop: auroraTheme.spacing.sm,
-    fontStyle: "italic",
-  },
-  newSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: auroraTheme.spacing.lg,
-    paddingVertical: auroraTheme.spacing.md,
-    borderRadius: auroraTheme.borderRadius.lg,
-    borderWidth: 2,
-    marginBottom: auroraTheme.spacing.sm,
-  },
-  newSectionHeaderContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: auroraTheme.spacing.sm,
-  },
-  newSectionHeaderText: {
-    fontSize: auroraTheme.typography.fontSize.md,
-    fontWeight: auroraTheme.typography.fontWeight.semibold,
+    fontSize: 16,
   },
 });

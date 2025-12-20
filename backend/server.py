@@ -289,7 +289,7 @@ except Exception as e:
     logger.warning(f"Argon2 not available, using bcrypt-only: {str(e)}")
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # SECURITY: settings from backend.config already enforce strong secrets
-SECRET_KEY: str = settings.JWT_SECRET or "unsafe-secret-key"
+SECRET_KEY: str = settings.JWT_SECRET
 ALGORITHM = settings.JWT_ALGORITHM
 security = HTTPBearer(auto_error=False)
 

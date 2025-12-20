@@ -26,6 +26,16 @@ help:
 	@echo "  make eval        - Run evaluation framework"
 	@echo "  make eval-report - Run evaluation with markdown report"
 	@echo ""
+	@echo "📦 Node.js (npm best practices):"
+	@echo "  make node-test-watch      - Run tests in watch mode"
+	@echo "  make node-test-coverage   - Run tests with coverage"
+	@echo "  make node-lint-fix        - Auto-fix lint issues"
+	@echo "  make node-typecheck-watch - Run typecheck in watch mode"
+	@echo "  make node-deps-check      - Interactive dependency update"
+	@echo "  make node-deps-outdated   - List outdated dependencies"
+	@echo "  make node-clean           - Clean cache/build artifacts"
+	@echo "  make node-clean-all       - Full clean (rm node_modules)"
+	@echo ""
 	@echo "🎵 Vibe Coding:"
 	@echo "  make vibe-install    - Install AI coding tools"
 	@echo "  make vibe-aider      - Start Aider terminal agent"
@@ -49,7 +59,7 @@ python-lint:
 python-format:
 	@echo "Formatting Python code..."
 	cd backend && black --line-length=100 api auth services middleware utils db scripts \
-		config.py server.py api_mapping.py db_mapping_config.py sql_server_connector.py exceptions.py error_messages.py && ruff format .
+		config.py server.py api/mapping_api.py db_mapping_config.py sql_server_connector.py exceptions.py error_messages.py && ruff format .
 
 python-typecheck:
 	@echo "Running Python type checker..."
@@ -64,13 +74,45 @@ node-test:
 	@echo "Running Node.js tests..."
 	cd frontend && npm test || true
 
+node-test-watch:
+	@echo "Running Node.js tests in watch mode..."
+	cd frontend && npm run test:watch
+
+node-test-coverage:
+	@echo "Running Node.js tests with coverage..."
+	cd frontend && npm run test:coverage
+
 node-lint:
 	@echo "Running Node.js linter..."
 	cd frontend && npm run lint
 
+node-lint-fix:
+	@echo "Fixing Node.js lint issues..."
+	cd frontend && npm run lint:fix
+
 node-typecheck:
 	@echo "Running TypeScript type checker..."
 	cd frontend && npm run typecheck
+
+node-typecheck-watch:
+	@echo "Running TypeScript type checker in watch mode..."
+	cd frontend && npm run typecheck:watch
+
+node-deps-check:
+	@echo "Checking Node.js dependencies for updates..."
+	cd frontend && npm run deps:check
+
+node-deps-outdated:
+	@echo "Listing outdated Node.js dependencies..."
+	cd frontend && npm run deps:outdated
+
+node-clean:
+	@echo "Cleaning Node.js cache and build artifacts..."
+	cd frontend && npm run clean
+
+node-clean-all:
+	@echo "Full Node.js clean (removes node_modules)..."
+	cd frontend && npm run clean:all
 
 # Combined targets
 ci: python-ci node-ci
