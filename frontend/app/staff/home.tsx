@@ -280,6 +280,12 @@ export default function StaffHome() {
     setSelectedFloor(null); // Reset floor when location type changes
   };
 
+  const handleOpenFloorPicker = () => {
+    console.log("handleOpenFloorPicker called");
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+    setShowFloorPicker(true);
+  };
+
   // Computed booleans for location type checks (avoids JSX string comparison issues)
   const isShowroomSelected = locationType === "showroom";
   const isGodownSelected = locationType === "godown";
@@ -633,11 +639,7 @@ export default function StaffHome() {
                       },
                     ]}
                     activeOpacity={0.7}
-                    onPress={() => {
-                      console.log("Floor picker pressed!");
-                      if (Platform.OS !== "web") Haptics.selectionAsync();
-                      setShowFloorPicker(true);
-                    }}
+                    onPress={handleOpenFloorPicker}
                   >
                     <View style={styles.dropdownContent} pointerEvents="none">
                       <Ionicons
@@ -1069,6 +1071,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1.5,
+    minHeight: 56,
   },
   dropdownContent: {
     flexDirection: "row",
