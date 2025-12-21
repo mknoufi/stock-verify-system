@@ -406,7 +406,9 @@ async def sync_batch(
     )
 
     # Build per-record results for legacy clients that expect flat success flags
-    results = [SyncResult(id=record_id, success=True) for record_id in ok_records]
+    results = [
+        SyncResult(id=record_id, success=True, message=None) for record_id in ok_records
+    ]
 
     results.extend(
         SyncResult(
@@ -466,6 +468,94 @@ async def session_heartbeat(
     }
 
 
+async def _process_session_op(
+    session_data: dict[str, Any],
+    current_user: dict[str, Any],
+    id_mapping: dict[str, str],
+    db: Any,
+) -> str:
+    """Process a session sync operation."""
+    warehouse = (session_data.get("warehouse") or "").strip()
+    if not warehouse:
+        raise ValueError("Missing warehouse for session operation")
+
+    staff_user = current_user.get("username", "unknown_user")
+    staff_name = current_user.get("full_name") or staff_user
+
+    raw_type = session_data.get("type")
+    normalized_type = (
+        raw_type.strip().upper() if isinstance(raw_type, str) else "STANDARD"
+    )
+    if normalized_type not in {"STANDARD", "BLIND", "STRICT"}:
+        normalized_type = "STANDARD"
+
+    session = Session(
+        warehouse=warehouse,
+        staff_user=staff_user,
+        staff_name=staff_name,
+        status=session_data.get("status", "OPEN"),
+        type=normalized_type,
+    )
+
+    session_doc = session.model_dump()
+    offline_id = session_data.get("session_id") or session_data.get("id")
+    if offline_id:
+        session_doc["offline_id"] = offline_id
+        id_mapping[str(offline_id)] = session.id
+
+    session_doc.update({"created_offline": True, "synced_at": datetime.utcnow()})
+    await db.sessions.insert_one(session_doc)
+    return "Session synced"
+
+
+async def _process_count_line_op(
+    line_data: dict[str, Any],
+    current_user: dict[str, Any],
+    id_mapping: dict[str, str],
+    db: Any,
+) -> str:
+    """Process a count_line sync operation."""
+    temp_session_id = line_data.get("session_id")
+    if temp_session_id is not None:
+        lookup_key = str(temp_session_id)
+        if lookup_key in id_mapping:
+            line_data["session_id"] = id_mapping[lookup_key]
+
+    line_data.setdefault("counted_by", current_user.get("username"))
+    line_data.setdefault("counted_at", datetime.utcnow())
+    line_data.setdefault("synced_at", datetime.utcnow())
+    await db.count_lines.insert_one(line_data)
+    return "Count line synced"
+
+
+async def _process_unknown_item_op(
+    item_data: dict[str, Any],
+    current_user: dict[str, Any],
+    id_mapping: dict[str, str],
+    db: Any,
+) -> str:
+    """Process an unknown_item sync operation."""
+    temp_session_id = item_data.get("session_id")
+    if temp_session_id is not None:
+        lookup_key = str(temp_session_id)
+        if lookup_key in id_mapping:
+            item_data["session_id"] = id_mapping[lookup_key]
+
+    item_data.setdefault("reported_by", current_user.get("username"))
+    item_data.setdefault("reported_at", datetime.utcnow())
+    item_data.setdefault("synced_at", datetime.utcnow())
+    await db.unknown_items.insert_one(item_data)
+    return "Unknown item synced"
+
+
+# Operation type → handler mapping
+_LEGACY_OP_HANDLERS: dict[str, Any] = {
+    "session": _process_session_op,
+    "count_line": _process_count_line_op,
+    "unknown_item": _process_unknown_item_op,
+}
+
+
 async def _process_legacy_operations(
     operations: list[LegacySyncOperation],
     batch_id: Optional[str],
@@ -481,107 +571,25 @@ async def _process_legacy_operations(
     ok_ids: list[str] = []
     error_entries: list[SyncError] = []
 
-    # Sort by timestamp to maintain original order when provided
-    ordered_ops = sorted(
-        operations,
-        key=lambda op: op.timestamp or "",
-    )
+    ordered_ops = sorted(operations, key=lambda op: op.timestamp or "")
 
     for op in ordered_ops:
         success = False
         message: Optional[str] = None
 
         try:
-            if op.type == "session":
-                session_data = deepcopy(op.data)
-                warehouse = (session_data.get("warehouse") or "").strip()
-                if not warehouse:
-                    raise ValueError("Missing warehouse for session operation")
-
-                staff_user = current_user.get("username", "unknown_user")
-                staff_name = current_user.get("full_name") or staff_user
-
-                raw_type = session_data.get("type")
-                normalized_type = (
-                    raw_type.strip().upper()
-                    if isinstance(raw_type, str)
-                    else "STANDARD"
-                )
-                if normalized_type not in {"STANDARD", "BLIND", "STRICT"}:
-                    normalized_type = "STANDARD"
-
-                session = Session(
-                    warehouse=warehouse,
-                    staff_user=staff_user,
-                    staff_name=staff_name,
-                    status=session_data.get("status", "OPEN"),
-                    type=normalized_type,
-                )
-
-                session_doc = session.model_dump()
-                offline_id = session_data.get("session_id") or session_data.get("id")
-                if offline_id:
-                    session_doc["offline_id"] = offline_id
-                    id_mapping[str(offline_id)] = session.id
-
-                session_doc.update(
-                    {
-                        "created_offline": True,
-                        "synced_at": datetime.utcnow(),
-                    }
-                )
-
-                await db.sessions.insert_one(session_doc)
-
+            handler = _LEGACY_OP_HANDLERS.get(op.type)
+            if handler:
+                data = deepcopy(op.data)
+                message = await handler(data, current_user, id_mapping, db)
                 success = True
-                message = "Session synced"
-
-            elif op.type == "count_line":
-                line_data = deepcopy(op.data)
-                temp_session_id = line_data.get("session_id")
-                if temp_session_id is not None:
-                    lookup_key = str(temp_session_id)
-                    if lookup_key in id_mapping:
-                        line_data["session_id"] = id_mapping[lookup_key]
-
-                line_data.setdefault("counted_by", current_user.get("username"))
-                line_data.setdefault("counted_at", datetime.utcnow())
-                line_data.setdefault("synced_at", datetime.utcnow())
-
-                await db.count_lines.insert_one(line_data)
-
-                success = True
-                message = "Count line synced"
-
-            elif op.type == "unknown_item":
-                item_data = deepcopy(op.data)
-                temp_session_id = item_data.get("session_id")
-                if temp_session_id is not None:
-                    lookup_key = str(temp_session_id)
-                    if lookup_key in id_mapping:
-                        item_data["session_id"] = id_mapping[lookup_key]
-
-                item_data.setdefault("reported_by", current_user.get("username"))
-                item_data.setdefault("reported_at", datetime.utcnow())
-                item_data.setdefault("synced_at", datetime.utcnow())
-
-                await db.unknown_items.insert_one(item_data)
-
-                success = True
-                message = "Unknown item synced"
-
             else:
                 message = f"Unknown operation type: {op.type}"
-
-        except (
-            Exception
-        ) as exc:  # Broad catch to ensure legacy payloads never crash sync
+        except Exception as exc:
             logger.error(f"Legacy sync operation failed ({op.id}): {exc}")
             message = str(exc)
 
-        result = SyncResult(id=op.id, success=success, message=message)
-        results.append(result)
-
+        results.append(SyncResult(id=op.id, success=success, message=message))
         if success:
             ok_ids.append(op.id)
         else:

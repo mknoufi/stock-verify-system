@@ -324,7 +324,21 @@ def _build_match_conditions(
     """Build match conditions for search pipeline"""
     match_conditions = {"$or": []}
 
-    for field in search_fields:
+    trimmed_query = query.strip()
+
+    # Default target fields based on user requirements:
+    # "only barcode and item name are search criteria"
+    # "if it start with 51,52,53,..,check for barcode"
+    # "afte first three character rnter only list out the compinations of item names matching"
+
+    target_fields = []
+
+    if trimmed_query.startswith(("51", "52", "53")):
+        target_fields = ["barcode"]
+    else:
+        target_fields = ["item_name"]
+
+    for field in target_fields:
         match_conditions["$or"].append({field: {"$regex": query, "$options": "i"}})
 
     # Additional filters
@@ -344,6 +358,12 @@ def _build_match_conditions(
         stock_filter = _get_stock_level_filter(stock_level)
         if stock_filter:
             match_conditions["stock_qty"] = stock_filter
+
+    if not match_conditions["$or"]:
+        # Fallback if no fields selected (shouldn't happen with logic above)
+        match_conditions["$or"].append(
+            {"item_name": {"$regex": query, "$options": "i"}}
+        )
 
     return match_conditions
 
@@ -401,6 +421,19 @@ def _build_search_pipeline(
     # Pagination
     pipeline.append({"$skip": offset})
     pipeline.append({"$limit": limit})
+
+    # Only surface the minimal fields required by the client
+    pipeline.append(
+        {
+            "$project": {
+                "_id": 1,
+                "item_name": 1,
+                "item_code": 1,
+                "barcode": 1,
+                "relevance_score": 1,
+            }
+        }
+    )
 
     return pipeline
 

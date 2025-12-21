@@ -16,6 +16,16 @@ from backend.services.redis_service import RedisService
 logger = logging.getLogger(__name__)
 
 
+def _decode_message_data(data: Any) -> Any:
+    """Decode message data from bytes and parse JSON if applicable."""
+    if isinstance(data, bytes):
+        data = data.decode("utf-8")
+    try:
+        return json.loads(data)
+    except (json.JSONDecodeError, TypeError):
+        return data
+
+
 class PubSubService:
     """
     Redis Pub/Sub service for real-time updates
@@ -71,37 +81,30 @@ class PubSubService:
                 try:
                     if self.pubsub is None:
                         break
-                    message = await self.pubsub.get_message(
-                        ignore_subscribe_messages=True, timeout=1.0
-                    )
-
-                    if message and message["type"] == "message":
-                        channel = message["channel"]
-                        data = message["data"]
-
-                        # Decode if bytes
-                        if isinstance(data, bytes):
-                            data = data.decode("utf-8")
-
-                        # Try to parse JSON
-                        try:
-                            data = json.loads(data)
-                        except (json.JSONDecodeError, TypeError):
-                            pass
-
-                        # Call handlers
-                        await self._handle_message(channel, data)
-
+                    await self._process_next_message()
                 except asyncio.CancelledError:
                     break
                 except Exception as e:
                     logger.error(f"Error in pub/sub listener: {str(e)}")
                     await asyncio.sleep(1)
-
         except Exception as e:
             logger.error(f"Pub/Sub listener crashed: {str(e)}")
         finally:
             self._is_listening = False
+
+    async def _process_next_message(self) -> None:
+        """Get and process the next message from pub/sub."""
+        if self.pubsub is None:
+            return
+
+        message = await self.pubsub.get_message(
+            ignore_subscribe_messages=True, timeout=1.0
+        )
+
+        if message and message["type"] == "message":
+            channel = message["channel"]
+            data = _decode_message_data(message["data"])
+            await self._handle_message(channel, data)
 
     async def _handle_message(self, channel: str, data: Any) -> None:
         """Handle incoming message"""

@@ -180,7 +180,7 @@ async def get_active_sessions(
     from backend.server import db
 
     # Build query
-    query = {"status": {"$in": ["active", "paused"]}}
+    query: dict[str, Any] = {"status": {"$in": ["active", "paused"]}}
 
     if user_id:
         # Only supervisors can view other users' sessions
@@ -289,7 +289,7 @@ async def get_session_stats(
         raise HTTPException(status_code=403, detail="Access denied")
 
     # Get item statistics
-    pipeline = [
+    pipeline: list[dict[str, Any]] = [
         {"$match": {"session_id": session_id}},
         {
             "$group": {

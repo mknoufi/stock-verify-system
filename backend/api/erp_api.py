@@ -29,13 +29,15 @@ def init_erp_api(
 _ALPHANUMERIC_PATTERN = re.compile(r"^[A-Z0-9_\-]+$")
 
 
-def _normalize_barcode_input(barcode: str, *, allow_alphanumeric: bool = True) -> str:
+def _normalize_barcode_input(
+    barcode: str, *, allow_alphanumeric: bool = True, strict_numeric: bool = True
+) -> str:
     """Normalize and validate barcode or item code input.
 
     Rules derived from tests and existing usage:
     - Empty values are rejected with 400.
-    - Numeric barcodes must be exactly 6 digits and start with 51, 52 or 53.
-      (Used for /erp/items/barcode and enhanced barcode lookups.)
+    - Numeric barcodes must be exactly 6 digits and start with 51, 52 or 53
+      (when strict_numeric is True).
     - When ``allow_alphanumeric`` is True, non-numeric item codes such as
       "TEST001" are allowed for endpoints like refresh-stock.
     """
@@ -52,7 +54,7 @@ def _normalize_barcode_input(barcode: str, *, allow_alphanumeric: bool = True) -
     normalized = barcode.strip().upper()
 
     # Strict rules for numeric barcodes used in public barcode endpoints
-    if normalized.isdigit():
+    if strict_numeric and normalized.isdigit():
         if len(normalized) != 6:
             raise HTTPException(
                 status_code=400,
@@ -76,7 +78,7 @@ def _normalize_barcode_input(barcode: str, *, allow_alphanumeric: bool = True) -
         return normalized
 
     # For barcode endpoints we do not allow non-numeric values
-    if not allow_alphanumeric:
+    if not allow_alphanumeric and not normalized.isdigit():
         raise HTTPException(
             status_code=400,
             detail={
@@ -184,7 +186,8 @@ async def refresh_item_stock(
         raise HTTPException(status_code=503, detail="Service not initialized")
 
     # For refresh-stock we accept both numeric barcodes and item codes
-    normalized_code = _normalize_barcode_input(item_code)
+    # We disable strict numeric checks because item codes might be numeric but not follow barcode rules
+    normalized_code = _normalize_barcode_input(item_code, strict_numeric=False)
 
     regex_match = {"$regex": f"^{re.escape(normalized_code)}$", "$options": "i"}
     item = await _db.erp_items.find_one(

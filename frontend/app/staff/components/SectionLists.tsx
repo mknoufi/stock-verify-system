@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -72,6 +73,11 @@ export function SectionLists({
   onResumeSection,
 }: SectionListsProps) {
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const topActiveSections = React.useMemo(() => activeSections.slice(0, 3), [activeSections]);
+  const overflowActiveSections = React.useMemo(
+    () => activeSections.slice(3),
+    [activeSections],
+  );
 
   return (
     <>
@@ -102,7 +108,7 @@ export function SectionLists({
           <ActivityIndicator color={theme.colors.accent} style={{ marginTop: 20 }} />
         ) : activeSections.length > 0 ? (
           <View style={styles.listContainer}>
-            {activeSections.map((session, index) => (
+            {topActiveSections.map((session, index) => (
               <Animated.View
                 key={session.id || session.session_id}
                 entering={FadeInUp.delay(100 + index * 80)}
@@ -143,6 +149,67 @@ export function SectionLists({
                 </ModernCard>
               </Animated.View>
             ))}
+            {overflowActiveSections.length > 0 && (
+              <>
+                <Text style={[styles.overflowHint, { color: theme.colors.textSecondary }]}>
+                  Drag horizontally to view more sections
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.overflowScrollContent}
+                  style={styles.overflowScroll}
+                >
+                  {overflowActiveSections.map((session, index) => (
+                    <Animated.View
+                      key={session.id || session.session_id}
+                      entering={FadeInUp.delay(300 + index * 60)}
+                      style={styles.overflowCardWrapper}
+                    >
+                      <ModernCard
+                        variant="glass"
+                        onPress={() =>
+                          onResumeSection(session.session_id || session.id || "", session.type)
+                        }
+                        style={styles.overflowCard}
+                        contentStyle={styles.sessionCardContent}
+                      >
+                        <View
+                          style={[
+                            styles.sessionIcon,
+                            { backgroundColor: `${theme.colors.accent}15` },
+                          ]}
+                        >
+                          <Ionicons name="layers" size={24} color={theme.colors.accent} />
+                        </View>
+                        <View style={styles.sessionInfo}>
+                          <Text
+                            style={[styles.sessionName, { color: theme.colors.text }]}
+                            numberOfLines={1}
+                          >
+                            {session.warehouse}
+                          </Text>
+                          <Text
+                            style={[styles.sessionMeta, { color: theme.colors.textSecondary }]}
+                          >
+                            {session.item_count || session.total_items || 0} items •
+                            {" "}
+                            {new Date(
+                              session.created_at || session.started_at || "",
+                            ).toLocaleDateString()}
+                          </Text>
+                        </View>
+                        <View
+                          style={[styles.resumeButton, { backgroundColor: theme.colors.accent }]}
+                        >
+                          <Ionicons name="arrow-forward" size={18} color="#FFF" />
+                        </View>
+                      </ModernCard>
+                    </Animated.View>
+                  ))}
+                </ScrollView>
+              </>
+            )}
           </View>
         ) : (
           <ModernCard variant="glass" intensity={10} style={styles.emptyState}>
@@ -344,7 +411,7 @@ const createStyles = (theme: AppTheme, isDark: boolean) =>
     },
     activeSessionCard: {
       borderRadius: theme.radius.lg,
-      borderWidth: 2,
+      borderWidth: 1,
       padding: theme.spacing.md,
       marginBottom: theme.spacing.sm,
     },
@@ -426,6 +493,26 @@ const createStyles = (theme: AppTheme, isDark: boolean) =>
       textAlign: "center",
       marginTop: theme.spacing.sm,
       fontStyle: "italic",
+    },
+    overflowHint: {
+      fontSize: theme.typography.baseSize - 1,
+    },
+    overflowScroll: {
+      marginTop: theme.spacing.sm,
+    },
+    overflowScrollContent: {
+      paddingRight: theme.spacing.md,
+      gap: theme.spacing.sm,
+    },
+    overflowCardWrapper: {
+      flexDirection: "row",
+    },
+    overflowCard: {
+      minWidth: 240,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      padding: theme.spacing.md,
+      marginBottom: 0,
     },
   });
 

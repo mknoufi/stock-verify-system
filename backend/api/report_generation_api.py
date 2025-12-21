@@ -110,6 +110,29 @@ def sanitize_for_csv(value: Any) -> str:
     return str(value)
 
 
+def _format_xlsx_cell_value(value: Any) -> Any:
+    """Format a value for Excel cell."""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _write_xlsx_headers(ws: Any, headers: list[str]) -> None:
+    """Write header row to Excel worksheet."""
+    for col, header in enumerate(headers, 1):
+        ws.cell(row=1, column=col, value=header)
+
+
+def _write_xlsx_data(ws: Any, data: list[dict], headers: list[str]) -> None:
+    """Write data rows to Excel worksheet."""
+    for row_idx, row in enumerate(data, 2):
+        for col_idx, header in enumerate(headers, 1):
+            value = row.get(header)
+            ws.cell(row=row_idx, column=col_idx, value=_format_xlsx_cell_value(value))
+
+
 async def generate_stock_summary(db, filters: ReportFilter) -> list[dict]:
     """Generate stock summary report data."""
     query: dict[str, Any] = {}
@@ -534,7 +557,6 @@ async def export_report_xlsx(
     db = get_db()
     filters = request.filters or ReportFilter()
 
-    # Generate report data
     generator = REPORT_GENERATORS[request.report_type]
     try:
         data = await generator(db, filters)
@@ -551,29 +573,14 @@ async def export_report_xlsx(
             detail="No data found for the specified filters",
         )
 
-    # Create Excel workbook
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = REPORT_TYPES[request.report_type]["name"][
-        :31
-    ]  # Excel limits sheet name to 31 chars
+    ws.title = REPORT_TYPES[request.report_type]["name"][:31]
 
-    # Write headers
     headers = list(data[0].keys())
-    for col, header in enumerate(headers, 1):
-        ws.cell(row=1, column=col, value=header)
+    _write_xlsx_headers(ws, headers)
+    _write_xlsx_data(ws, data, headers)
 
-    # Write data
-    for row_idx, row in enumerate(data, 2):
-        for col_idx, header in enumerate(headers, 1):
-            value = row.get(header)
-            if isinstance(value, (dict, list)):
-                value = json.dumps(value)
-            elif isinstance(value, datetime):
-                value = value.isoformat()
-            ws.cell(row=row_idx, column=col_idx, value=value)
-
-    # Save to buffer
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)

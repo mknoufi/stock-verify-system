@@ -7,43 +7,51 @@ help:
 	@echo "📦 Stock Verify Application - Available Commands"
 	@echo ""
 	@echo "🚀 Main Targets:"
+	@echo "  make start       - Start Full Application (Backend + Frontend + DB)"
+	@echo "  make backend     - Start Backend only"
+	@echo "  make frontend    - Start Frontend only (LAN mode)"
+	@echo "  make fix-expo    - Fix Expo issues (Tunnel mode)"
+	@echo "  make stop        - Stop all running services"
+	@echo ""
+	@echo "✅ Quality Assurance:"
 	@echo "  make ci          - Run all CI checks (Python + Node.js)"
 	@echo "  make test        - Run all tests"
 	@echo "  make lint        - Run all linters"
 	@echo "  make format      - Format all code"
-	@echo "  make typecheck   - Run type checkers"
-	@echo ""
-	@echo "🔒 Security:"
-	@echo "  make security    - Run security checks"
-	@echo "  make secrets     - Generate new JWT secrets"
 	@echo ""
 	@echo "🛠️  Development:"
 	@echo "  make install     - Install dependencies"
-	@echo "  make pre-commit  - Run pre-commit hooks"
 	@echo "  make clean       - Clean build artifacts"
 	@echo ""
-	@echo "📊 Evaluation:"
-	@echo "  make eval        - Run evaluation framework"
-	@echo "  make eval-report - Run evaluation with markdown report"
-	@echo ""
-	@echo "📦 Node.js (npm best practices):"
-	@echo "  make node-test-watch      - Run tests in watch mode"
-	@echo "  make node-test-coverage   - Run tests with coverage"
-	@echo "  make node-lint-fix        - Auto-fix lint issues"
-	@echo "  make node-typecheck-watch - Run typecheck in watch mode"
-	@echo "  make node-deps-check      - Interactive dependency update"
-	@echo "  make node-deps-outdated   - List outdated dependencies"
-	@echo "  make node-clean           - Clean cache/build artifacts"
-	@echo "  make node-clean-all       - Full clean (rm node_modules)"
-	@echo ""
-	@echo "🎵 Vibe Coding:"
-	@echo "  make vibe-install    - Install AI coding tools"
-	@echo "  make vibe-aider      - Start Aider terminal agent"
-	@echo "  make vibe-interpreter- Start Open Interpreter"
-	@echo "  make vibe-info       - Show vibe coding setup info"
 
+# =============================================================================
+# 🚀 STARTUP COMMANDS
+# =============================================================================
+.PHONY: start backend frontend fix-expo stop
 
-# Python backend targets
+start:
+	@echo "🚀 Starting Full Application..."
+	./scripts/start_all.sh
+
+backend:
+	@echo "🚀 Starting Backend..."
+	./scripts/start_backend.sh
+
+frontend:
+	@echo "🚀 Starting Frontend (LAN Mode)..."
+	./scripts/restart_expo_lan.sh
+
+fix-expo:
+	@echo "🛠️  Fixing Expo (Tunnel Mode)..."
+	./scripts/fix_expo.sh
+
+stop:
+	@echo "🛑 Stopping Services..."
+	./scripts/stop_all.sh
+
+# =============================================================================
+# 🐍 PYTHON BACKEND
+# =============================================================================
 .PHONY: python-ci python-test python-lint python-format python-typecheck
 
 python-ci: python-format python-lint python-typecheck python-test
@@ -51,6 +59,10 @@ python-ci: python-format python-lint python-typecheck python-test
 python-test:
 	@echo "Running Python tests..."
 	cd backend && pytest tests/ -v --tb=short
+
+python-load-test:
+	@echo "Running Locust load test..."
+	cd backend && locust -f locustfile.py --headless -u 10 -r 2 -t 30s --host http://localhost:8001
 
 python-lint:
 	@echo "Running Python linters..."
@@ -65,7 +77,9 @@ python-typecheck:
 	@echo "Running Python type checker..."
 	mypy backend --ignore-missing-imports --python-version=3.10 || true
 
-# Node.js frontend targets
+# =============================================================================
+# 📦 NODE.JS FRONTEND
+# =============================================================================
 .PHONY: node-ci node-test node-lint node-typecheck
 
 node-ci: node-lint node-typecheck node-test
@@ -98,23 +112,13 @@ node-typecheck-watch:
 	@echo "Running TypeScript type checker in watch mode..."
 	cd frontend && npm run typecheck:watch
 
-node-deps-check:
-	@echo "Checking Node.js dependencies for updates..."
-	cd frontend && npm run deps:check
-
-node-deps-outdated:
-	@echo "Listing outdated Node.js dependencies..."
-	cd frontend && npm run deps:outdated
-
 node-clean:
 	@echo "Cleaning Node.js cache and build artifacts..."
 	cd frontend && npm run clean
 
-node-clean-all:
-	@echo "Full Node.js clean (removes node_modules)..."
-	cd frontend && npm run clean:all
-
-# Combined targets
+# =============================================================================
+# 🔄 COMBINED TARGETS
+# =============================================================================
 ci: python-ci node-ci
 	@echo "✅ All CI checks passed!"
 
@@ -131,7 +135,9 @@ pre-commit:
 	@echo "Running pre-commit hooks..."
 	pre-commit run -a
 
-# Installation
+# =============================================================================
+# 🛠️  INSTALLATION & CLEANUP
+# =============================================================================
 install:
 	@echo "Installing Python dependencies..."
 	pip install -r backend/requirements.txt
@@ -141,7 +147,6 @@ install:
 	@echo "Installing pre-commit hooks..."
 	pre-commit install
 
-# Cleanup
 clean:
 	@echo "Cleaning build artifacts..."
 	find . -type d -name "__pycache__" -exec rm -r {} + 2>/dev/null || true
@@ -152,7 +157,9 @@ clean:
 	find . -type d -name "node_modules" -prune -o -type d -name ".next" -exec rm -r {} + 2>/dev/null || true
 	@echo "✅ Cleanup complete!"
 
-# Security targets
+# =============================================================================
+# 🔒 SECURITY
+# =============================================================================
 .PHONY: security secrets validate-env
 
 security:
@@ -171,17 +178,14 @@ security:
 secrets:
 	@echo "🔐 Generating new JWT secrets..."
 	cd backend && python scripts/generate_secrets.py
-	@echo ""
-	@echo "⚠️  Remember to:"
-	@echo "  1. Copy these secrets to your .env file"
-	@echo "  2. Update production environment variables"
-	@echo "  3. Never commit .env files to Git"
 
 validate-env:
 	@echo "🔍 Validating environment configuration..."
 	cd backend && python scripts/validate_env.py
 
-# Evaluation Framework
+# =============================================================================
+# 📊 EVALUATION
+# =============================================================================
 .PHONY: eval eval-report eval-performance eval-security
 
 eval:
@@ -199,68 +203,3 @@ eval-performance:
 eval-security:
 	@echo "Running security evaluation..."
 	cd backend && pytest tests/evaluation/test_security_evaluation.py -v
-# =============================================================================
-# 🎵 VIBE CODING TARGETS
-# =============================================================================
-.PHONY: vibe-install vibe-aider vibe-interpreter vibe-info
-
-vibe-install:
-	@echo "🎵 Installing Vibe Coding Tools..."
-	@echo ""
-	@echo "📦 Installing Aider (terminal-based AI pair programming)..."
-	pip install aider-chat || echo "⚠️  Aider install failed - may need pip upgrade"
-	@echo ""
-	@echo "📦 Installing Open Interpreter..."
-	pip install open-interpreter || echo "⚠️  Open Interpreter install failed"
-	@echo ""
-	@echo "📦 Installing Continue dependencies..."
-	@echo "   Install VS Code extension: Continue.continue"
-	@echo ""
-	@echo "📦 Installing Cline dependencies..."
-	@echo "   Install VS Code extension: saoudrizwan.claude-dev"
-	@echo ""
-	@echo "✅ Vibe Coding tools installed!"
-	@echo ""
-	@echo "📋 Next steps:"
-	@echo "   1. Set ANTHROPIC_API_KEY environment variable"
-	@echo "   2. Run 'make vibe-aider' to start Aider"
-	@echo "   3. See VIBE_CODING_SETUP.md for full documentation"
-
-vibe-aider:
-	@echo "🎵 Starting Aider..."
-	@if [ -z "$$ANTHROPIC_API_KEY" ]; then \
-		echo "❌ ERROR: ANTHROPIC_API_KEY not set"; \
-		echo "   Run: export ANTHROPIC_API_KEY=your_key_here"; \
-		exit 1; \
-	fi
-	aider
-
-vibe-interpreter:
-	@echo "🎵 Starting Open Interpreter..."
-	@if [ -z "$$ANTHROPIC_API_KEY" ]; then \
-		echo "❌ ERROR: ANTHROPIC_API_KEY not set"; \
-		echo "   Run: export ANTHROPIC_API_KEY=your_key_here"; \
-		exit 1; \
-	fi
-	interpreter --config .interpreter.yml
-
-vibe-info:
-	@echo "🎵 Vibe Coding Setup - Stock Verification System"
-	@echo ""
-	@echo "📁 Configuration Files:"
-	@echo "   .aider.conf.yml      - Aider settings"
-	@echo "   .continue/           - Continue extension config"
-	@echo "   .clinerules          - Cline/Claude Dev rules"
-	@echo "   .cursorrules         - Cursor IDE rules"
-	@echo "   .swe-agent.yml       - SWE-Agent config"
-	@echo "   .interpreter.yml     - Open Interpreter config"
-	@echo "   .metagpt.yml         - MetaGPT config"
-	@echo "   .autogpt.yml         - AutoGPT config"
-	@echo "   .devon.yml           - Devon config"
-	@echo ""
-	@echo "🚀 Quick Commands:"
-	@echo "   make vibe-install    - Install AI coding tools"
-	@echo "   make vibe-aider      - Start Aider terminal agent"
-	@echo "   make vibe-interpreter- Start Open Interpreter"
-	@echo ""
-	@echo "📖 See VIBE_CODING_SETUP.md for detailed documentation"

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class SQLServerConnectionBuilder:
     """Centralized SQL Server connection string builder and connection utilities"""
 
-    DEFAULT_DRIVER = "ODBC Driver 17 for SQL Server"
+    DEFAULT_DRIVER = "ODBC Driver 18 for SQL Server"
     DEFAULT_TIMEOUT = 30
 
     @staticmethod

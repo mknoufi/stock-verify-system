@@ -227,7 +227,7 @@ class CompareEngine:
         """
         Calculate differences between two rows
         """
-        diff = {}
+        diff: dict[str, dict[str, Any]] = {}
 
         all_keys = set(row_a.keys()) | set(row_b.keys())
 

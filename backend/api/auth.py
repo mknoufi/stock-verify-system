@@ -417,6 +417,59 @@ async def login(
         return Fail(e)
 
 
+async def _find_user_by_fast_lookup(
+    db: Any, pin: str, lookup_hash: str
+) -> Optional[dict[str, Any]]:
+    """Find user via O(1) fast PIN lookup hash."""
+    found_user = await db.users.find_one({"pin_lookup_hash": lookup_hash})
+    if not found_user:
+        return None
+    # Verify secure hash to protect against SHA-256 collision
+    if not verify_password(pin, found_user.get("pin_hash", "")):
+        logger.warning(
+            f"Hash collision or data corruption for user {found_user.get('username')}"
+        )
+        return None
+    return found_user
+
+
+async def _find_user_by_legacy_scan(
+    db: Any, pin: str, lookup_hash: str
+) -> Optional[dict[str, Any]]:
+    """Find user via O(N) legacy PIN scan with opportunistic migration."""
+    users_with_pin = await db.users.find({"pin_hash": {"$exists": True}}).to_list(
+        length=1000
+    )
+    for user in users_with_pin:
+        if verify_password(pin, user.get("pin_hash", "")):
+            # Opportunistic migration for next time
+            try:
+                await db.users.update_one(
+                    {"_id": user["_id"]}, {"$set": {"pin_lookup_hash": lookup_hash}}
+                )
+                logger.info(f"Migrated user {user['username']} to fast PIN lookup")
+            except Exception as e:
+                logger.warning(f"Failed to migrate user to fast PIN lookup: {e}")
+            return user
+    return None
+
+
+async def _find_user_by_pin(db: Any, pin: str) -> Optional[dict[str, Any]]:
+    """Find user by PIN using fast lookup with legacy fallback."""
+    from backend.utils.crypto_utils import get_pin_lookup_hash
+
+    lookup_hash = get_pin_lookup_hash(pin)
+
+    # Strategy 1: O(1) Fast Lookup
+    found_user = await _find_user_by_fast_lookup(db, pin, lookup_hash)
+    if found_user:
+        return found_user
+
+    # Strategy 2: O(N) Legacy Fallback
+    logger.debug("Fast lookup failed, falling back to legacy scan...")
+    return await _find_user_by_legacy_scan(db, pin, lookup_hash)
+
+
 @router.post("/auth/login-pin", response_model=ApiResponse[TokenResponse])
 @result_to_response(success_status=200)
 async def login_with_pin(
@@ -431,10 +484,9 @@ async def login_with_pin(
     db = get_db()
     cache_service = get_cache_service()
     pin = credentials.pin
+    client_ip = request.client.host if request.client else ""
 
     logger.info("=== PIN LOGIN ATTEMPT START ===")
-
-    client_ip = request.client.host if request.client else ""
 
     # Validate PIN format (4-digit numeric)
     if not pin or len(pin) != 4 or not pin.isdigit():
@@ -447,20 +499,9 @@ async def login_with_pin(
         if rate_limit_fail:
             return rate_limit_fail
 
-        # Find user by PIN - we iterate through users with PIN and verify
+        # Find user by PIN
         logger.info("Searching for user by PIN...")
-
-        # We need to verify PIN against all users with PIN set
-        # Since we hash PINs, we iterate and verify
-        users_with_pin = await db.users.find({"pin_hash": {"$exists": True}}).to_list(
-            length=100
-        )
-
-        found_user = None
-        for user in users_with_pin:
-            if verify_password(pin, user.get("pin_hash", "")):
-                found_user = user
-                break
+        found_user = await _find_user_by_pin(db, pin)
 
         if not found_user:
             logger.warning(f"No user found with matching PIN from IP: {client_ip}")

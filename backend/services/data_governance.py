@@ -146,7 +146,7 @@ class DataGovernanceService:
 
     async def apply_retention_policies(self) -> dict[str, Any]:
         """Apply all retention policies (delete expired data)"""
-        results = {}
+        results: dict[str, Any] = {}
 
         async for policy_doc in self.policies_collection.find():
             policy = RetentionPolicy(

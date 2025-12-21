@@ -35,6 +35,9 @@ psutil>=6.1.0
 authlib>=1.4.0
 xlsxwriter>=3.2.0
 copilotkit>=0.1.72
+tenacity>=9.1.2  # Retry logic
+bandit>=1.8.6    # Security scanning
+locust>=2.34.0   # Load testing
 
 # OpenTelemetry tracing
 opentelemetry-api>=1.25.0

@@ -18,7 +18,7 @@ except ImportError:
     HAS_PYDANTIC_V2 = False
     try:
         from pydantic import (
-            BaseSettings as PydanticBaseSettings,  # type: ignore[no-redef]
+            BaseSettings as PydanticBaseSettingsFallback,
         )
     except (
         ImportError
@@ -27,6 +27,7 @@ except ImportError:
             "Please install pydantic or pydantic-settings before running the backend"
         ) from exc
     SettingsConfigDict = dict  # type: ignore[assignment,misc]
+    PydanticBaseSettings = PydanticBaseSettingsFallback
 
 from pathlib import Path
 

@@ -3,14 +3,13 @@
 import json
 import logging
 import os
-import socket
 import sys
 import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar, cast
 
 import jwt
 import uvicorn
@@ -124,6 +123,7 @@ from backend.utils.api_utils import (  # noqa: E402
 )
 from backend.utils.auth_utils import get_password_hash  # noqa: E402
 from backend.utils.logging_config import setup_logging  # noqa: E402
+from backend.utils.port_detector import PortDetector  # noqa: E402
 from backend.utils.result import Fail, Ok, Result  # noqa: E402
 from backend.utils.tracing import init_tracing, instrument_fastapi_app  # noqa: E402
 
@@ -184,7 +184,7 @@ R = TypeVar("R")
 class ApiResponse(BaseModel, Generic[T]):
     success: bool
     data: Optional[T] = None
-    error: dict[str, Optional[Any]] = None
+    error: Optional[dict[str, Optional[Any]]] = None
 
     @classmethod
     def success_response(cls, data: T):
@@ -228,7 +228,7 @@ mongo_url = settings.MONGO_URL
 mongo_url = mongo_url.rstrip("/")
 # Do not append pool options to URL; keep them in client options only
 
-mongo_client_options = {
+mongo_client_options: dict[str, Any] = {
     "maxPoolSize": 100,
     "minPoolSize": 10,
     "maxIdleTimeMS": 45000,
@@ -289,7 +289,7 @@ except Exception as e:
     logger.warning(f"Argon2 not available, using bcrypt-only: {str(e)}")
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # SECURITY: settings from backend.config already enforce strong secrets
-SECRET_KEY: str = settings.JWT_SECRET
+SECRET_KEY: str = cast(str, settings.JWT_SECRET)
 ALGORITHM = settings.JWT_ALGORITHM
 security = HTTPBearer(auto_error=False)
 
@@ -1043,10 +1043,6 @@ try:
     app.include_router(notes_router, prefix="/api")  # Notes feature
     app.include_router(sync_conflicts_router, prefix="/api")  # Sync conflicts feature
 
-    # Register the new batch sync router
-    from backend.api.sync import router as batch_sync_router
-
-    app.include_router(batch_sync_router, prefix="/api/sync", tags=["sync"])
 except Exception as _e:
     logger.warning(f"Feature API router not available: {_e}")
 
@@ -2516,51 +2512,6 @@ app.include_router(
 
 
 # Run the server if executed directly
-def find_available_port(start_port: int, max_attempts: int = 10) -> int:
-    """Find the first available port starting from start_port."""
-    for port in range(start_port, start_port + max_attempts):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                # Try binding to 0.0.0.0 to ensure availability on all interfaces
-                s.bind(("0.0.0.0", port))
-                return port
-            except OSError:
-                continue
-    return start_port
-
-
-def get_local_ip():
-    """Get the local IP address of the machine."""
-    try:
-        # 1. Try connecting to a public DNS server (Google)
-        # This usually forces the OS to pick the primary outgoing interface (LAN)
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0)
-        try:
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-        except Exception:
-            ip = "127.0.0.1"
-        finally:
-            s.close()
-
-        # 2. Sanity check: If we got localhost or something weird, try 192.168 specifically
-        if ip.startswith("127.") or ip == "0.0.0.0":
-            # Fallback: iterate interfaces (simple approach often restricted, so we rely on socket)
-            # Re-try with a local router guess
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            try:
-                s.connect(("192.168.1.1", 80))
-                ip = s.getsockname()[0]
-            except Exception:
-                pass
-            finally:
-                s.close()
-
-        print(f"DEBUG: Detected Local IP: {ip}")
-        return ip
-    except Exception:
-        return "127.0.0.1"
 
 
 def save_backend_info(port: int, local_ip: str) -> None:
@@ -2599,8 +2550,11 @@ def save_backend_info(port: int, local_ip: str) -> None:
 if __name__ == "__main__":
     # Get configured port as starting point
     start_port = int(getattr(settings, "PORT", os.getenv("PORT", 8001)))
-    port = find_available_port(start_port)
-    local_ip = get_local_ip()
+    # Use PortDetector to find port and IP
+    port = PortDetector.find_available_port(
+        start_port, range(start_port, start_port + 10)
+    )
+    local_ip = PortDetector.get_local_ip()
 
     # Save port to file for other services to discover
     save_backend_info(port, local_ip)

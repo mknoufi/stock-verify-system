@@ -71,11 +71,23 @@ def get_connection(conn_string):
 def _safe_identifier(name: str) -> str:
     """Validate and return a safe SQL identifier.
 
-    Allows letters, numbers, and underscores; must start with a letter or underscore.
+    Allows letters, numbers, underscores, and spaces (common in SQL Server).
+    Rejects brackets to prevent injection when wrapped in [].
     Raises HTTPException(400) if invalid.
     """
-    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name or ""):
+    # Allow alphanumeric, underscore, and space. Must not be empty.
+    # Must not contain brackets [] which are used for quoting.
+    if not name or "]" in name or "[" in name:
         raise HTTPException(status_code=400, detail=f"Invalid identifier: {name}")
+
+    # Check for other potentially dangerous characters if needed, but [] is the main concern for injection in [{name}]
+    # Let's stick to a regex that allows spaces but is still restrictive enough
+    if not re.fullmatch(r"[A-Za-z0-9_ ]+", name):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid identifier (only alphanumeric, space, underscore allowed): {name}",
+        )
+
     return name
 
 
@@ -183,17 +195,16 @@ async def test_mapping(
         select_fields = []
         for app_field, mapping in config.columns.items():
             erp_col = _safe_identifier(mapping.erp_column)
-            select_fields.append(f"TOP 5 [{erp_col}] as {app_field}")
+            select_fields.append(f"[{erp_col}] as {app_field}")
 
         # Basic check to ensure at least one column
         if not select_fields:
             raise HTTPException(status_code=400, detail="No columns mapped")
 
         # Use TOP 5 to limit data
-        query = f"SELECT {', '.join(select_fields).replace('TOP 5', '', 1)} FROM [{schema}].[{table_name}]"
-
-        # Re-add TOP 5 at the start (a bit hacky string manipulation for simplicity)
-        query = f"SELECT TOP 5 {query[7:]}"
+        query = (
+            f"SELECT TOP 5 {', '.join(select_fields)} FROM [{schema}].[{table_name}]"
+        )
 
         # Log a sanitized summary (omit full query text to reduce risk)
         logger.info(
