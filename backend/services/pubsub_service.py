@@ -97,9 +97,7 @@ class PubSubService:
         if self.pubsub is None:
             return
 
-        message = await self.pubsub.get_message(
-            ignore_subscribe_messages=True, timeout=1.0
-        )
+        message = await self.pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
 
         if message and message["type"] == "message":
             channel = message["channel"]
@@ -139,9 +137,7 @@ class PubSubService:
         await self.pubsub.subscribe(channel)
         logger.info(f"✓ Subscribed to channel: {channel}")
 
-    async def unsubscribe(
-        self, channel: str, handler: Optional[Callable] = None
-    ) -> None:
+    async def unsubscribe(self, channel: str, handler: Optional[Callable] = None) -> None:
         """
         Unsubscribe from a channel
 
@@ -155,9 +151,7 @@ class PubSubService:
         if handler:
             # Remove specific handler
             if channel in self.subscribers:
-                self.subscribers[channel] = [
-                    h for h in self.subscribers[channel] if h != handler
-                ]
+                self.subscribers[channel] = [h for h in self.subscribers[channel] if h != handler]
         else:
             # Remove all handlers
             if channel in self.subscribers:
@@ -202,9 +196,7 @@ class PubSubService:
         message = {"event": event, "rack_id": rack_id, "data": data}
         return await self.publish(channel, message)
 
-    async def publish_session_update(
-        self, session_id: str, event: str, data: dict
-    ) -> int:
+    async def publish_session_update(self, session_id: str, event: str, data: dict) -> int:
         """
         Publish session update
 
@@ -241,9 +233,7 @@ class PubSubService:
         channel = f"rack:updates:{rack_id}"
         await self.subscribe(channel, handler)
 
-    async def subscribe_to_session_updates(
-        self, session_id: str, handler: Callable
-    ) -> None:
+    async def subscribe_to_session_updates(self, session_id: str, handler: Callable) -> None:
         """Subscribe to session updates"""
         channel = f"session:updates:{session_id}"
         await self.subscribe(channel, handler)

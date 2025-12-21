@@ -38,9 +38,7 @@ class PortDetector:
 
         for port in port_range:
             if PortDetector.is_port_available(port):
-                logger.info(
-                    f"Found available port: {port} (preferred was {preferred_port})"
-                )
+                logger.info(f"Found available port: {port} (preferred was {preferred_port})")
                 return port
 
         raise Exception(f"No available ports found in range {port_range}")
@@ -98,9 +96,7 @@ class PortDetector:
             return False
 
     @staticmethod
-    def find_mongo_port(
-        start_port: int = 27017, max_attempts: int = 10
-    ) -> tuple[int, bool]:
+    def find_mongo_port(start_port: int = 27017, max_attempts: int = 10) -> tuple[int, bool]:
         """Find MongoDB port and return (port, is_running)"""
         # Check default port first
         if PortDetector.is_mongo_running(start_port):
