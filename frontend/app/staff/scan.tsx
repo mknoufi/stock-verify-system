@@ -252,10 +252,10 @@ export default function ScanScreen() {
       (entry) => entry.code === trimmedData
     );
 
-    if (existingIndex >= 0) {
+    if (existingIndex >= 0 && scanBufferRef.current[existingIndex]) {
       // Increment count for existing barcode
-      scanBufferRef.current[existingIndex].count += 1;
-      scanBufferRef.current[existingIndex].timestamp = now;
+      scanBufferRef.current[existingIndex]!.count += 1;
+      scanBufferRef.current[existingIndex]!.timestamp = now;
     } else {
       // Add new barcode to buffer
       scanBufferRef.current.push({
