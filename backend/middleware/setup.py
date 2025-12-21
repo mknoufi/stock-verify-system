@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import List
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -36,7 +35,7 @@ def _setup_trusted_hosts(app: FastAPI) -> None:
         logger.warning("TrustedHostMiddleware not available")
 
 
-def _get_cors_origins() -> List[str]:
+def _get_cors_origins() -> list[str]:
     """Determine allowed CORS origins based on environment."""
     if getattr(settings, "CORS_ALLOW_ORIGINS", None):
         return [

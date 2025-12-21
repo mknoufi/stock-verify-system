@@ -6,7 +6,7 @@ Adds recommended indexes from CODEBASE_ANALYSIS.md for improved query performanc
 import asyncio
 import logging
 import os
-from typing import Any, Set, Tuple
+from typing import Any
 
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -42,7 +42,7 @@ _INDEXES_TO_CREATE = {
 }
 
 
-def _normalize_index_key(index_spec: Any) -> Tuple[Tuple[str, int], ...]:
+def _normalize_index_key(index_spec: Any) -> tuple[tuple[str, int], ...]:
     """Convert index spec to normalized tuple format for comparison."""
     if isinstance(index_spec, tuple):
         if len(index_spec) == 2 and isinstance(index_spec[0], str):
@@ -59,7 +59,7 @@ def _normalize_index_key(index_spec: Any) -> Tuple[Tuple[str, int], ...]:
 async def _create_single_index(
     collection: Any,
     index_spec: Any,
-    existing_keys: Set[Tuple[Tuple[str, int], ...]],
+    existing_keys: set[tuple[tuple[str, int], ...]],
 ) -> None:
     """Create a single index if it doesn't already exist."""
     index_key = _normalize_index_key(index_spec)

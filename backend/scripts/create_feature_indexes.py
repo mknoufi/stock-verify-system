@@ -10,7 +10,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Any
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -25,7 +25,7 @@ MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.getenv("DB_NAME", "stock_count")
 
 # Index definitions: (collection, index_fields, description)
-_FEATURE_INDEXES: List[Tuple[str, List[Tuple[str, int]], str]] = [
+_FEATURE_INDEXES: list[tuple[str, list[tuple[str, int]], str]] = [
     ("export_schedules", [("next_run", 1), ("enabled", 1)], "next_run + enabled"),
     (
         "export_schedules",
@@ -56,7 +56,7 @@ _VERIFY_INDEXES = [
 
 
 async def _create_index(
-    db: Any, collection: str, fields: List[Tuple[str, int]], desc: str
+    db: Any, collection: str, fields: list[tuple[str, int]], desc: str
 ) -> None:
     """Create a single index."""
     try:

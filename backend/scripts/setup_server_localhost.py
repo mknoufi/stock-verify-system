@@ -7,7 +7,6 @@ Updates .env for localhost connection (best practice)
 import io
 import sys
 from pathlib import Path
-from typing import Dict, List
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -27,9 +26,9 @@ _SQL_VARS = [
 ]
 
 
-def _read_env_vars() -> Dict[str, str]:
+def _read_env_vars() -> dict[str, str]:
     """Read existing .env file into dict."""
-    env_vars: Dict[str, str] = {}
+    env_vars: dict[str, str] = {}
     if ENV_FILE.exists():
         print(f"\n📄 Reading existing {ENV_FILE}...")
         with open(ENV_FILE, encoding="utf-8") as f:
@@ -41,7 +40,7 @@ def _read_env_vars() -> Dict[str, str]:
     return env_vars
 
 
-def _update_env_for_localhost(env_vars: Dict[str, str]) -> None:
+def _update_env_for_localhost(env_vars: dict[str, str]) -> None:
     """Update env vars for localhost SQL Server connection."""
     print("\n✅ Updating SQL Server configuration for localhost...")
     env_vars["SQL_SERVER_HOST"] = "localhost"
@@ -54,16 +53,16 @@ def _update_env_for_localhost(env_vars: Dict[str, str]) -> None:
     env_vars["SQL_SERVER_PASSWORD"] = ""
 
 
-def _write_env_file(env_vars: Dict[str, str]) -> None:
+def _write_env_file(env_vars: dict[str, str]) -> None:
     """Write updated env vars back to file."""
     print(f"\n💾 Writing updated {ENV_FILE}...")
 
-    lines: List[str] = []
+    lines: list[str] = []
     if ENV_FILE.exists():
         with open(ENV_FILE, encoding="utf-8") as f:
             lines = f.readlines()
 
-    updated_lines: List[str] = []
+    updated_lines: list[str] = []
     found_vars = dict.fromkeys(_SQL_VARS, False)
 
     for line in lines:
@@ -85,7 +84,7 @@ def _write_env_file(env_vars: Dict[str, str]) -> None:
         f.writelines(updated_lines)
 
 
-def _print_summary(env_vars: Dict[str, str]) -> None:
+def _print_summary(env_vars: dict[str, str]) -> None:
     """Print summary of updated configuration."""
     print("✅ Configuration updated!")
     print("\n📋 Updated Configuration:")

@@ -494,9 +494,9 @@ async def export_items_csv(
                     "variance": item.get("variance", 0.0),
                     "item_condition": item.get("item_condition", ""),
                     "serial_number": item.get("serial_number", ""),
-                    "is_serialized": "Yes"
-                    if item.get("is_serialized", False)
-                    else "No",
+                    "is_serialized": (
+                        "Yes" if item.get("is_serialized", False) else "No"
+                    ),
                     "session_id": item.get("session_id", ""),
                     "verification_notes": item.get("verification_notes", ""),
                 }
