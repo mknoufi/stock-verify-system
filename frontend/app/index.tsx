@@ -62,7 +62,7 @@ export default function Index() {
           entering={FadeInDown.delay(600).duration(1000)}
           style={styles.versionText}
         >
-          v2.0.0 • Aurora Engine
+          {"v2.0.0 • Aurora Engine"}
         </Animated.Text>
       </View>
     </AuroraBackground>

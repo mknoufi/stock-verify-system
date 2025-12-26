@@ -50,7 +50,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   showLabel = false,
   label,
   animated = true,
-  indeterminate = false,
+  indeterminate: _indeterminate = false,
   style,
 }) => {
   const progressValue = useSharedValue(0);

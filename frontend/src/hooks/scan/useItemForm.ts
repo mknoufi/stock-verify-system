@@ -62,7 +62,7 @@ export const useItemForm = () => {
     }
   };
 
-  const validateForm = (item: Item | null, sessionType: string | null) => {
+  const validateForm = (item: Item | null, _sessionType: string | null) => {
     if (!item) return false;
 
     // If batch mode, validate batches

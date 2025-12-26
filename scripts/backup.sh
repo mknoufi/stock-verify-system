@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # MongoDB Backup Script
-# Runs daily via cron or docker-compose
+# Runs daily via cron
 
 set -e
 
 # Configuration
-MONGO_HOST="${MONGO_HOST:-mongodb}"
+MONGO_HOST="${MONGO_HOST:-localhost}"
 MONGO_PORT="${MONGO_PORT:-27017}"
 MONGO_USERNAME="${MONGO_USERNAME:-admin}"
 MONGO_PASSWORD="${MONGO_PASSWORD}"

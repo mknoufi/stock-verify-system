@@ -14,17 +14,21 @@
 
 ## 🔧 Quick Start Commands
 
-### One-Time Setup
+### Option 1: Docker (Recommended for Backend)
 ```bash
-cd /Users/noufi1/cursor new/STOCK_VERIFY_2-db-maped
-docker-compose up -d mongo  # Start MongoDB
+# Start Backend and MongoDB
+docker-compose up -d
+
+# Logs
+docker-compose logs -f backend
 ```
 
-### Start Backend (Terminal 1)
+### Option 2: Manual Setup
+
+#### Start Backend (Terminal 1)
 ```bash
-cd /Users/noufi1/cursor new/STOCK_VERIFY_2-db-maped/backend
-export PYTHONPATH=..
-export MONGO_URL="mongodb://localhost:27018/stock_verify?replicaSet=rs0"
+cd backend
+# Ensure backend/.env is configured
 uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload
 ```
 
@@ -34,7 +38,7 @@ uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload
 
 ### Start Frontend (Terminal 2)
 ```bash
-cd /Users/noufi1/cursor new/STOCK_VERIFY_2-db-maped/frontend
+cd frontend
 npm start
 ```
 

@@ -2,7 +2,9 @@
  * ThemePicker Component
  *
  * Visual theme selection grid with live preview
- * Shows all available themes with color swatches
+  * Shows all available themes with color swatches
+    *
+ * // cSpell:ignore springify
  */
 
 import React, { useCallback } from "react";
@@ -33,7 +35,7 @@ interface ThemePickerProps {
 export const ThemePicker: React.FC<ThemePickerProps> = ({
   showModeToggle = true,
   compact = false,
-  columns = 3,
+  columns: _columns = 3,
 }) => {
   const {
     theme,

@@ -1,4 +1,5 @@
 """
+# cSpell:ignore redef behaviour lavanya emart dotenv
 Application Configuration Management
 Type-safe configuration with validation using Pydantic
 """
@@ -27,7 +28,7 @@ except ImportError:
             "Please install pydantic or pydantic-settings before running the backend"
         ) from exc
     SettingsConfigDict = dict  # type: ignore[assignment,misc]
-    PydanticBaseSettings = PydanticBaseSettingsFallback
+    PydanticBaseSettings = PydanticBaseSettingsFallback  # type: ignore[assignment,misc]
 
 from pathlib import Path
 
@@ -49,7 +50,7 @@ class Settings(PydanticBaseSettings):
             case_sensitive=True,
             extra="ignore",
         )
-    else:  # pragma: no cover - legacy pydantic v1 behaviour
+    else:  # pragma: no cover - legacy pydantic v1 behavior
 
         class Config:
             env_file = str(ROOT_DIR / ".env")
@@ -82,17 +83,39 @@ class Settings(PydanticBaseSettings):
             raise ValueError("MIN_CLIENT_VERSION cannot be empty")
         # Allow formats like '1', '1.2', '1.2.3', optionally with suffix '-beta' or '+meta'
         if not re.match(r"^\d+(\.\d+){0,2}([-+][\w.]+)?$", v_str):
-            raise ValueError("MIN_CLIENT_VERSION must be a semantic version like '1.2.3'")
+            raise ValueError(
+                "MIN_CLIENT_VERSION must be a semantic version like '1.2.3'"
+            )
         return v_str
 
     # MongoDB (with dynamic port detection)
-    MONGO_URL: str = "mongodb://localhost:27017"
-    DB_NAME: str = "stock_verification"
+    # Note: we support multiple common env var names for developer convenience:
+    # - MONGO_URL (preferred)
+    # - MONGODB_URI / MONGODB_URL (common in many deploy setups)
+    MONGO_URL: str = Field(default="mongodb://localhost:27017")
 
-    @validator("MONGO_URL")
+
+    @validator("MONGO_URL", pre=True, always=True)
     def validate_and_detect_mongo_url(cls, v):
-        """Auto-detect MongoDB port if not specified and validate"""
-        # Auto-detect port
+        """Resolve MongoDB URL from env aliases and auto-detect local port when needed."""
+
+        # 1) Accept common environment aliases.
+        # Prefer explicit MONGO_URL, then MONGODB_URI, then MONGODB_URL.
+        env_mongo_url = os.getenv("MONGO_URL")
+        env_mongodb_uri = os.getenv("MONGODB_URI")
+        env_mongodb_url = os.getenv("MONGODB_URL")
+
+        if env_mongo_url:
+            v = env_mongo_url
+        elif env_mongodb_uri:
+            v = env_mongodb_uri
+        elif env_mongodb_url:
+            v = env_mongodb_url
+
+        # 2) If still default, try auto-detection.
+        if not v:
+            v = "mongodb://localhost:27017"
+
         if v == "mongodb://localhost:27017":
             try:
                 from backend.utils.port_detector import PortDetector
@@ -102,10 +125,10 @@ class Settings(PydanticBaseSettings):
             except Exception as e:
                 logger.warning(f"MongoDB port detection failed, using default: {e}")
 
-        # Validate
+        # 3) Validate
         if not v:
             raise ValueError("MONGO_URL is required")
-        return v
+        return str(v).strip()
 
     @validator("DB_NAME")
     def validate_db_name(cls, v):
@@ -114,9 +137,13 @@ class Settings(PydanticBaseSettings):
         return v
 
     # SQL Server (Optional - app works without it)
-    SQL_SERVER_HOST: Optional[str] = Field(None, description="SQL Server host (optional)")
+    SQL_SERVER_HOST: Optional[str] = Field(
+        None, description="SQL Server host (optional)"
+    )
     SQL_SERVER_PORT: int = 1433
-    SQL_SERVER_DATABASE: Optional[str] = Field(None, description="SQL Server database (optional)")
+    SQL_SERVER_DATABASE: Optional[str] = Field(
+        None, description="SQL Server database (optional)"
+    )
     SQL_SERVER_USER: Optional[str] = None
     SQL_SERVER_PASSWORD: Optional[str] = None
 
@@ -210,7 +237,9 @@ class Settings(PydanticBaseSettings):
     RATE_LIMIT_PER_MINUTE: int = Field(100, ge=1)
     RATE_LIMIT_BURST: int = Field(20, ge=1)
     MAX_CONCURRENT: int = Field(50, ge=1)
-    QUEUE_SIZE: int = Field(100, ge=1, description="Queue size for concurrent request handler")
+    QUEUE_SIZE: int = Field(
+        100, ge=1, description="Queue size for concurrent request handler"
+    )
     RATE_LIMIT_MAX_ATTEMPTS: int = Field(5, ge=1)
     RATE_LIMIT_TTL_SECONDS: int = Field(300, ge=1)
 
@@ -300,7 +329,21 @@ except Exception as e:
 
     class FallbackSettings:
         def __init__(self):
-            self.MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+            # Keep behavior consistent with Settings: support env aliases + auto-detect
+            mongo_url = (
+                os.getenv("MONGO_URL")
+                or os.getenv("MONGODB_URI")
+                or os.getenv("MONGODB_URL")
+                or "mongodb://localhost:27017"
+            )
+            if mongo_url == "mongodb://localhost:27017":
+                try:
+                    from backend.utils.port_detector import PortDetector
+
+                    mongo_url = PortDetector.get_mongo_url()
+                except Exception:
+                    pass
+            self.MONGO_URL = mongo_url
             self.DB_NAME = os.getenv("DB_NAME", "stock_count")
             self.SQL_SERVER_HOST = os.getenv("SQL_SERVER_HOST")
             self.SQL_SERVER_PORT = int(os.getenv("SQL_SERVER_PORT", 1433))
@@ -322,7 +365,9 @@ except Exception as e:
                 "LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
             self.LOG_FILE = os.getenv("LOG_FILE", "app.log")
-            self.USE_CONNECTION_POOL = os.getenv("USE_CONNECTION_POOL", "true").lower() == "true"
+            self.USE_CONNECTION_POOL = (
+                os.getenv("USE_CONNECTION_POOL", "true").lower() == "true"
+            )
             self.POOL_SIZE = int(os.getenv("POOL_SIZE", 10))
             self.MAX_OVERFLOW = int(os.getenv("MAX_OVERFLOW", 5))
             self.REDIS_URL = os.getenv("REDIS_URL")
@@ -331,12 +376,16 @@ except Exception as e:
             self.RATE_LIMIT_BURST = int(os.getenv("RATE_LIMIT_BURST", 20))
             self.MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", 50))
             self.METRICS_HISTORY_SIZE = int(os.getenv("METRICS_HISTORY_SIZE", 1000))
-            self.ERP_SYNC_ENABLED = os.getenv("ERP_SYNC_ENABLED", "true").lower() == "true"
+            self.ERP_SYNC_ENABLED = (
+                os.getenv("ERP_SYNC_ENABLED", "true").lower() == "true"
+            )
             self.ERP_SYNC_INTERVAL = int(os.getenv("ERP_SYNC_INTERVAL", 3600))
             self.CHANGE_DETECTION_SYNC_ENABLED = (
                 os.getenv("CHANGE_DETECTION_SYNC_ENABLED", "true").lower() == "true"
             )
-            self.CHANGE_DETECTION_INTERVAL = int(os.getenv("CHANGE_DETECTION_INTERVAL", 300))
+            self.CHANGE_DETECTION_INTERVAL = int(
+                os.getenv("CHANGE_DETECTION_INTERVAL", 300)
+            )
             # New settings for rate limiting and CORS
             self.RATE_LIMIT_MAX_ATTEMPTS = int(os.getenv("RATE_LIMIT_MAX_ATTEMPTS", 5))
             self.RATE_LIMIT_TTL_SECONDS = int(os.getenv("RATE_LIMIT_TTL_SECONDS", 300))
@@ -344,7 +393,9 @@ except Exception as e:
             self.APP_NAME = os.getenv("APP_NAME", "Stock Count API")
             self.APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
             # Normalize MIN_CLIENT_VERSION: use default when env var is missing or empty, and strip whitespace
-            self.MIN_CLIENT_VERSION = (os.getenv("MIN_CLIENT_VERSION") or "1.0.0").strip()
+            self.MIN_CLIENT_VERSION = (
+                os.getenv("MIN_CLIENT_VERSION") or "1.0.0"
+            ).strip()
 
     settings = FallbackSettings()  # type: ignore[assignment]
 
@@ -381,12 +432,16 @@ def perform_security_checks(settings_obj):
 
         if (is_production or is_staging) and not debug_mode:
             _validate_secret("JWT_SECRET", jwt_secret, placeholders, environment)
-            _validate_secret("JWT_REFRESH_SECRET", jwt_refresh, placeholders, environment)
+            _validate_secret(
+                "JWT_REFRESH_SECRET", jwt_refresh, placeholders, environment
+            )
             logger.info(f"✅ {environment.capitalize()} mode: Security checks passed")
         else:
             # Development mode - just warn
             if jwt_secret in placeholders:
-                logger.warning("⚠️  DEVELOPMENT: Using default JWT_SECRET. Change for production!")
+                logger.warning(
+                    "⚠️  DEVELOPMENT: Using default JWT_SECRET. Change for production!"
+                )
             if jwt_refresh in placeholders:
                 logger.warning(
                     "⚠️  DEVELOPMENT: Using default JWT_REFRESH_SECRET. Change for production!"

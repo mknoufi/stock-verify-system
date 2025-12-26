@@ -20,6 +20,7 @@ from pathlib import Path
 try:
     from crewai import Agent, Crew, Process, Task
     from crewai.tools import tool
+    from langchain_community.tools import DuckDuckGoSearchRun
 except ImportError:
     print("Please install required packages: pip install -r agents/requirements.txt")
     sys.exit(1)
@@ -134,6 +135,16 @@ def lint_code_tool(file_path: str) -> str:
         return f"Error linting: {e}"
 
 
+@tool("Web Search")
+def web_search_tool(query: str) -> str:
+    """Search the web for documentation, error solutions, or security vulnerabilities."""
+    try:
+        search = DuckDuckGoSearchRun()
+        return search.run(query)
+    except Exception as e:
+        return f"Error searching web: {e}"
+
+
 # ============================================================================
 # AGENT DEFINITIONS
 # ============================================================================
@@ -148,8 +159,9 @@ def create_security_auditor() -> Agent:
 vulnerabilities with expertise in Python/FastAPI and React Native applications.
 {PROJECT_CONTEXT}
 Focus on: SQL injection (CWE-89), CORS misconfiguration (CWE-942),
-authentication bypasses, and sensitive data exposure.""",
-        tools=[read_file_tool, search_code_tool, lint_code_tool],
+authentication bypasses, and sensitive data exposure.
+You have access to the web to search for the latest CVEs and security best practices.""",
+        tools=[read_file_tool, search_code_tool, lint_code_tool, web_search_tool],
         verbose=True,
         allow_delegation=False,
     )
@@ -208,8 +220,9 @@ def create_debugger() -> Agent:
         backstory=f"""You are a debugging expert who systematically analyzes issues,
 traces execution paths, and identifies root causes.
 {PROJECT_CONTEXT}
-Approach: Gather symptoms → Form hypotheses → Verify with evidence → Propose fix.""",
-        tools=[read_file_tool, search_code_tool, run_tests_tool, lint_code_tool],
+Approach: Gather symptoms → Form hypotheses → Verify with evidence → Propose fix.
+You can search the web for error messages and library documentation.""",
+        tools=[read_file_tool, search_code_tool, run_tests_tool, lint_code_tool, web_search_tool],
         verbose=True,
         allow_delegation=True,
     )

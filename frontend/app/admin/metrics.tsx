@@ -129,7 +129,7 @@ export default function MetricsScreen() {
       )}
       <Text style={styles.metricTitle}>{title}</Text>
       <Text style={[styles.metricValue, { color }]}>{value}</Text>
-      {subtitle && <Text style={styles.metricSubtitle}>{subtitle}</Text>}
+      {subtitle ? <Text style={styles.metricSubtitle}>{subtitle}</Text> : null}
     </View>
   );
 

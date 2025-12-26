@@ -14,18 +14,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { PinEntryModal } from "../../src/components/modals/PinEntryModal";
 import { useAuthStore } from "../../src/store/authStore";
 import { deleteCountLine, getCountLines } from "../../src/services/api/api";
-import { StatusBar } from "expo-status-bar";
 import { haptics } from "../../src/services/utils/haptics";
 import { flags } from "../../src/constants/flags";
 import { PullToRefresh } from "../../src/components/PullToRefresh";
 import { BottomSheet } from "../../src/components/ui/BottomSheet";
 import { SkeletonList } from "../../src/components/LoadingSkeleton";
 import { SwipeableRow } from "../../src/components/SwipeableRow";
-import { StaffLayout } from "../../src/components/layout/StaffLayout";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { AuroraBackground } from "../../src/components/ui/AuroraBackground";
 import { GlassCard } from "../../src/components/ui/GlassCard";
-import { auroraTheme } from "../../src/theme/auroraTheme";
+import { theme } from "../../src/styles/modernDesignSystem";
+import { ScreenContainer } from "../../src/components/ui";
 
 export default function HistoryScreen() {
   const params = useLocalSearchParams();
@@ -39,6 +37,7 @@ export default function HistoryScreen() {
   interface CountLine {
     id: string;
     item_code: string;
+    batch_id?: string;
     item_name: string;
     erp_qty: number;
     counted_qty: number;
@@ -63,12 +62,13 @@ export default function HistoryScreen() {
   const loadCountLines = React.useCallback(async () => {
     try {
       const data = await getCountLines(sessionId as string);
+      const safeData = Array.isArray(data) ? data : [];
       setCountLines(
         showApprovedOnly
-          ? data.filter((d: any) => d.status === "approved")
-          : data,
+          ? safeData.filter((d: any) => d.status === "approved")
+          : safeData,
       );
-      if (data?.length && flags.enableHaptics) {
+      if (safeData.length && flags.enableHaptics) {
         haptics.success();
       }
     } catch (error) {
@@ -151,13 +151,13 @@ export default function HistoryScreen() {
     item: CountLine;
     index: number;
   }) => {
-    const varianceColor = item.variance === 0 ? "#4CAF50" : "#FF5252";
+    const varianceColor = item.variance === 0 ? "#10B981" : "#EF4444";
     const statusColor =
       item.status === "approved"
-        ? "#4CAF50"
+        ? "#10B981"
         : item.status === "rejected"
-          ? "#FF5252"
-          : "#FF9800";
+          ? "#EF4444"
+          : "#F59E0B";
 
     const CardContent = (
       <GlassCard variant="medium" style={styles.countCard}>
@@ -172,7 +172,14 @@ export default function HistoryScreen() {
           </View>
         </View>
 
-        <Text style={styles.itemCode}>Code: {item.item_code || "N/A"}</Text>
+        <View style={styles.codeRow}>
+          <Text style={styles.itemCode}>Code: {item.item_code || "N/A"}</Text>
+          {item.batch_id && (
+            <View style={styles.batchBadge}>
+              <Text style={styles.batchBadgeText}>Batch: {item.batch_id}</Text>
+            </View>
+          )}
+        </View>
 
         <View style={styles.qtyRow}>
           <View style={styles.qtyItem}>
@@ -246,96 +253,96 @@ export default function HistoryScreen() {
   };
 
   return (
-    <StaffLayout
-      title="Count History"
-      headerActions={[
-        {
+    <ScreenContainer
+      backgroundType="aurora"
+      auroraVariant="primary"
+      header={{
+        title: "Count History",
+        showBackButton: true,
+        showUsername: false,
+        showLogoutButton: true,
+        rightAction: {
           icon: "options-outline",
           label: "Filters",
           onPress: () => setFiltersOpen(true),
         },
-      ]}
-      screenVariant="default"
-      backgroundColor="transparent"
+      }}
+      contentMode="static"
+      noPadding
+      statusBarStyle="light"
     >
-      <AuroraBackground>
-        <StatusBar style="light" />
-        {loading && !refreshing ? (
-          <View style={{ padding: 16 }}>
-            <SkeletonList itemHeight={120} count={6} />
-          </View>
-        ) : (
-          <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
-            <FlashList
-              data={countLines}
-              renderItem={renderCountLine}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.list}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="file-tray-outline" size={64} color="#888" />
-                  <Text style={styles.emptyText}>
-                    {loading ? "Loading..." : "No counts yet"}
-                  </Text>
-                </View>
-              }
-            />
-          </PullToRefresh>
-        )}
+      {loading && !refreshing ? (
+        <View style={{ padding: 16 }}>
+          <SkeletonList itemHeight={120} count={6} />
+        </View>
+      ) : (
+        <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
+          <FlashList
+            data={countLines}
+            renderItem={renderCountLine}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Ionicons name="file-tray-outline" size={64} color={theme.colors.text.tertiary} />
+                <Text style={styles.emptyText}>
+                  {loading ? "Loading..." : "No counts yet"}
+                </Text>
+              </View>
+            }
+          />
+        </PullToRefresh>
+      )}
 
-        <BottomSheet
-          visible={filtersOpen}
-          onClose={() => setFiltersOpen(false)}
-          height={260}
-        >
-          <Text style={styles.filterTitle}>Filters</Text>
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              showApprovedOnly && styles.filterChipActive,
-            ]}
-            onPress={() => {
-              const next = !showApprovedOnly;
-              setShowApprovedOnly(next);
-              setFiltersOpen(false);
-              if (flags.enableDeepLinks) {
-                router.replace({
-                  pathname: "/staff/history",
-                  params: { sessionId, approved: next ? "1" : undefined },
-                });
-              }
-              loadCountLines();
-            }}
-          >
-            <Ionicons
-              name="checkmark-done-outline"
-              size={18}
-              color={showApprovedOnly ? "#111" : "#ccc"}
-            />
-            <Text
-              style={[
-                styles.filterChipText,
-                showApprovedOnly && styles.filterChipTextActive,
-              ]}
-            >
-              Approved Only
-            </Text>
-          </TouchableOpacity>
-        </BottomSheet>
-
-        <PinEntryModal
-          visible={pinModalVisible}
-          onClose={() => {
-            setPinModalVisible(false);
-            setSelectedLineForDelete(null);
+      <BottomSheet
+        visible={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        height={260}
+      >
+        <Text style={styles.filterTitle}>Filters</Text>
+        <TouchableOpacity
+          style={[styles.filterChip, showApprovedOnly && styles.filterChipActive]}
+          onPress={() => {
+            const next = !showApprovedOnly;
+            setShowApprovedOnly(next);
+            setFiltersOpen(false);
+            if (flags.enableDeepLinks) {
+              router.replace({
+                pathname: "/staff/history",
+                params: { sessionId, approved: next ? "1" : undefined },
+              });
+            }
+            loadCountLines();
           }}
-          onSuccess={handlePinSuccess}
-          action="delete_count_line"
-          staffUsername={user?.username || "unknown"}
-          entityId={selectedLineForDelete?.id}
-        />
-      </AuroraBackground>
-    </StaffLayout>
+        >
+          <Ionicons
+            name="checkmark-done-outline"
+            size={18}
+            color={showApprovedOnly ? "#020617" : theme.colors.text.tertiary}
+          />
+          <Text
+            style={[
+              styles.filterChipText,
+              showApprovedOnly && styles.filterChipTextActive,
+            ]}
+          >
+            Approved Only
+          </Text>
+        </TouchableOpacity>
+      </BottomSheet>
+
+      <PinEntryModal
+        visible={pinModalVisible}
+        onClose={() => {
+          setPinModalVisible(false);
+          setSelectedLineForDelete(null);
+        }}
+        onSuccess={handlePinSuccess}
+        action="delete_count_line"
+        staffUsername={user?.username || "unknown"}
+        entityId={selectedLineForDelete?.id}
+      />
+    </ScreenContainer>
   );
 }
 
@@ -347,26 +354,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: auroraTheme.spacing.md,
+    padding: 16,
     paddingTop: 60,
     backgroundColor: "transparent",
   },
   backButton: {
-    padding: auroraTheme.spacing.xs,
+    padding: 8,
   },
   headerTitle: {
-    fontSize: auroraTheme.typography.fontSize.xl,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
-    color: auroraTheme.colors.text.primary,
+    fontSize: 20,
+    fontWeight: "700",
+    color: theme.colors.text.primary,
   },
   list: {
-    padding: auroraTheme.spacing.md,
+    padding: 16,
   },
   filterTitle: {
-    color: auroraTheme.colors.text.primary,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
-    fontSize: auroraTheme.typography.fontSize.md,
-    marginBottom: auroraTheme.spacing.md,
+    color: theme.colors.text.primary,
+    fontWeight: "700",
+    fontSize: 18,
+    marginBottom: 16,
   },
   filterChip: {
     flexDirection: "row",
@@ -376,35 +383,35 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: auroraTheme.colors.border.medium,
-    backgroundColor: auroraTheme.colors.background.elevated,
+    borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.05)",
     alignSelf: "flex-start",
   },
   filterChipActive: {
-    backgroundColor: auroraTheme.colors.success[500],
-    borderColor: auroraTheme.colors.success[500],
+    backgroundColor: "#10B981",
+    borderColor: "#10B981",
   },
   filterChipText: {
-    color: auroraTheme.colors.text.secondary,
-    fontWeight: auroraTheme.typography.fontWeight.semibold,
+    color: theme.colors.text.secondary,
+    fontWeight: "600",
   },
   filterChipTextActive: {
-    color: auroraTheme.colors.text.primary,
+    color: "#020617",
   },
   countCard: {
-    marginBottom: auroraTheme.spacing.md,
-    padding: auroraTheme.spacing.md,
+    marginBottom: 16,
+    padding: 16,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: auroraTheme.spacing.sm,
+    marginBottom: 8,
   },
   itemName: {
-    fontSize: auroraTheme.typography.fontSize.lg,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
-    color: auroraTheme.colors.text.primary,
+    fontSize: 16,
+    fontWeight: "700",
+    color: theme.colors.text.primary,
     flex: 1,
   },
   statusBadge: {
@@ -413,19 +420,37 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statusText: {
-    color: auroraTheme.colors.text.primary,
+    color: "#020617",
     fontSize: 10,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
+    fontWeight: "700",
   },
   itemCode: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.text.secondary,
-    marginBottom: auroraTheme.spacing.md,
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+  },
+  codeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  batchBadge: {
+    backgroundColor: "rgba(14, 165, 233, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(14, 165, 233, 0.2)",
+  },
+  batchBadgeText: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#0EA5E9",
   },
   qtyRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: auroraTheme.spacing.md,
+    marginBottom: 16,
   },
   qtyItem: {
     flex: 1,
@@ -433,39 +458,39 @@ const styles = StyleSheet.create({
   },
   qtyLabel: {
     fontSize: 12,
-    color: auroraTheme.colors.text.tertiary,
+    color: theme.colors.text.tertiary,
     marginBottom: 4,
   },
   qtyValue: {
-    fontSize: auroraTheme.typography.fontSize.lg,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
-    color: auroraTheme.colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+    color: theme.colors.text.primary,
   },
   reasonBox: {
-    backgroundColor: "rgba(255, 152, 0, 0.1)",
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
   },
   reasonLabel: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.text.secondary,
+    fontSize: 12,
+    color: theme.colors.text.secondary,
     marginBottom: 4,
   },
   reasonText: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.warning[500],
-    fontWeight: auroraTheme.typography.fontWeight.bold,
+    fontSize: 14,
+    color: "#F59E0B",
+    fontWeight: "700",
   },
   remark: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.text.secondary,
+    fontSize: 14,
+    color: theme.colors.text.secondary,
     fontStyle: "italic",
-    marginBottom: auroraTheme.spacing.sm,
+    marginBottom: 8,
   },
   timestamp: {
     fontSize: 12,
-    color: auroraTheme.colors.text.tertiary,
+    color: theme.colors.text.tertiary,
     textAlign: "right",
   },
   emptyContainer: {
@@ -474,8 +499,8 @@ const styles = StyleSheet.create({
     paddingVertical: 64,
   },
   emptyText: {
-    color: auroraTheme.colors.text.secondary,
-    fontSize: auroraTheme.typography.fontSize.md,
-    marginTop: auroraTheme.spacing.md,
+    color: theme.colors.text.secondary,
+    fontSize: 16,
+    marginTop: 16,
   },
 });

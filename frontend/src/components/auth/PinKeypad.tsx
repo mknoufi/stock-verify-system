@@ -15,8 +15,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -29,10 +29,6 @@ import Animated, {
 import {
   modernColors,
 } from "../../styles/modernDesignSystem";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const KEYPAD_SIZE = Math.min(SCREEN_WIDTH - 64, 320);
-const KEY_SIZE = Math.max(60, (KEYPAD_SIZE - 32) / 3); // Minimum 60px tap target
 
 interface PinKeypadProps {
   pin: string;
@@ -51,6 +47,10 @@ export function PinKeypad({
   disabled = false,
   error = false,
 }: PinKeypadProps) {
+  const { width } = useWindowDimensions();
+  const KEYPAD_SIZE = Math.min(width - 64, 320);
+  const KEY_SIZE = Math.max(60, (KEYPAD_SIZE - 32) / 3);
+
   const keys = useMemo(
     () => [
       ["1", "2", "3"],
@@ -128,7 +128,7 @@ export function PinKeypad({
 
     if (isEmpty) {
       return (
-        <View key={`empty-${rowIndex}-${colIndex}`} style={styles.keyEmpty} />
+        <View key={`empty-${rowIndex}-${colIndex}`} style={[styles.keyEmpty, { width: KEY_SIZE, height: KEY_SIZE }]} />
       );
     }
 
@@ -139,6 +139,11 @@ export function PinKeypad({
           styles.key,
           isSpecialKey && styles.keySpecial,
           disabled && styles.keyDisabled,
+          {
+            width: KEY_SIZE,
+            height: KEY_SIZE,
+            borderRadius: KEY_SIZE / 2,
+          }
         ]}
         onPress={() => handleKeyPress(key)}
         disabled={disabled}
@@ -180,7 +185,7 @@ export function PinKeypad({
   return (
     <View style={styles.container}>
       {renderIndicators()}
-      <View style={styles.keypad}>
+      <View style={[styles.keypad, { width: KEYPAD_SIZE }]}>
         {keys.map((row, rowIndex) => (
           <View key={`row-${rowIndex}`} style={styles.row}>
             {row.map((key, colIndex) => renderKey(key, rowIndex, colIndex))}
@@ -219,7 +224,6 @@ const styles = StyleSheet.create({
     backgroundColor: modernColors.semantic.error,
   },
   keypad: {
-    width: KEYPAD_SIZE,
     gap: 12,
   },
   row: {
@@ -228,9 +232,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   key: {
-    width: KEY_SIZE,
-    height: KEY_SIZE,
-    borderRadius: KEY_SIZE / 2,
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.12)",
@@ -245,8 +246,6 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   keyEmpty: {
-    width: KEY_SIZE,
-    height: KEY_SIZE,
   },
   keyText: {
     fontSize: 28,

@@ -100,12 +100,12 @@ export function SectionLists({
             <Ionicons name="add" size={20} color="#FFF" />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
+        <Text style={styles.sectionSubtitle}>
           Tap a section to continue scanning
         </Text>
 
         {isLoading ? (
-          <ActivityIndicator color={theme.colors.accent} style={{ marginTop: 20 }} />
+          <ActivityIndicator color="#0EA5E9" style={{ marginTop: 20 }} />
         ) : activeSections.length > 0 ? (
           <View style={styles.listContainer}>
             {topActiveSections.map((session, index) => (
@@ -124,26 +124,26 @@ export function SectionLists({
                   <View
                     style={[
                       styles.sessionIcon,
-                      { backgroundColor: `${theme.colors.accent}20` },
+                      { backgroundColor: "#0EA5E915" },
                     ]}
                   >
-                    <Ionicons name="layers" size={24} color={theme.colors.accent} />
+                    <Ionicons name="layers" size={24} color="#0EA5E9" />
                   </View>
                   <View style={styles.sessionInfo}>
                     <Text
-                      style={[styles.sessionName, { color: theme.colors.text }]}
+                      style={styles.sessionName}
                       numberOfLines={1}
                     >
                       {session.warehouse}
                     </Text>
                     <Text
-                      style={[styles.sessionMeta, { color: theme.colors.textSecondary }]}
+                      style={styles.sessionMeta}
                     >
                       {session.item_count || session.total_items || 0} items •{" "}
                       {new Date(session.created_at || session.started_at || "").toLocaleDateString()}
                     </Text>
                   </View>
-                  <View style={[styles.resumeButton, { backgroundColor: theme.colors.accent }]}>
+                  <View style={styles.resumeButton}>
                     <Ionicons name="arrow-forward" size={18} color="#FFF" />
                   </View>
                 </ModernCard>
@@ -151,7 +151,7 @@ export function SectionLists({
             ))}
             {overflowActiveSections.length > 0 && (
               <>
-                <Text style={[styles.overflowHint, { color: theme.colors.textSecondary }]}>
+                <Text style={styles.overflowHint}>
                   Drag horizontally to view more sections
                 </Text>
                 <ScrollView
@@ -177,20 +177,20 @@ export function SectionLists({
                         <View
                           style={[
                             styles.sessionIcon,
-                            { backgroundColor: `${theme.colors.accent}15` },
+                            { backgroundColor: "#0EA5E915" },
                           ]}
                         >
-                          <Ionicons name="layers" size={24} color={theme.colors.accent} />
+                          <Ionicons name="layers" size={24} color="#0EA5E9" />
                         </View>
                         <View style={styles.sessionInfo}>
                           <Text
-                            style={[styles.sessionName, { color: theme.colors.text }]}
+                            style={styles.sessionName}
                             numberOfLines={1}
                           >
                             {session.warehouse}
                           </Text>
                           <Text
-                            style={[styles.sessionMeta, { color: theme.colors.textSecondary }]}
+                            style={styles.sessionMeta}
                           >
                             {session.item_count || session.total_items || 0} items •
                             {" "}
@@ -200,7 +200,7 @@ export function SectionLists({
                           </Text>
                         </View>
                         <View
-                          style={[styles.resumeButton, { backgroundColor: theme.colors.accent }]}
+                          style={styles.resumeButton}
                         >
                           <Ionicons name="arrow-forward" size={18} color="#FFF" />
                         </View>
@@ -217,12 +217,12 @@ export function SectionLists({
               <Ionicons
                 name="checkmark-circle-outline"
                 size={40}
-                color={theme.colors.success || theme.colors.accent}
+                color="#10B981"
               />
-              <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+              <Text style={styles.emptyTitle}>
                 All Caught Up!
               </Text>
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+              <Text style={styles.emptyText}>
                 No active sections. Start a new one below.
               </Text>
             </View>
@@ -237,9 +237,9 @@ export function SectionLists({
             <Ionicons
               name="checkmark-done-circle"
               size={22}
-              color={theme.colors.success || "#22C55E"}
+              color="#10B981"
             />
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+            <Text style={[styles.sectionTitle, { color: "#F8FAFC" }]}>
               Finished Sections
             </Text>
           </View>
@@ -248,10 +248,8 @@ export function SectionLists({
               styles.searchToggleButton,
               {
                 backgroundColor: showFinishedSearch
-                  ? theme.colors.accent
-                  : isDark
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.05)",
+                  ? "#0EA5E9"
+                  : "rgba(255,255,255,0.05)",
               },
             ]}
             onPress={onToggleSearch}
@@ -262,28 +260,20 @@ export function SectionLists({
             <Ionicons
               name="search"
               size={18}
-              color={showFinishedSearch ? "#FFF" : theme.colors.textSecondary}
+              color="#FFF"
             />
           </TouchableOpacity>
         </View>
 
         {showFinishedSearch && (
           <View
-            style={[
-              styles.searchContainer,
-              {
-                backgroundColor: isDark
-                  ? "rgba(255,255,255,0.05)"
-                  : "rgba(0,0,0,0.03)",
-                borderColor: theme.colors.border,
-              },
-            ]}
+            style={styles.searchContainer}
           >
-            <Ionicons name="search" size={18} color={theme.colors.textSecondary} />
+            <Ionicons name="search" size={18} color="#94A3B8" />
             <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
+              style={styles.searchInput}
               placeholder="Search finished sections..."
-              placeholderTextColor={theme.colors.textSecondary}
+              placeholderTextColor="#64748B"
               value={finishedSearchQuery}
               onChangeText={onSearchQueryChange}
               autoFocus
@@ -291,7 +281,7 @@ export function SectionLists({
             />
             {finishedSearchQuery.length > 0 && (
               <TouchableOpacity onPress={() => onSearchQueryChange("")} accessibilityRole="button">
-                <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
+                <Ionicons name="close-circle" size={18} color="#94A3B8" />
               </TouchableOpacity>
             )}
           </View>
@@ -311,7 +301,6 @@ export function SectionLists({
                       backgroundColor: isDark
                         ? "rgba(255,255,255,0.03)"
                         : "rgba(0,0,0,0.02)",
-                      borderColor: theme.colors.border,
                     },
                   ]}
                 >
@@ -319,24 +308,24 @@ export function SectionLists({
                     <View
                       style={[
                         styles.sessionIcon,
-                        { backgroundColor: `${theme.colors.success || "#22C55E"}15` },
+                        { backgroundColor: "#10B98115" },
                       ]}
                     >
                       <Ionicons
                         name="checkmark-circle"
                         size={24}
-                        color={theme.colors.success || "#22C55E"}
+                        color="#10B981"
                       />
                     </View>
                     <View style={styles.sessionInfo}>
                       <Text
-                        style={[styles.sessionName, { color: theme.colors.text }]}
+                        style={styles.sessionName}
                         numberOfLines={1}
                       >
                         {session.warehouse}
                       </Text>
                       <Text
-                        style={[styles.sessionMeta, { color: theme.colors.textSecondary }]}
+                        style={styles.sessionMeta}
                       >
                         {session.item_count || session.total_items || 0} items • Last used{" "}
                         {getRelativeTime(
@@ -349,14 +338,14 @@ export function SectionLists({
               </Animated.View>
             ))}
             {finishedSections.length > 3 && (
-              <Text style={[styles.moreText, { color: theme.colors.textSecondary }]}>
+              <Text style={styles.moreText}>
                 +{finishedSections.length - 3} more sections
               </Text>
             )}
           </View>
         ) : (
           <View style={styles.emptyStateSmall}>
-            <Text style={[styles.emptyTextSmall, { color: theme.colors.textSecondary }]}>
+            <Text style={styles.emptyTextSmall}>
               {finishedSearchQuery ? "No matching sections found" : "No finished sections yet"}
             </Text>
           </View>
@@ -366,70 +355,77 @@ export function SectionLists({
   );
 }
 
-const createStyles = (theme: AppTheme, isDark: boolean) =>
+const createStyles = (_theme: AppTheme, _isDark: boolean) =>
   StyleSheet.create({
     section: {
-      marginBottom: theme.spacing.xxl,
+      marginBottom: 32,
     },
     sectionHeaderRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: theme.spacing.xs,
+      marginBottom: 12,
     },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
-      gap: theme.spacing.sm,
+      gap: 10,
     },
     sectionTitle: {
-      fontSize: theme.typography.baseSize * theme.typography.scale,
-      fontWeight: "600",
-      marginBottom: theme.spacing.xs,
+      fontSize: 18,
+      fontWeight: "700",
+      letterSpacing: -0.5,
     },
     sectionSubtitle: {
-      fontSize: theme.typography.baseSize,
-      color: theme.colors.textSecondary,
-      marginBottom: theme.spacing.md,
+      fontSize: 14,
+      color: "#94A3B8",
+      marginBottom: 16,
     },
     iconButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 36,
+      height: 36,
+      borderRadius: 12,
       justifyContent: "center",
       alignItems: "center",
+      backgroundColor: "#0EA5E9",
+      shadowColor: "#0EA5E9",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
     },
     searchToggleButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 36,
+      height: 36,
+      borderRadius: 12,
       justifyContent: "center",
       alignItems: "center",
     },
     listContainer: {
-      gap: theme.spacing.md,
+      gap: 12,
     },
     activeSessionCard: {
-      borderRadius: theme.radius.lg,
+      borderRadius: 20,
       borderWidth: 1,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.sm,
+      borderColor: "rgba(255, 255, 255, 0.05)",
+      marginBottom: 4,
     },
     finishedSessionCard: {
-      borderRadius: theme.radius.lg,
+      borderRadius: 20,
       borderWidth: 1,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.sm,
+      borderColor: "rgba(255, 255, 255, 0.05)",
+      padding: 16,
+      marginBottom: 4,
     },
     sessionCardContent: {
       flexDirection: "row",
       alignItems: "center",
-      gap: theme.spacing.md,
+      gap: 16,
     },
     sessionIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: theme.radius.md,
+      width: 52,
+      height: 52,
+      borderRadius: 16,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -437,82 +433,96 @@ const createStyles = (theme: AppTheme, isDark: boolean) =>
       flex: 1,
     },
     sessionName: {
-      fontSize: theme.typography.baseSize + 2,
+      fontSize: 16,
       fontWeight: "600",
-      marginBottom: 2,
+      color: "#F8FAFC",
+      marginBottom: 4,
     },
     sessionMeta: {
-      fontSize: theme.typography.baseSize - 2,
+      fontSize: 13,
+      color: "#94A3B8",
     },
     resumeButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 40,
+      height: 40,
+      borderRadius: 14,
       justifyContent: "center",
       alignItems: "center",
+      backgroundColor: "#0EA5E9",
     },
     emptyState: {
       alignItems: "center",
-      padding: theme.spacing.xl,
-      gap: theme.spacing.sm,
+      padding: 32,
+      gap: 12,
+      borderRadius: 24,
     },
     emptyTitle: {
-      fontSize: theme.typography.baseSize + 1,
+      fontSize: 17,
       fontWeight: "700",
-      marginTop: theme.spacing.sm,
+      marginTop: 8,
+      color: "#F8FAFC",
     },
     emptyText: {
-      fontSize: theme.typography.baseSize,
+      fontSize: 14,
       textAlign: "center",
+      color: "#94A3B8",
+      lineHeight: 20,
     },
     searchContainer: {
       flexDirection: "row",
       alignItems: "center",
-      gap: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-      borderRadius: theme.radius.lg,
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 16,
       borderWidth: 1,
-      marginBottom: theme.spacing.md,
+      borderColor: "rgba(255, 255, 255, 0.1)",
+      backgroundColor: "rgba(15, 23, 42, 0.6)",
+      marginBottom: 16,
     },
     searchInput: {
       flex: 1,
-      fontSize: theme.typography.baseSize + 2,
+      fontSize: 16,
+      color: "#F8FAFC",
       paddingVertical: 4,
     },
     emptyStateSmall: {
-      paddingVertical: theme.spacing.lg,
+      paddingVertical: 24,
       alignItems: "center",
     },
     emptyTextSmall: {
-      fontSize: theme.typography.baseSize,
+      fontSize: 14,
+      color: "#64748B",
       fontStyle: "italic",
     },
     moreText: {
-      fontSize: theme.typography.baseSize,
+      fontSize: 14,
+      color: "#64748B",
       textAlign: "center",
-      marginTop: theme.spacing.sm,
-      fontStyle: "italic",
+      marginTop: 8,
     },
     overflowHint: {
-      fontSize: theme.typography.baseSize - 1,
+      fontSize: 12,
+      color: "#64748B",
+      marginBottom: 8,
+      marginLeft: 4,
     },
     overflowScroll: {
-      marginTop: theme.spacing.sm,
+      marginTop: 4,
     },
     overflowScrollContent: {
-      paddingRight: theme.spacing.md,
-      gap: theme.spacing.sm,
+      paddingRight: 20,
+      gap: 12,
     },
     overflowCardWrapper: {
       flexDirection: "row",
     },
     overflowCard: {
-      minWidth: 240,
-      borderRadius: theme.radius.lg,
+      minWidth: 260,
+      borderRadius: 20,
       borderWidth: 1,
-      padding: theme.spacing.md,
-      marginBottom: 0,
+      borderColor: "rgba(255, 255, 255, 0.05)",
+      padding: 16,
     },
   });
 

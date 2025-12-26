@@ -244,34 +244,3 @@ declare module "react-native-awesome-gallery" {
     props: GalleryProps<T>,
   ): React.ReactElement;
 }
-
-declare module "react-native-spinkit" {
-  import { ViewProps } from "react-native";
-
-  export type SpinnerType =
-    | "CircleFlip"
-    | "Bounce"
-    | "Wave"
-    | "WanderingCubes"
-    | "Pulse"
-    | "ChasingDots"
-    | "ThreeBounce"
-    | "Circle"
-    | "FadingCircle"
-    | "FadingCircleAlt"
-    | "9CubeGrid"
-    | "FoldingCube"
-    | "Plane"
-    | "Arc"
-    | "ArcAlt";
-
-  export interface SpinnerProps extends ViewProps {
-    type?: SpinnerType;
-    color?: string;
-    size?: number;
-    isVisible?: boolean;
-  }
-
-  const Spinner: React.FC<SpinnerProps>;
-  export default Spinner;
-}

@@ -11,10 +11,16 @@ module.exports = function (api) {
           // Replaces import.meta with a module-level object
         },
       ],
-      // NOTE: module-resolver plugin is temporarily disabled to avoid
-      // a bundling-time dependency on babel-plugin-module-resolver.
-      // If you need '@/...' aliases again, re-enable the plugin and
-      // ensure the Babel plugin can be resolved in this environment.
+      // Re-enabled module-resolver to support '@/...' aliases
+      [
+        "module-resolver",
+        {
+          root: ["./"],
+          alias: {
+            "@": "./src",
+          },
+        },
+      ],
       // Reanimated plugin includes worklets support and must be listed last
       "react-native-reanimated/plugin",
     ],

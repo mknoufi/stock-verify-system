@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
-  Dimensions,
+  useWindowDimensions,
   ViewStyle,
 } from "react-native";
 import { useRouter, useSegments } from "expo-router";
@@ -176,7 +176,7 @@ interface AdminSidebarProps {
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   collapsed = false,
-  onToggleCollapse,
+  onToggleCollapse: _onToggleCollapse,
   style,
   testID,
 }) => {
@@ -184,7 +184,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const router = useRouter();
   const segments = useSegments();
   const { user, logout } = useAuthStore();
-  const { width } = Dimensions.get("window");
+  const { width } = useWindowDimensions();
   const isMobile = width < breakpoints.tablet;
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(

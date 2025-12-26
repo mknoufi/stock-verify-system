@@ -11,6 +11,7 @@ export interface Item {
   stock_qty?: number;
   category?: string;
   subcategory?: string;
+  uom?: string;
   uom_name?: string;
   item_group?: string;
   location?: string;
@@ -20,8 +21,13 @@ export interface Item {
   item_type?: string;
   quantity?: number;
   sales_price?: number;
+  sale_price?: number;
   item_name?: string;
   image_url?: string; // item image URL for display
+  batch_id?: string;
+  manual_barcode?: string;
+  unit2_barcode?: string;
+  unit_m_barcode?: string;
 }
 
 export type ScannerMode = "item" | "serial";
@@ -45,6 +51,7 @@ export interface ScanFormData {
 export interface CreateCountLinePayload {
   session_id: string;
   item_code: string;
+  batch_id?: string;
   counted_qty: number;
   damaged_qty?: number;
   damage_included?: boolean;
@@ -59,6 +66,7 @@ export interface CreateCountLinePayload {
   mark_location?: string | null;
   sr_no?: string | null;
   manufacturing_date?: string | null;
+  expiry_date?: string | null;
   photo_base64?: string;
   photo_proofs?: PhotoProofDraft[];
   mrp_counted?: number;

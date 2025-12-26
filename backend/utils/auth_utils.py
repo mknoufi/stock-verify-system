@@ -1,5 +1,6 @@
 import logging
-from typing import Any
+from datetime import datetime, timedelta
+from typing import Any, Optional
 
 from passlib.context import CryptContext
 
@@ -30,7 +31,9 @@ try:
         bcrypt.checkpw(b"test", test_hash)
         logger.info("Password hashing: Using Argon2 with bcrypt fallback")
     except Exception as e:
-        logger.warning(f"Bcrypt backend check failed, using bcrypt-only context: {str(e)}")
+        logger.warning(
+            f"Bcrypt backend check failed, using bcrypt-only context: {str(e)}"
+        )
         pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 except Exception as e:
     logger.warning(f"Argon2 not available, using bcrypt-only: {str(e)}")
@@ -90,7 +93,9 @@ def _verify_bcrypt_fallback(password_bytes: bytes, hashed_password: str) -> bool
             logger.error(f"Password hash is not a string: {type(hashed_password)}")
             return False
     except ImportError:
-        logger.error("bcrypt module not available - password verification cannot proceed")
+        logger.error(
+            "bcrypt module not available - password verification cannot proceed"
+        )
         return False
     except Exception as e:
         logger.error(f"Direct bcrypt verification failed: {type(e).__name__}: {str(e)}")
@@ -102,8 +107,24 @@ def get_password_hash(password: str) -> str:
     return str(pwd_context.hash(password))
 
 
-def create_access_token(data: dict[str, Any], secret_key: str = None, algorithm: str = None) -> str:
+def create_access_token(
+    data: dict[str, Any],
+    secret_key: Optional[str] = None,
+    algorithm: Optional[str] = None,
+    expires_delta: Optional[timedelta] = None,
+) -> str:
     """Create a JWT access token from user data"""
-    key = secret_key if secret_key else SECRET_KEY
-    algo = algorithm if algorithm else ALGORITHM
-    return str(jwt.encode(data, key, algorithm=algo))
+    # Use settings.JWT_SECRET directly to ensure we get the latest value (e.g. during tests)
+    key = secret_key if secret_key else str(settings.JWT_SECRET)
+    algo = algorithm if algorithm else str(settings.JWT_ALGORITHM)
+
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(
+            minutes=getattr(settings, "ACCESS_TOKEN_EXPIRE_MINUTES", 15)
+        )
+
+    to_encode.update({"exp": expire, "type": "access"})
+    return str(jwt.encode(to_encode, key, algorithm=algo))

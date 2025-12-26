@@ -98,6 +98,36 @@ git filter-branch --force --index-filter \
   "git rm --cached --ignore-unmatch frontend/.env" \
   --prune-empty --tag-name-filter cat -- --all
 
+## Security Verification Tasks (Verification Gate T074)
+
+### Automated Checks
+1.  **Dependency Scanning**:
+    *   Run `pip-audit` or `safety` to check for vulnerable Python packages.
+    *   Run `npm audit` in the frontend directory.
+    *   **Pass Criteria**: No "Critical" or "High" severity vulnerabilities.
+
+2.  **Static Application Security Testing (SAST)**:
+    *   Run `bandit -r backend/` to check for common Python security issues.
+    *   **Pass Criteria**: No "High" confidence issues (except known false positives).
+
+3.  **Secret Scanning**:
+    *   Run `trufflehog` or `gitleaks` on the repository to ensure no new secrets have been committed.
+    *   **Pass Criteria**: Zero secrets found in the latest commit.
+
+### Manual Verification
+1.  **Authentication**:
+    *   Verify that `JWT_SECRET` is NOT hardcoded in any file.
+    *   Verify that `change-password` endpoint requires the *current* password.
+    *   Verify that `change-pin` endpoint requires the *current* PIN.
+
+2.  **Authorization**:
+    *   Verify that `supervisor` routes (e.g., Settings, Reports) return `403 Forbidden` for `staff` users.
+    *   Verify that WebSocket connections are rejected for non-supervisor users (as per T076).
+
+3.  **Data Protection**:
+    *   Verify that sensitive data (passwords, PINs) are hashed in the database (check `users` collection).
+    *   Verify that HTTPS is enforced (via HSTS header) in production.
+
 # Clean up
 git reflog expire --expire=now --all
 git gc --prune=now --aggressive

@@ -6,6 +6,7 @@ Automatically detect and use available ports
 import logging
 import os
 import socket
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,9 @@ class PortDetector:
 
         for port in port_range:
             if PortDetector.is_port_available(port):
-                logger.info(f"Found available port: {port} (preferred was {preferred_port})")
+                logger.info(
+                    f"Found available port: {port} (preferred was {preferred_port})"
+                )
                 return port
 
         raise Exception(f"No available ports found in range {port_range}")
@@ -65,38 +68,37 @@ class PortDetector:
     @staticmethod
     def is_mongo_running(port: int = 27017, host: str = "localhost") -> bool:
         """Check if MongoDB is running on a specific port"""
+        # Keep this lightweight and safe during import/startup:
+        # - First ensure TCP connect works
+        # - Then attempt a short synchronous 'ping' via PyMongo (no event loop juggling)
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(1)
-                result = sock.connect_ex((host, port))
-                if result == 0:
-                    # Port is open, verify it's MongoDB by trying a simple connection
-                    try:
-                        import asyncio
+                if sock.connect_ex((host, port)) != 0:
+                    return False
 
-                        from motor.motor_asyncio import AsyncIOMotorClient
+            try:
+                from pymongo import MongoClient
 
-                        client = AsyncIOMotorClient(
-                            f"mongodb://{host}:{port}", serverSelectionTimeoutMS=1000
-                        )
-                        # Try to ping
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        try:
-                            loop.run_until_complete(client.admin.command("ping"))
-                            return True
-                        finally:
-                            loop.close()
-                            client.close()
-                    except Exception:
-                        # Port is open but might not be MongoDB
-                        return result == 0
+                client = MongoClient(
+                    f"mongodb://{host}:{port}",
+                    serverSelectionTimeoutMS=800,
+                    connectTimeoutMS=800,
+                    socketTimeoutMS=800,
+                    directConnection=True,
+                )
+                client.admin.command("ping")
+                return True
+            except Exception:
+                # Port is open but ping failed (could be a different service)
                 return False
         except Exception:
             return False
 
     @staticmethod
-    def find_mongo_port(start_port: int = 27017, max_attempts: int = 10) -> tuple[int, bool]:
+    def find_mongo_port(
+        start_port: int = 27017, max_attempts: int = 10
+    ) -> tuple[int, bool]:
         """Find MongoDB port and return (port, is_running)"""
         # Check default port first
         if PortDetector.is_mongo_running(start_port):
@@ -115,21 +117,38 @@ class PortDetector:
     @staticmethod
     def get_mongo_url() -> str:
         """Get MongoDB URL with dynamic port detection"""
-        mongo_port = int(os.getenv("MONGO_PORT", 27017))
+        # If explicitly provided, respect it
+        explicit = (
+            os.getenv("MONGO_URL")
+            or os.getenv("MONGODB_URI")
+            or os.getenv("MONGODB_URL")
+        )
+        if explicit:
+            return explicit
 
-        # Check if MongoDB is running on default port
-        if not PortDetector.is_port_available(27017):
-            mongo_port = 27017  # MongoDB is running
-        else:
-            # Try to find MongoDB on alternative ports
-            alternatives = [27018, 27019, 27020]
-            for port in alternatives:
-                if not PortDetector.is_port_available(port):
-                    mongo_port = port
-                    break
+        # If running inside Docker, prefer service DNS name
+        if Path("/.dockerenv").exists() or os.getenv("DOCKER_CONTAINER") == "true":
+            mongo_url = "mongodb://mongo:27017"
+            logger.info(f"Using MongoDB URL (docker): {mongo_url}")
+            return mongo_url
 
-        mongo_url = f"mongodb://localhost:{mongo_port}"
-        logger.info(f"Using MongoDB URL: {mongo_url}")
+        # If MONGO_PORT is set, use it
+        if os.getenv("MONGO_PORT"):
+            mongo_url = f"mongodb://localhost:{int(os.getenv('MONGO_PORT', '27017'))}?directConnection=true"
+            logger.info(f"Using MongoDB URL (MONGO_PORT): {mongo_url}")
+            return mongo_url
+
+        # Host dev: prefer the standard port, then the docker-compose published port.
+        candidates = [27017, 27018, 27019, 27020]
+        for port in candidates:
+            if PortDetector.is_mongo_running(port):
+                mongo_url = f"mongodb://localhost:{port}?directConnection=true"
+                logger.info(f"Using MongoDB URL (detected): {mongo_url}")
+                return mongo_url
+
+        # Fallback
+        mongo_url = "mongodb://localhost:27017?directConnection=true"
+        logger.info(f"Using MongoDB URL (fallback): {mongo_url}")
         return mongo_url
 
     @staticmethod

@@ -14,21 +14,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from backend.services.cache_service import CacheService
-from backend.tests.utils.in_memory_db import (
-    InMemoryDatabase,
-    setup_server_with_in_memory_db,
-)
-
-# Ensure backend package root is importable when running tests from project root
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-PROJECT_ROOT = BACKEND_DIR.parent
-
-for path in (str(BACKEND_DIR), str(PROJECT_ROOT)):
-    if path not in sys.path:
-        sys.path.insert(0, path)
-
-# Test environment setup
+# Test environment setup - MUST BE BEFORE BACKEND IMPORTS
 os.environ.update(
     {
         "TESTING": "true",
@@ -43,6 +29,20 @@ os.environ.update(
         "LOG_LEVEL": "DEBUG",
     }
 )
+
+from backend.services.cache_service import CacheService
+from backend.tests.utils.in_memory_db import (
+    InMemoryDatabase,
+    setup_server_with_in_memory_db,
+)
+
+# Ensure backend package root is importable when running tests from project root
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+
+for path in (str(BACKEND_DIR), str(PROJECT_ROOT)):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 
 # Import test utilities and mocks
@@ -74,7 +74,9 @@ async def async_client(test_db, monkeypatch) -> AsyncGenerator[AsyncClient, None
     """Provide an async client for API testing."""
     from backend.server import app
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         yield client
 
 

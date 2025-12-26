@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -10,11 +10,17 @@ T = TypeVar("T")
 class ApiResponse(BaseModel, Generic[T]):
     success: bool
     data: Optional[T] = None
-    error: Optional[dict[str, Any]] = None
+    error: Union[dict[str, Any], None] = Field(default=None)
+    message: Optional[str] = None
+
+    model_config = {
+        "json_schema_extra": {"examples": []},
+        # Exclude None values from serialization to avoid validation issues
+    }
 
     @classmethod
-    def success_response(cls, data: T):
-        return cls(success=True, data=data)
+    def success_response(cls, data: T, message: Optional[str] = None):
+        return cls(success=True, data=data, error=None, message=message)
 
     @classmethod
     def error_response(cls, error: dict[str, Any]):
@@ -150,6 +156,7 @@ class CountLineCreate(BaseModel):
     item_code: str
     counted_qty: float
     damaged_qty: Optional[float] = 0
+    non_returnable_damaged_qty: Optional[float] = 0
     damage_included: Optional[bool] = None
     item_condition: Optional[str] = None
     floor_no: Optional[str] = None
@@ -157,6 +164,7 @@ class CountLineCreate(BaseModel):
     mark_location: Optional[str] = None
     sr_no: Optional[str] = None
     manufacturing_date: Optional[str] = None
+    expiry_date: Optional[str] = None
     variance_reason: Optional[str] = None
     variance_note: Optional[str] = None
     remark: Optional[str] = None

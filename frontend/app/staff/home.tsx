@@ -6,9 +6,9 @@ import {
   Alert,
   StyleSheet,
   Platform,
-  Dimensions,
   Modal,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,14 +16,12 @@ import * as Haptics from "expo-haptics";
 
 import { useAuthStore } from "../../src/store/authStore";
 import { useScanSessionStore } from "../../src/store/scanSessionStore";
-import { createSession } from "../../src/services/api/api";
+import { createSession, getZones, getWarehouses } from "../../src/services/api/api";
 import { useSessionsQuery } from "../../src/hooks/useSessionsQuery";
 import { SESSION_PAGE_SIZE } from "../../src/constants/config";
 import { PremiumInput } from "../../src/components/premium/PremiumInput";
-import { PremiumButton } from "../../src/components/premium/PremiumButton";
 import { SessionType } from "../../src/types";
 
-import { auroraTheme } from "../../src/theme/auroraTheme";
 import { useThemeContext } from "../../src/theme/ThemeContext";
 import {
   FloatingScanButton,
@@ -32,32 +30,13 @@ import {
 } from "../../src/components/ui";
 import { SectionLists } from "./components/SectionLists";
 
-const { width: _SCREEN_WIDTH } = Dimensions.get("window");
-
-// Location configuration
-type LocationType = "showroom" | "godown";
-
-const LOCATION_OPTIONS: Record<
-  LocationType,
-  { label: string; floors: string[] }
-> = {
-  showroom: {
-    label: "Showroom",
-    floors: ["Ground Floor", "First Floor", "Third Floor"],
-  },
-  godown: {
-    label: "Godown",
-    floors: ["Top Godown", "Back Godown", "Damage Area"],
-  },
-};
-
 export default function StaffHome() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { theme, isDark } = useThemeContext();
 
   // State
-  const [locationType, setLocationType] = useState<LocationType | null>(null);
+  const [locationType, setLocationType] = useState<string | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [rackName, setRackName] = useState("");
   const [sessionType] = useState<SessionType>("STANDARD");
@@ -66,6 +45,11 @@ export default function StaffHome() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [_lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [showFloorPicker, setShowFloorPicker] = useState(false);
+
+  // Dynamic Location State
+  const [zones, setZones] = useState<string[]>([]);
+  const [warehouses, setWarehouses] = useState<string[]>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
 
   // Queries
   const {
@@ -136,7 +120,7 @@ export default function StaffHome() {
   const [showFinishedSearch, setShowFinishedSearch] = useState(false);
 
   // Helper function for relative time
-  const getRelativeTime = (date: Date | string): string => {
+  const _getRelativeTime = (date: Date | string): string => {
     const now = new Date();
     const then = new Date(date);
     const diffMs = now.getTime() - then.getTime();
@@ -225,8 +209,7 @@ export default function StaffHome() {
     }
 
     // Build warehouse name: "Showroom - Ground Floor - A1"
-    const locationLabel = LOCATION_OPTIONS[locationType].label;
-    const warehouseName = `${locationLabel} - ${selectedFloor} - ${trimmedRack.toUpperCase()}`;
+    const warehouseName = `${locationType} - ${selectedFloor} - ${trimmedRack.toUpperCase()}`;
 
     try {
       if (Platform.OS !== "web")
@@ -274,20 +257,44 @@ export default function StaffHome() {
     } as any);
   };
 
-  const handleLocationTypeChange = (type: LocationType) => {
+  // Fetch Zones on mount
+  useEffect(() => {
+    const fetchZones = async () => {
+      try {
+        setIsLoadingLocations(true);
+        const data = await getZones();
+        setZones(data);
+      } catch (error) {
+        console.error("Failed to fetch zones", error);
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    };
+    fetchZones();
+  }, []);
+
+  const handleLocationTypeChange = async (type: string) => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
     setLocationType(type);
     setSelectedFloor(null); // Reset floor when location type changes
+
+    // Fetch warehouses for the selected zone
+    try {
+      setIsLoadingLocations(true);
+      const data = await getWarehouses(type);
+      setWarehouses(data);
+    } catch (error) {
+      console.error("Failed to fetch warehouses", error);
+      Alert.alert("Error", "Failed to load floor data");
+    } finally {
+      setIsLoadingLocations(false);
+    }
   };
 
   const handleOpenFloorPicker = () => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
     setShowFloorPicker(true);
   };
-
-  // Computed booleans for location type checks (avoids JSX string comparison issues)
-  const isShowroomSelected = locationType === "showroom";
-  const isGodownSelected = locationType === "godown";
 
   // Render Helpers
   const _formatSyncTime = (date: Date | null): string => {
@@ -332,10 +339,6 @@ export default function StaffHome() {
                 handleResumeSection(latest.session_id || latest.id, latest.type);
               } else {
                 setShowNewSectionForm(true);
-                Alert.alert(
-                  "No Active Section",
-                  "Create a new section to start scanning.",
-                );
               }
             }}
             disabled={activeSectionsList.length === 0}
@@ -381,7 +384,7 @@ export default function StaffHome() {
             style={[
               styles.newSectionModalContent,
               {
-                backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF",
+                backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
               },
             ]}
           >
@@ -394,16 +397,16 @@ export default function StaffHome() {
                 <View
                   style={[
                     styles.headerIconContainer,
-                    { backgroundColor: "#3B82F620" },
+                    { backgroundColor: "#0EA5E920" },
                   ]}
                 >
-                  <Ionicons name="add-circle" size={24} color="#3B82F6" />
+                  <Ionicons name="add-circle" size={24} color="#0EA5E9" />
                 </View>
                 <View>
                   <Text
                     style={[
                       styles.modalTitle,
-                      { color: isDark ? "#FFFFFF" : "#1C1C1E" },
+                      { color: isDark ? "#F8FAFC" : "#0F172A" },
                     ]}
                   >
                     New Section
@@ -411,7 +414,7 @@ export default function StaffHome() {
                   <Text
                     style={[
                       styles.modalSubtitle,
-                      { color: isDark ? "#8E8E93" : "#6B7280" },
+                      { color: isDark ? "#94A3B8" : "#64748B" },
                     ]}
                   >
                     Set up your counting area
@@ -421,14 +424,14 @@ export default function StaffHome() {
               <TouchableOpacity
                 style={[
                   styles.closeButton,
-                  { backgroundColor: isDark ? "#2C2C2E" : "#F3F4F6" },
+                  { backgroundColor: isDark ? "#1E293B" : "#F1F5F9" },
                 ]}
                 onPress={() => setShowNewSectionForm(false)}
               >
                 <Ionicons
                   name="close"
                   size={20}
-                  color={isDark ? "#8E8E93" : "#6B7280"}
+                  color={isDark ? "#94A3B8" : "#64748B"}
                 />
               </TouchableOpacity>
             </View>
@@ -445,7 +448,7 @@ export default function StaffHome() {
                   <View
                     style={[
                       styles.stepNumber,
-                      { backgroundColor: "#3B82F6" },
+                      { backgroundColor: "#0EA5E9" },
                     ]}
                   >
                     <Text style={styles.stepNumberText}>1</Text>
@@ -453,271 +456,191 @@ export default function StaffHome() {
                   <Text
                     style={[
                       styles.stepLabel,
-                      { color: isDark ? "#FFFFFF" : "#1C1C1E" },
+                      { color: isDark ? "#F8FAFC" : "#0F172A" },
                     ]}
                   >
                     Choose Location Type
                   </Text>
                 </View>
                 <View style={styles.locationTypeRow}>
-                  <TouchableOpacity
-                    style={[
-                      styles.locationTypeButton,
-                      {
-                        backgroundColor:
-                          locationType === "showroom"
-                            ? "#3B82F615"
-                            : isDark
-                              ? "#2C2C2E"
-                              : "#F9FAFB",
-                        borderColor:
-                          locationType === "showroom"
-                            ? "#3B82F6"
-                            : isDark
-                              ? "#3A3A3C"
-                              : "#E5E7EB",
-                      },
-                    ]}
-                    onPress={() => handleLocationTypeChange("showroom")}
-                    activeOpacity={0.7}
-                  >
-                    <View
-                      style={[
-                        styles.locationIcon,
-                        {
-                          backgroundColor:
-                            locationType === "showroom"
-                              ? "#3B82F620"
-                              : isDark
-                                ? "#3A3A3C"
-                                : "#E5E7EB",
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name="storefront"
-                        size={24}
-                        color={
-                          locationType === "showroom"
-                            ? "#3B82F6"
-                            : isDark
-                              ? "#8E8E93"
-                              : "#6B7280"
-                        }
-                      />
-                    </View>
-                    <Text
-                      style={[
-                        styles.locationTypeText,
-                        {
-                          color:
-                            locationType === "showroom"
-                              ? "#3B82F6"
-                              : isDark
-                                ? "#FFFFFF"
-                                : "#1C1C1E",
-                        },
-                      ]}
-                    >
-                      Showroom
-                    </Text>
-                    {locationType === "showroom" ? (
-                      <View style={styles.checkBadge}>
-                        <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                      </View>
-                    ) : null}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.locationTypeButton,
-                      {
-                        backgroundColor:
-                          locationType === "godown"
-                            ? "#8B5CF615"
-                            : isDark
-                              ? "#2C2C2E"
-                              : "#F9FAFB",
-                        borderColor:
-                          locationType === "godown"
-                            ? "#8B5CF6"
-                            : isDark
-                              ? "#3A3A3C"
-                              : "#E5E7EB",
-                      },
-                    ]}
-                    onPress={() => handleLocationTypeChange("godown")}
-                    activeOpacity={0.7}
-                  >
-                    <View
-                      style={[
-                        styles.locationIcon,
-                        {
-                          backgroundColor:
-                            locationType === "godown"
-                              ? "#8B5CF620"
-                              : isDark
-                                ? "#3A3A3C"
-                                : "#E5E7EB",
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name="cube"
-                        size={24}
-                        color={
-                          locationType === "godown"
-                            ? "#8B5CF6"
-                            : isDark
-                              ? "#8E8E93"
-                              : "#6B7280"
-                        }
-                      />
-                    </View>
-                    <Text
-                      style={[
-                        styles.locationTypeText,
-                        {
-                          color:
-                            locationType === "godown"
-                              ? "#8B5CF6"
-                              : isDark
-                                ? "#FFFFFF"
-                                : "#1C1C1E",
-                        },
-                      ]}
-                    >
-                      Godown
-                    </Text>
-                    {locationType === "godown" ? (
-                      <View
-                        style={[styles.checkBadge, { backgroundColor: "#8B5CF6" }]}
+                  {isLoadingLocations && zones.length === 0 ? (
+                    <ActivityIndicator color={isDark ? "#F8FAFC" : "#0F172A"} />
+                  ) : (
+                    zones.map((zone) => (
+                      <TouchableOpacity
+                        key={zone}
+                        style={[
+                          styles.locationTypeButton,
+                          {
+                            backgroundColor:
+                              locationType === zone
+                                ? "#0EA5E915"
+                                : isDark
+                                  ? "#1E293B"
+                                  : "#F8FAFC",
+                            borderColor:
+                              locationType === zone
+                                ? "#0EA5E9"
+                                : isDark
+                                  ? "#334155"
+                                  : "#E2E8F0",
+                          },
+                        ]}
+                        onPress={() => handleLocationTypeChange(zone)}
+                        activeOpacity={0.7}
                       >
-                        <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                      </View>
-                    ) : null}
-                  </TouchableOpacity>
+                        <View
+                          style={[
+                            styles.locationIcon,
+                            {
+                              backgroundColor:
+                                locationType === zone
+                                  ? "#0EA5E920"
+                                  : isDark
+                                    ? "#334155"
+                                    : "#F1F5F9",
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name={zone.toLowerCase().includes("showroom") ? "storefront" : "cube"}
+                            size={24}
+                            color={
+                              locationType === zone
+                                ? "#0EA5E9"
+                                : isDark
+                                  ? "#94A3B8"
+                                  : "#64748B"
+                            }
+                          />
+                        </View>
+                        <Text
+                          style={[
+                            styles.locationTypeText,
+                            {
+                              color:
+                                locationType === zone
+                                  ? "#0EA5E9"
+                                  : isDark
+                                    ? "#F8FAFC"
+                                    : "#0F172A",
+                            },
+                          ]}
+                        >
+                          {zone}
+                        </Text>
+                        {locationType === zone ? (
+                          <View style={styles.checkBadge}>
+                            <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                          </View>
+                        ) : null}
+                      </TouchableOpacity>
+                    ))
+                  )}
                 </View>
               </View>
 
-              {/* Step 2: Floor/Area Selector */}
-              {locationType && (
-                <View style={styles.stepContainer}>
-                  <View style={styles.stepHeader}>
-                    <View
-                      style={[
-                        styles.stepNumber,
-                        {
-                          backgroundColor: selectedFloor
-                            ? "#10B981"
-                            : "#3B82F6",
-                        },
-                      ]}
-                    >
-                      <Text style={styles.stepNumberText}>2</Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.stepLabel,
-                        { color: isDark ? "#FFFFFF" : "#1C1C1E" },
-                      ]}
-                    >
-                      Select {locationType === "showroom" ? "Floor" : "Area"}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
+              {/* Step 2: Floor Selection */}
+              <View style={styles.stepContainer}>
+                <View style={styles.stepHeader}>
+                  <View
                     style={[
-                      styles.dropdownButton,
-                      {
-                        backgroundColor: isDark ? "#2C2C2E" : "#F9FAFB",
-                        borderColor: selectedFloor
-                          ? "#10B981"
-                          : isDark
-                            ? "#3A3A3C"
-                            : "#E5E7EB",
-                      },
+                      styles.stepNumber,
+                      { backgroundColor: "#0EA5E9" },
                     ]}
-                    activeOpacity={0.7}
-                    onPress={handleOpenFloorPicker}
-                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   >
-                    <View style={styles.dropdownContent}>
-                      <Ionicons
-                        name={locationType === "showroom" ? "layers" : "grid"}
-                        size={20}
-                        color={selectedFloor ? "#10B981" : "#8E8E93"}
-                      />
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          {
-                            color: selectedFloor
-                              ? isDark
-                                ? "#FFFFFF"
-                                : "#1C1C1E"
-                              : "#8E8E93",
-                          },
-                        ]}
-                      >
-                        {selectedFloor ||
-                          `Tap to select ${locationType === "showroom" ? "floor" : "area"}`}
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.dropdownChevron,
-                        { backgroundColor: isDark ? "#3A3A3C" : "#E5E7EB" },
-                      ]}
-                    >
-                      <Ionicons
-                        name="chevron-down"
-                        size={16}
-                        color={isDark ? "#8E8E93" : "#6B7280"}
-                      />
-                    </View>
-                  </TouchableOpacity>
+                    <Text style={styles.stepNumberText}>2</Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      { color: isDark ? "#F8FAFC" : "#0F172A" },
+                    ]}
+                  >
+                    Select Floor / Area
+                  </Text>
                 </View>
-              )}
 
-              {/* Step 3: Rack Input */}
-              {selectedFloor && (
-                <View style={styles.stepContainer}>
-                  <View style={styles.stepHeader}>
-                    <View
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownButton,
+                    {
+                      backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
+                      borderColor: isDark ? "#334155" : "#E2E8F0",
+                    },
+                  ]}
+                  onPress={handleOpenFloorPicker}
+                  disabled={!locationType}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.dropdownContent}>
+                    <Ionicons
+                      name="business"
+                      size={20}
+                      color={locationType ? "#0EA5E9" : "#94A3B8"}
+                    />
+                    <Text
                       style={[
-                        styles.stepNumber,
+                        styles.dropdownText,
                         {
-                          backgroundColor: rackName.trim()
-                            ? "#10B981"
-                            : "#3B82F6",
+                          color: selectedFloor
+                            ? isDark
+                              ? "#F8FAFC"
+                              : "#0F172A"
+                            : "#94A3B8",
                         },
                       ]}
                     >
-                      <Text style={styles.stepNumberText}>3</Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.stepLabel,
-                        { color: isDark ? "#FFFFFF" : "#1C1C1E" },
-                      ]}
-                    >
-                      Enter Rack / Shelf
+                      {selectedFloor || "Choose a floor..."}
                     </Text>
                   </View>
-                  <PremiumInput
-                    placeholder="e.g. A1, B2, R1"
-                    value={rackName}
-                    onChangeText={setRackName}
-                    autoCapitalize="characters"
-                  />
-                </View>
-              )}
+                  <View
+                    style={[
+                      styles.dropdownChevron,
+                      { backgroundColor: isDark ? "#334155" : "#F1F5F9" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="chevron-down"
+                      size={18}
+                      color={isDark ? "#94A3B8" : "#64748B"}
+                    />
+                  </View>
+                </TouchableOpacity>
+              </View>
 
-              {/* Spacer */}
-              <View style={{ height: 16 }} />
+              {/* Step 3: Rack Name */}
+              <View style={styles.stepContainer}>
+                <View style={styles.stepHeader}>
+                  <View
+                    style={[
+                      styles.stepNumber,
+                      { backgroundColor: "#0EA5E9" },
+                    ]}
+                  >
+                    <Text style={styles.stepNumberText}>3</Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      { color: isDark ? "#F8FAFC" : "#0F172A" },
+                    ]}
+                  >
+                    Rack / Shelf Identifier
+                  </Text>
+                </View>
+
+                <PremiumInput
+                  value={rackName}
+                  onChangeText={setRackName}
+                  placeholder="e.g. RACK-A1, SHELF-02"
+                  leftIcon="grid-outline"
+                  autoCapitalize="characters"
+                  editable={!!selectedFloor}
+                />
+              </View>
             </ScrollView>
 
-            {/* Start Button */}
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 style={[
@@ -725,142 +648,116 @@ export default function StaffHome() {
                   {
                     backgroundColor:
                       locationType && selectedFloor && rackName.trim()
-                        ? "#3B82F6"
+                        ? "#0EA5E9"
                         : isDark
-                          ? "#2C2C2E"
-                          : "#E5E7EB",
+                          ? "#1E293B"
+                          : "#E2E8F0",
                   },
                 ]}
-                onPress={() => {
-                  handleStartNewSection();
-                  setShowNewSectionForm(false);
-                }}
+                onPress={handleStartNewSection}
                 disabled={
-                  !locationType ||
-                  !selectedFloor ||
-                  !rackName.trim() ||
-                  isCreatingSession
+                  !locationType || !selectedFloor || !rackName.trim() || isCreatingSession
                 }
                 activeOpacity={0.8}
               >
                 {isCreatingSession ? (
-                  <Text style={styles.startButtonText}>Creating...</Text>
+                  <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <>
-                    <Ionicons name="play-circle" size={22} color="#FFFFFF" />
-                    <Text style={styles.startButtonText}>Start Section</Text>
+                    <Text style={styles.startButtonText}>Start Counting</Text>
+                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
                   </>
                 )}
               </TouchableOpacity>
             </View>
           </View>
+        </View>
+      </Modal>
 
-          {showFloorPicker && (
-            <View style={styles.floorPickerOverlay} pointerEvents="box-none">
-              <TouchableOpacity
-                style={[styles.modalBackdrop, styles.floorPickerBackdrop]}
-                activeOpacity={1}
-                onPress={() => setShowFloorPicker(false)}
-              />
-              <View
+      {/* Floor Picker Modal */}
+      <Modal
+        visible={showFloorPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFloorPicker(false)}
+      >
+        <View style={styles.floorPickerOverlay}>
+          <TouchableOpacity
+            style={styles.floorPickerBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowFloorPicker(false)}
+          />
+          <View
+            style={[
+              styles.modalContent,
+              styles.floorPickerContent,
+              { backgroundColor: isDark ? "#0F172A" : "#FFFFFF" },
+            ]}
+          >
+            <View style={styles.dragHandle} />
+            <View style={styles.modalHeader}>
+              <Text
                 style={[
-                  styles.modalContent,
-                  styles.floorPickerContent,
-                  { backgroundColor: theme.colors.surface },
+                  styles.modalTitle,
+                  { color: isDark ? "#F8FAFC" : "#0F172A" },
                 ]}
               >
-                <View style={styles.modalHeader}>
-                  <Text
+                Select Floor
+              </Text>
+              <TouchableOpacity onPress={() => setShowFloorPicker(false)}>
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={isDark ? "#94A3B8" : "#64748B"}
+                />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {isLoadingLocations ? (
+                <ActivityIndicator color={isDark ? "#F8FAFC" : "#0F172A"} style={{ padding: 20 }} />
+              ) : (
+                warehouses.map((floor) => (
+                  <TouchableOpacity
+                    key={floor}
                     style={[
-                      styles.modalTitle,
-                      { color: theme.colors.text, flex: 1 },
+                      styles.modalOption,
+                      {
+                        backgroundColor:
+                          selectedFloor === floor
+                            ? "#0EA5E910"
+                            : "transparent",
+                      },
                     ]}
-                    numberOfLines={1}
+                    onPress={() => {
+                      setSelectedFloor(floor);
+                      setShowFloorPicker(false);
+                      if (Platform.OS !== "web") Haptics.selectionAsync();
+                    }}
                   >
-                    Select {locationType === "showroom" ? "Floor" : "Area"}
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowFloorPicker(false)}>
-                    <Ionicons
-                      name="close"
-                      size={24}
-                      color={theme.colors.text}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {!locationType && (
-                  <View style={styles.modalBody}>
                     <Text
                       style={[
-                        styles.cardSubtitle,
-                        { color: theme.colors.textSecondary },
+                        styles.modalOptionText,
+                        {
+                          color:
+                            selectedFloor === floor
+                              ? "#0EA5E9"
+                              : isDark
+                                ? "#F8FAFC"
+                                : "#0F172A",
+                          fontWeight: selectedFloor === floor ? "700" : "400",
+                        },
                       ]}
                     >
-                      Select a location type above to see available options.
+                      {floor}
                     </Text>
-                  </View>
-                )}
-
-                {locationType && (
-                  <>
-                    {LOCATION_OPTIONS[locationType].floors.length === 0 ? (
-                      <View style={styles.modalBody}>
-                        <Text
-                          style={[
-                            styles.cardSubtitle,
-                            { color: theme.colors.textSecondary },
-                          ]}
-                        >
-                          No {locationType === "showroom" ? "floors" : "areas"} have
-                          been configured yet.
-                        </Text>
-                      </View>
-                    ) : (
-                      <ScrollView>
-                        {LOCATION_OPTIONS[locationType].floors.map((floor) => (
-                          <TouchableOpacity
-                            key={floor}
-                            style={[
-                              styles.modalOption,
-                              selectedFloor === floor && {
-                                backgroundColor: `${theme.colors.accent}20`,
-                              },
-                            ]}
-                            onPress={() => {
-                              if (Platform.OS !== "web")
-                                Haptics.selectionAsync();
-                              setSelectedFloor(floor);
-                              setShowFloorPicker(false);
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.modalOptionText,
-                                {
-                                  color:
-                                    selectedFloor === floor
-                                      ? theme.colors.accent
-                                      : theme.colors.text,
-                                },
-                              ]}
-                            >
-                              {floor}
-                            </Text>
-                            {selectedFloor === floor && (
-                              <Ionicons
-                                name="checkmark"
-                                size={20}
-                                color={theme.colors.accent}
-                              />
-                            )}
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
+                    {selectedFloor === floor && (
+                      <Ionicons name="checkmark" size={20} color="#0EA5E9" />
                     )}
-                  </>
-                )}
-              </View>
-            </View>
-          )}
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+          </View>
         </View>
       </Modal>
     </ScreenContainer>
@@ -872,151 +769,193 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: auroraTheme.spacing.lg,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingBottom: auroraTheme.spacing.md,
+    marginBottom: 20,
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: "#0EA5E920",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#0EA5E940",
   },
   welcomeText: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.text.secondary,
+    fontSize: 14,
+    color: "#94A3B8",
+    marginBottom: 2,
   },
   userName: {
-    fontSize: auroraTheme.typography.fontSize.xl,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
-    color: auroraTheme.colors.text.primary,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#F8FAFC",
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: auroraTheme.spacing.sm,
-  },
-  syncBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: auroraTheme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: auroraTheme.borderRadius.full,
-    gap: 6,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  syncText: {
-    fontSize: auroraTheme.typography.fontSize.xs,
-    color: auroraTheme.colors.text.secondary,
+    gap: 10,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     alignItems: "center",
-  },
-  content: {
-    padding: auroraTheme.spacing.lg,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   statsGrid: {
     flexDirection: "row",
-    gap: auroraTheme.spacing.md,
-    marginBottom: auroraTheme.spacing.xl,
+    gap: 12,
+    marginBottom: 24,
   },
   statCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
     flexDirection: "row",
     alignItems: "center",
-    padding: auroraTheme.spacing.md,
-    gap: auroraTheme.spacing.sm,
+    gap: 12,
   },
   iconBox: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
   statValue: {
-    fontSize: auroraTheme.typography.fontSize.lg,
-    fontWeight: auroraTheme.typography.fontWeight.bold,
-    color: auroraTheme.colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#F8FAFC",
   },
   statLabel: {
-    fontSize: auroraTheme.typography.fontSize.xs,
-    color: auroraTheme.colors.text.secondary,
+    fontSize: 12,
+    color: "#94A3B8",
+    fontWeight: "500",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#F8FAFC",
+  },
+  newSectionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#0EA5E9",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  newSectionButtonText: {
+    color: "#FFF",
+    fontSize: 13,
+    fontWeight: "600",
   },
   createCard: {
-    padding: auroraTheme.spacing.lg,
-    marginBottom: auroraTheme.spacing.xl,
+    padding: 20,
+    borderRadius: 24,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
+    marginBottom: 24,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: auroraTheme.spacing.sm,
-    marginBottom: auroraTheme.spacing.xs,
+    gap: 10,
+    marginBottom: 4,
   },
   cardTitle: {
-    fontSize: auroraTheme.typography.fontSize.lg,
-    fontWeight: auroraTheme.typography.fontWeight.semibold,
-    color: auroraTheme.colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#F8FAFC",
   },
   cardSubtitle: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    color: auroraTheme.colors.text.secondary,
-    marginBottom: auroraTheme.spacing.lg,
+    fontSize: 14,
+    color: "#94A3B8",
+    marginBottom: 20,
   },
   modeSection: {
-    marginBottom: auroraTheme.spacing.lg,
+    marginBottom: 20,
   },
   label: {
-    fontSize: auroraTheme.typography.fontSize.sm,
-    fontWeight: auroraTheme.typography.fontWeight.medium,
-    color: auroraTheme.colors.text.secondary,
-    marginBottom: auroraTheme.spacing.sm,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#94A3B8",
+    marginBottom: 10,
   },
   modeSelector: {
     flexDirection: "row",
     backgroundColor: "rgba(0, 0, 0, 0.2)",
-    borderRadius: auroraTheme.borderRadius.lg,
-    padding: 2,
-    marginBottom: auroraTheme.spacing.xs,
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 8,
   },
   modeButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: "center",
-    borderRadius: auroraTheme.borderRadius.md,
+    borderRadius: 10,
   },
   modeButtonActive: {
-    backgroundColor: auroraTheme.colors.primary[500],
+    backgroundColor: "#0EA5E9",
   },
   modeText: {
-    fontSize: auroraTheme.typography.fontSize.xs,
-    fontWeight: auroraTheme.typography.fontWeight.medium,
-    color: auroraTheme.colors.text.secondary,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#94A3B8",
   },
   modeTextActive: {
     color: "#FFF",
-    fontWeight: auroraTheme.typography.fontWeight.bold,
+    fontWeight: "700",
   },
   modeDescription: {
-    fontSize: 11,
-    color: auroraTheme.colors.text.tertiary,
+    fontSize: 12,
+    color: "#64748B",
     fontStyle: "italic",
     textAlign: "center",
     marginTop: 4,
   },
   inputRow: {
     flexDirection: "row",
-    gap: auroraTheme.spacing.md,
-    marginBottom: auroraTheme.spacing.lg,
+    gap: 12,
+    marginBottom: 20,
   },
   startButton: {
-    marginTop: auroraTheme.spacing.sm,
+    marginTop: 8,
   },
   fabContainer: {
     position: "absolute",
@@ -1027,7 +966,7 @@ const styles = StyleSheet.create({
   },
   // New styles for section form
   selectorSection: {
-    marginBottom: auroraTheme.spacing.md,
+    marginBottom: 20,
   },
   locationTypeRow: {
     flexDirection: "row",
@@ -1062,7 +1001,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#0EA5E9",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1120,7 +1059,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(128,128,128,0.4)",
+    backgroundColor: "rgba(148, 163, 184, 0.3)",
     alignSelf: "center",
     marginTop: 8,
     marginBottom: 8,

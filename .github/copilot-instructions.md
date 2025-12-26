@@ -32,6 +32,10 @@ These rules help AI coding agents work productively and safely in this repo. Foc
 ## Conventions & Patterns
 - API prefix: Most app routes mount under `/api` via `api_router`. Use `app.include_router(router, prefix="/api")` as in `server.py`.
 - SQL access: Always parameterize pyodbc queries with `?` placeholders (see `SQL_TEMPLATES` in `db_mapping_config.py`). Avoid string concatenation.
+- Barcode Validation: ERP items follow a strict 6-digit numeric rule. Valid prefixes are 51, 52, and 53. Normalization is handled by `_normalize_barcode_input` in `erp_api.py`.
+- Frontend Data Flow: `frontend/src/services/api/api.ts` contains a normalization layer that maps backend fields (e.g., `sale_price`, `uom_name`) to stable frontend models. Always check this layer when adding new fields.
+- Testing Mocks: When testing services that interact with MongoDB (like `SQLSyncService`), ensure that internal collection attributes are mocked as `AsyncMock` (e.g., `mock_db.sync_metadata.update_one = AsyncMock(...)`) to avoid `TypeError` during await.
+- Enhanced API: `backend/api/enhanced_item_api.py` (V2) provides optimized lookups with caching and monitoring. It must maintain parity with V1 validation rules.
 - Rate limiting, pooling, and sync intervals are env‑driven (see `config.py`). Prefer settings over hard‑coded constants.
 - Frontend calls: Centralize via `frontend/services/*` with Axios; include JWT and honor `EXPO_PUBLIC_BACKEND_URL`.
 - Error shape: Consistent `{ "detail": ..., "error_code": ..., "timestamp": ... }` per `API_CONTRACTS.md`.

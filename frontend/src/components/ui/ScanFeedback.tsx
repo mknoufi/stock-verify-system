@@ -10,7 +10,7 @@
  */
 
 import React, { useCallback, useEffect } from "react";
-import { View, Text, StyleSheet, Dimensions, Platform } from "react-native";
+import { View, Text, StyleSheet, useWindowDimensions, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -24,8 +24,6 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { auroraTheme } from "@/theme/auroraTheme";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export type ScanFeedbackType =
   | "success"
@@ -91,6 +89,7 @@ export const ScanFeedback: React.FC<ScanFeedbackProps> = ({
   duration = 2000,
   showIcon = true,
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const iconScale = useSharedValue(0);
@@ -203,7 +202,7 @@ export const ScanFeedback: React.FC<ScanFeedbackProps> = ({
 
   return (
     <View style={styles.overlay} pointerEvents="none">
-      <Animated.View style={[styles.container, containerStyle]}>
+      <Animated.View style={[styles.container, { width: screenWidth * 0.7 }, containerStyle]}>
         <LinearGradient
           colors={config.gradient as readonly [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
@@ -250,7 +249,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   container: {
-    width: SCREEN_WIDTH * 0.7,
     maxWidth: 280,
     borderRadius: auroraTheme.borderRadius["2xl"],
     overflow: "hidden",

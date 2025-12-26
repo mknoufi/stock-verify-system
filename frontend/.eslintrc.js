@@ -11,4 +11,15 @@ module.exports = {
     // Disable false positive for string comparisons in JSX expressions
     'react-native/no-raw-text': 'off',
   },
+  settings: {
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: './tsconfig.json',
+      },
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+    },
+  },
 };

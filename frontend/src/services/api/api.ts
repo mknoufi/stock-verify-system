@@ -421,7 +421,26 @@ export const getItemByBarcode = async (
       const items = await searchItemsInCache(trimmedBarcode);
       if (items.length > 0) {
         __DEV__ && console.log("✅ Found in cache:", items[0]?.item_code);
-        return items[0];
+        const cached = items[0];
+        if (!cached) {
+          throw new Error(
+            "Offline: Cache returned an empty item. Connect to internet to search server.",
+          );
+        }
+        return {
+          id: cached.item_code,
+          name: cached.item_name,
+          item_code: cached.item_code,
+          barcode: cached.barcode,
+          item_name: cached.item_name,
+          description: cached.description,
+          stock_qty: cached.current_stock,
+          uom_name: cached.uom_name ?? cached.uom,
+          mrp: cached.mrp,
+          sales_price: cached.sales_price,
+          category: cached.category,
+          subcategory: cached.subcategory,
+        };
       }
       throw new Error(
         "Item not found in offline cache. Connect to internet to search server.",
@@ -460,38 +479,59 @@ export const getItemByBarcode = async (
       );
     }
 
-    // Map backend fields to frontend Item interface
-    // Handle empty item_name by falling back to category or item_code
+    // Normalize backend fields to the canonical frontend Item interface.
+    // Backend field names can vary (e.g. uom vs uom_name, sale_price vs sales_price).
     const displayName =
       itemData.item_name || itemData.category || `Item ${itemData.item_code}`;
-    if (!itemData.name) {
-      itemData.name = displayName;
-    }
-    if (!itemData.item_name) {
-      itemData.item_name = displayName;
-    }
-    if (itemData._id && !itemData.id) {
-      itemData.id = itemData._id;
-    }
 
-    __DEV__ && console.log("✅ Found via API:", itemData.item_code);
+    const normalizedItem: any = {
+      ...itemData,
+      id: itemData.id || itemData._id || itemData.item_code,
+      name: itemData.name || displayName,
+      item_name: itemData.item_name || displayName,
+      // Prefer the human-readable UOM if available.
+      uom_name: itemData.uom_name ?? itemData.uom ?? itemData.uom_code,
+      // Prefer sales_price, but accept alternate backend names.
+      sales_price:
+        itemData.sales_price ?? itemData.sale_price ?? itemData.standard_rate,
+      mrp: itemData.mrp,
+      category: itemData.category,
+      subcategory: itemData.subcategory,
+      // Normalize stock quantity naming differences.
+      stock_qty:
+        itemData.stock_qty ?? itemData.current_stock ?? itemData.stock_qty,
+    };
+
+    __DEV__ && console.log("✅ Found via API:", normalizedItem.item_code);
 
     // Cache the item for future offline use
     try {
       await cacheItem({
-        item_code: itemData.item_code,
-        barcode: itemData.barcode,
-        item_name: itemData.item_name,
-        description: itemData.description,
-        uom: itemData.uom,
-        current_stock: itemData.current_stock || itemData.stock_qty, // Handle field name difference
+        item_code: normalizedItem.item_code,
+        barcode: normalizedItem.barcode,
+        item_name: normalizedItem.item_name,
+        description: normalizedItem.description,
+        uom: normalizedItem.uom ?? normalizedItem.uom_code ?? normalizedItem.uom_name,
+        uom_name: normalizedItem.uom_name,
+        mrp: normalizedItem.mrp,
+        sales_price: normalizedItem.sales_price,
+        sale_price: normalizedItem.sale_price ?? normalizedItem.sales_price,
+        category: normalizedItem.category,
+        subcategory: normalizedItem.subcategory,
+        warehouse: normalizedItem.warehouse,
+        manual_barcode: normalizedItem.manual_barcode,
+        unit2_barcode: normalizedItem.unit2_barcode,
+        unit_m_barcode: normalizedItem.unit_m_barcode,
+        batch_id: normalizedItem.batch_id,
+        current_stock:
+          normalizedItem.current_stock || normalizedItem.stock_qty, // Handle field name difference
       });
     } catch (cacheError) {
       __DEV__ && console.warn("Failed to cache item:", cacheError);
       // Don't fail the whole operation for cache errors
     }
 
-    return itemData;
+    return normalizedItem;
   } catch (apiError: any) {
     const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
     __DEV__ && console.error("❌ API call failed:", errorMessage);
@@ -564,16 +604,42 @@ export const searchItems = async (query: string): Promise<Item[]> => {
         description: item.description,
         uom: item.uom,
         stock_qty: item.current_stock,
+        manual_barcode: item.manual_barcode,
+        unit2_barcode: item.unit2_barcode,
+        unit_m_barcode: item.unit_m_barcode,
+        batch_id: item.batch_id,
       }));
     }
 
-    // Use enhanced v2 search endpoint
-    const response = await api.get(
-      `/api/v2/erp/items/search/advanced?query=${encodeURIComponent(query)}`,
-    );
+    // Use new optimized search endpoint (fallback to cache on network errors)
+    let response;
+    try {
+      response = await api.get("/api/items/search/optimized", {
+        params: { q: query },
+      });
+    } catch (error) {
+      __DEV__ && console.warn("Search API failed, falling back to cache:", error);
+      const cachedItems = await searchItemsInCache(query);
+      return cachedItems.map((item) => ({
+        id: item.item_code,
+        name: item.item_name,
+        item_code: item.item_code,
+        barcode: item.barcode,
+        item_name: item.item_name,
+        description: item.description,
+        uom: item.uom,
+        stock_qty: item.current_stock,
+        manual_barcode: item.manual_barcode,
+        unit2_barcode: item.unit2_barcode,
+        unit_m_barcode: item.unit_m_barcode,
+        batch_id: item.batch_id,
+      }));
+    }
 
-    // Handle v2 response format
-    const items = response.data.items || [];
+    // Handle ApiResponse wrapper
+    const apiResponse = response.data;
+    const data = apiResponse.data || { items: [] };
+    const items = data.items || [];
 
     // Map backend fields to frontend Item interface
     const mappedItems: Item[] = items.map((item: Record<string, unknown>) => {
@@ -581,8 +647,13 @@ export const searchItems = async (query: string): Promise<Item[]> => {
       if (item.item_name && !mapped.name) {
         mapped.name = item.item_name as string;
       }
+      if (item.uom_name && !mapped.uom) {
+        mapped.uom = item.uom_name as string;
+      }
       if (item._id && !mapped.id) {
         mapped.id = item._id as string;
+      } else if (item.item_code && !mapped.id) {
+        mapped.id = item.item_code as string;
       }
       return mapped;
     });
@@ -596,6 +667,15 @@ export const searchItems = async (query: string): Promise<Item[]> => {
         description: (item as any).description, // Maintain legacy fields if needed
         uom: (item as any).uom_name || (item as any).uom,
         current_stock: item.stock_qty,
+        mrp: item.mrp,
+        sale_price: item.sale_price,
+        category: item.category,
+        subcategory: item.subcategory,
+        warehouse: item.warehouse,
+        manual_barcode: item.manual_barcode,
+        unit2_barcode: item.unit2_barcode,
+        unit_m_barcode: item.unit_m_barcode,
+        batch_id: item.batch_id,
       });
     }
 
@@ -621,6 +701,194 @@ export const searchItems = async (query: string): Promise<Item[]> => {
       __DEV__ && console.error("Cache fallback error:", fallbackError);
       return [];
     }
+  }
+};
+
+// Optimized search with relevance scoring and pagination
+export interface OptimizedSearchResult {
+  items: Item[];
+  total: number;
+  page: number;
+  page_size: number;
+  query: string;
+  search_time_ms: number;
+}
+
+export const searchItemsOptimized = async (
+  query: string,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<OptimizedSearchResult> => {
+  try {
+    if (!isOnline()) {
+      // Fallback to cache search for offline
+      const cachedItems = await searchItemsInCache(query);
+      const mappedItems = cachedItems.map((item) => ({
+        id: item.item_code,
+        name: item.item_name,
+        item_code: item.item_code,
+        barcode: item.barcode,
+        item_name: item.item_name,
+        description: item.description,
+        uom: item.uom,
+        stock_qty: item.current_stock,
+        mrp: item.mrp,
+        sale_price: item.sale_price,
+        sales_price: item.sales_price,
+        category: item.category,
+        subcategory: item.subcategory,
+        warehouse: item.warehouse,
+        manual_barcode: item.manual_barcode,
+        unit2_barcode: item.unit2_barcode,
+        unit_m_barcode: item.unit_m_barcode,
+        batch_id: item.batch_id,
+      }));
+      return {
+        items: mappedItems,
+        total: mappedItems.length,
+        page: 1,
+        page_size: mappedItems.length,
+        query,
+        search_time_ms: 0,
+      };
+    }
+
+    // Use new optimized search endpoint
+    const response = await api.get("/api/items/search/optimized", {
+      params: {
+        q: query,
+        page,
+        page_size: pageSize,
+      },
+    });
+
+    // Unwrap ApiResponse
+    const apiResponse = response.data;
+    const data = apiResponse.data || { items: [] };
+    const items = data.items || [];
+
+    // Map backend fields to frontend Item interface with relevance info
+    const mappedItems: Item[] = items.map((item: Record<string, unknown>) => ({
+      id: (item._id as string) || (item.item_code as string),
+      item_code: item.item_code as string,
+      barcode: item.barcode as string,
+      name: item.item_name as string,
+      item_name: item.item_name as string,
+      description: item.description as string,
+      uom: (item.uom_name as string) || (item.uom as string),
+      uom_name: (item.uom_name as string) || (item.uom as string),
+      stock_qty: item.current_stock as number,
+      mrp: item.mrp as number,
+      sale_price: item.sale_price as number,
+      sales_price: (item.sale_price as number) || (item.sales_price as number),
+      manual_barcode: item.manual_barcode as string,
+      unit2_barcode: item.unit2_barcode as string,
+      unit_m_barcode: item.unit_m_barcode as string,
+      batch_id: item.batch_id as string,
+      category: item.category as string,
+      subcategory: item.subcategory as string,
+      warehouse: item.warehouse as string,
+      // Relevance metadata from optimized search
+      relevance_score: item.relevance_score as number,
+      match_type: item.match_type as string,
+    }));
+
+    // Cache top items for offline access
+    for (const item of mappedItems.slice(0, 10)) {
+      await cacheItem({
+        item_code: item.item_code!,
+        barcode: item.barcode,
+        item_name: item.item_name || item.name,
+        description: (item as any).description,
+        uom: (item as any).uom,
+        current_stock: item.stock_qty,
+        mrp: item.mrp,
+        sale_price: item.sale_price,
+        sales_price: item.sales_price,
+        category: item.category,
+        subcategory: item.subcategory,
+        warehouse: item.warehouse,
+        manual_barcode: item.manual_barcode,
+        unit2_barcode: item.unit2_barcode,
+        unit_m_barcode: item.unit_m_barcode,
+        batch_id: item.batch_id,
+      });
+    }
+
+    return {
+      items: mappedItems,
+      total: data.total || mappedItems.length,
+      page: data.page || page,
+      page_size: data.page_size || pageSize,
+      query: data.query || query,
+      search_time_ms: data.search_time_ms || 0,
+    };
+  } catch (error) {
+    __DEV__ && console.error("Error in optimized search:", error);
+
+    // Fallback to cache
+    try {
+      const cachedItems = await searchItemsInCache(query);
+      const mappedItems = cachedItems.map((item) => ({
+        id: item.item_code,
+        name: item.item_name,
+        item_code: item.item_code,
+        barcode: item.barcode,
+        item_name: item.item_name,
+        description: item.description,
+        uom: item.uom,
+        stock_qty: item.current_stock,
+        mrp: item.mrp,
+        sale_price: item.sale_price,
+        sales_price: item.sales_price,
+        category: item.category,
+        subcategory: item.subcategory,
+        warehouse: item.warehouse,
+        manual_barcode: item.manual_barcode,
+        unit2_barcode: item.unit2_barcode,
+        unit_m_barcode: item.unit_m_barcode,
+        batch_id: item.batch_id,
+      }));
+      return {
+        items: mappedItems,
+        total: mappedItems.length,
+        page: 1,
+        page_size: mappedItems.length,
+        query,
+        search_time_ms: 0,
+      };
+    } catch (fallbackError) {
+      __DEV__ && console.error("Cache fallback error:", fallbackError);
+      return {
+        items: [],
+        total: 0,
+        page: 1,
+        page_size: pageSize,
+        query,
+        search_time_ms: 0,
+      };
+    }
+  }
+};
+
+// Get search suggestions for autocomplete
+export const getSearchSuggestions = async (
+  query: string,
+  limit: number = 5
+): Promise<string[]> => {
+  try {
+    if (!isOnline() || query.length < 2) {
+      return [];
+    }
+
+    const response = await api.get("/api/items/search/suggestions", {
+      params: { query, limit },
+    });
+
+    return response.data.suggestions || [];
+  } catch (error) {
+    __DEV__ && console.error("Error fetching suggestions:", error);
+    return [];
   }
 };
 
@@ -2194,6 +2462,8 @@ export const countLineApi = {
 export const itemsApi = {
   getItemByBarcode,
   searchItems,
+  searchItemsOptimized,
+  getSearchSuggestions,
   createUnknownItem,
   refreshItemStock,
 };
@@ -2444,6 +2714,55 @@ export const getFieldStatistics = async (fieldName: string) => {
   }
 };
 
+// ==========================================
+// SELF-DIAGNOSIS API
+// ==========================================
+
+/**
+ * Get comprehensive health status with auto-diagnosis
+ */
+export const getDiagnosisHealth = async () => {
+  try {
+    const response = await api.get("/api/diagnosis/health");
+    return response.data;
+  } catch (error: unknown) {
+    __DEV__ && console.error("Get diagnosis health error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get error statistics with analysis
+ * @param hours Time window in hours
+ */
+export const getDiagnosisStats = async (hours: number = 24) => {
+  try {
+    const response = await api.get(`/api/diagnosis/statistics?hours=${hours}`);
+    return response.data;
+  } catch (error: unknown) {
+    __DEV__ && console.error("Get diagnosis stats error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Manually diagnose an error
+ * @param errorInfo Error details (type, message, context)
+ */
+export const diagnoseError = async (errorInfo: {
+  error_type: string;
+  error_message: string;
+  context?: Record<string, any>;
+}) => {
+  try {
+    const response = await api.post("/api/diagnosis/diagnose", errorInfo);
+    return response.data;
+  } catch (error: unknown) {
+    __DEV__ && console.error("Diagnose error failed:", error);
+    throw error;
+  }
+};
+
 export default api;
 
 // Batch sync offline queue
@@ -2464,6 +2783,29 @@ export const getWatchtowerStats = async () => {
     return response.data;
   } catch (error: unknown) {
     __DEV__ && console.error("Get watchtower stats error:", error);
+    throw error;
+  }
+};
+
+// Get Zones
+export const getZones = async () => {
+  try {
+    const response = await api.get("/api/locations/zones");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching zones:", error);
+    throw error;
+  }
+};
+
+// Get Warehouses
+export const getWarehouses = async (zone?: string) => {
+  try {
+    const url = zone ? `/api/locations/warehouses?zone=${zone}` : "/api/locations/warehouses";
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching warehouses:", error);
     throw error;
   }
 };

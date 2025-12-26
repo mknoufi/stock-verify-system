@@ -17,7 +17,18 @@ export interface CachedItem {
   item_name: string;
   description?: string;
   uom?: string;
+  uom_name?: string;
+  mrp?: number;
+  sales_price?: number;
+  sale_price?: number;
+  category?: string;
+  subcategory?: string;
   current_stock?: number;
+  warehouse?: string;
+  manual_barcode?: string;
+  unit2_barcode?: string;
+  unit_m_barcode?: string;
+  batch_id?: string;
   cached_at: string;
 }
 
@@ -199,6 +210,12 @@ export const removeManyFromOfflineQueue = async (ids: string[]) => {
   try {
     const queue = await getOfflineQueue();
     const updatedQueue = queue.filter((item) => !ids.includes(item.id));
+
+    // T079: Log deletion for verification
+    if (queue.length !== updatedQueue.length) {
+      console.log(`[OfflineStorage] Removed ${queue.length - updatedQueue.length} confirmed items from offline queue.`);
+    }
+
     await storage.set(STORAGE_KEYS.OFFLINE_QUEUE, updatedQueue);
   } catch (error) {
     __DEV__ && console.error("Error removing many from offline queue:", error);

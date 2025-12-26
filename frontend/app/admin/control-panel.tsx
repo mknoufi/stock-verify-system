@@ -430,7 +430,7 @@ export default function ControlPanelScreen() {
           activeOpacity={0.7}
         >
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
-          {!isWeb && <Text style={styles.backButtonText}>Back</Text>}
+          {!isWeb ? <Text style={styles.backButtonText}>Back</Text> : null}
         </TouchableOpacity>
         <View style={styles.titleContainer}>
           <Ionicons

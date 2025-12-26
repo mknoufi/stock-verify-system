@@ -8,3 +8,6 @@ export * from "./useDebouncedCallback";
 export * from "./useAIBarcode";
 export * from "./useVoiceControl";
 export * from "./useCameraEnhancement";
+export * from "./useResponsive";
+export * from "./useOptimizedSearch";
+export * from "./useSearchItemsQuery";

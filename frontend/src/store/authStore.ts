@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { secureStorage } from "../services/storage/secureStorage";
 import apiClient from "../services/httpClient";
+import { useSettingsStore } from "./settingsStore";
 
 interface User {
   id: string;
@@ -33,6 +34,7 @@ export interface AuthState {
 
 const AUTH_STORAGE_KEY = "auth_user";
 const TOKEN_STORAGE_KEY = "auth_token";
+const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -53,7 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       if (response.data.success && response.data.data) {
-        const { access_token, user } = response.data.data;
+        const { access_token, refresh_token, user } = response.data.data;
 
         // Store token for subsequent requests
         apiClient.defaults.headers.common["Authorization"] =
@@ -61,6 +63,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
         // Use SecureStore for sensitive data
         await secureStorage.setItem(TOKEN_STORAGE_KEY, access_token);
+        if (refresh_token) {
+          await secureStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refresh_token);
+        }
         await secureStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
 
         set({
@@ -68,6 +73,10 @@ export const useAuthStore = create<AuthState>((set) => ({
           isAuthenticated: true,
           isLoading: false,
         });
+
+        // Sync user settings from backend after successful login
+        useSettingsStore.getState().syncFromBackend();
+
         return { success: true };
       }
 
@@ -115,7 +124,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await apiClient.post("/api/auth/login-pin", { pin });
 
       if (response.data.success && response.data.data) {
-        const { access_token, user } = response.data.data;
+        const { access_token, refresh_token, user } = response.data.data;
 
         // Store token for subsequent requests
         apiClient.defaults.headers.common["Authorization"] =
@@ -123,6 +132,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
         // Use SecureStore
         await secureStorage.setItem(TOKEN_STORAGE_KEY, access_token);
+        if (refresh_token) {
+          await secureStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refresh_token);
+        }
         await secureStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
 
         set({
@@ -130,6 +142,10 @@ export const useAuthStore = create<AuthState>((set) => ({
           isAuthenticated: true,
           isLoading: false,
         });
+
+        // Sync user settings from backend after successful PIN login
+        useSettingsStore.getState().syncFromBackend();
+
         return { success: true };
       }
 
@@ -139,7 +155,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         message: response.data.message || "Invalid PIN",
       };
     } catch (error: unknown) {
-      console.error("PIN login failed:", error);
+      // Avoid console.error here: React Native LogBox can surface it as a noisy
+      // on-screen overlay, and the UI already shows a user-friendly Alert.
+      // Also avoid logging the full Axios error object (may contain request data).
+      __DEV__ &&
+        console.log(
+          "PIN login failed:",
+          (error as { message?: string } | null)?.message || "unknown error",
+        );
       set({ isLoading: false });
 
       let message = "Invalid PIN";
@@ -169,6 +192,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     await secureStorage.removeItem(AUTH_STORAGE_KEY);
     await secureStorage.removeItem(TOKEN_STORAGE_KEY);
+    await secureStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     delete apiClient.defaults.headers.common["Authorization"];
     set({
       user: null,

@@ -46,6 +46,13 @@ import {
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+// Services that should not show toggle button (read-only status)
+// eslint-disable-next-line react-native/no-raw-text
+const NON_TOGGLEABLE_SERVICES: readonly string[] = [
+  /* database */ 'database',
+  /* sql_server */ 'sql_server',
+];
+
 // Health Score Component
 const HealthScore = ({ score }: { score: number }) => {
   const getColor = (s: number) => {
@@ -88,6 +95,7 @@ const ServiceItem = ({
   loading: boolean;
 }) => {
   const isRunning = status?.running;
+  const showToggleButton = !NON_TOGGLEABLE_SERVICES.includes(name);
 
   return (
     <View style={styles.serviceItem}>
@@ -112,7 +120,7 @@ const ServiceItem = ({
         </View>
       </View>
 
-      {name !== "database" && name !== "sql_server" && (
+      {showToggleButton && (
         <AnimatedPressable
           onPress={onToggle}
           style={[

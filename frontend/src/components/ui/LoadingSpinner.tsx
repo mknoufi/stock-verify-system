@@ -33,7 +33,7 @@ interface LoadingSpinnerProps {
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   isVisible = true,
   size = 37,
-  type = "ThreeBounce",
+  type: _type = "ThreeBounce",
   color = colorPalette.primary[500],
   style,
 }) => {

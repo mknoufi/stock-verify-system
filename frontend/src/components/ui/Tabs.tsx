@@ -78,7 +78,7 @@ export const Tabs: React.FC<TabsProps> = ({
     }));
   };
 
-  const renderTab = (tab: Tab, index: number) => {
+  const renderTab = (tab: Tab, _index: number) => {
     const isActive = tab.key === activeTab;
 
     return (
@@ -132,7 +132,7 @@ export const Tabs: React.FC<TabsProps> = ({
   return (
     <View style={styles.wrapper}>
       <Container {...containerProps}>
-        {tabs.map((tab, index) => renderTab(tab, index))}
+        {tabs.map((tab, _index) => renderTab(tab, _index))}
       </Container>
 
       {/* Indicator */}

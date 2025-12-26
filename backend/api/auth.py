@@ -114,6 +114,7 @@ async def generate_auth_tokens(
             {"sub": user["username"], "role": user.get("role", "staff")},
             secret_key=auth_deps.secret_key,
             algorithm=auth_deps.algorithm,
+            expires_delta=access_token_expires,
         )
 
         # Generate refresh token using service
@@ -160,7 +161,9 @@ async def log_failed_login_attempt(
         logger.error(f"Failed to log login attempt: {str(e)}")
 
 
-async def log_successful_login(user: dict[str, Any], ip_address: str, request: Request) -> None:
+async def log_successful_login(
+    user: dict[str, Any], ip_address: str, request: Request
+) -> None:
     """Log a successful login."""
     db = get_db()
     try:
@@ -194,7 +197,9 @@ async def register(user: UserRegister):
         # Check if user already exists
         existing_user = await db.users.find_one({"username": user.username})
         if existing_user:
-            error = get_error_message("AUTH_USERNAME_EXISTS", {"username": user.username})
+            error = get_error_message(
+                "AUTH_USERNAME_EXISTS", {"username": user.username}
+            )
             raise HTTPException(
                 status_code=error["status_code"],
                 detail={
@@ -233,6 +238,7 @@ async def register(user: UserRegister):
             data={"sub": user.username, "role": user.role},
             secret_key=auth_deps.secret_key,
             algorithm=auth_deps.algorithm,
+            expires_delta=timedelta(minutes=15),
         )
         refresh_token = refresh_token_service.create_refresh_token(
             {"sub": user.username, "role": user.role}
@@ -242,7 +248,9 @@ async def register(user: UserRegister):
 
         # Store refresh token in database
         expires_at = datetime.utcnow() + timedelta(days=30)
-        await refresh_token_service.store_refresh_token(refresh_token, user.username, expires_at)
+        await refresh_token_service.store_refresh_token(
+            refresh_token, user.username, expires_at
+        )
 
         return {
             "access_token": access_token,
@@ -262,7 +270,9 @@ async def register(user: UserRegister):
     except HTTPException:
         raise
     except Exception as e:
-        error = get_error_message("UNKNOWN_ERROR", {"operation": "register", "error": str(e)})
+        error = get_error_message(
+            "UNKNOWN_ERROR", {"operation": "register", "error": str(e)}
+        )
         logger.error(f"Registration error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=error["status_code"],
@@ -306,7 +316,9 @@ def _validate_user_password(
     hashed_pwd = user.get("hashed_password") or user.get("password")
     if not hashed_pwd:
         logger.error("No hashed_password or password field found!")
-        return Fail(AuthenticationError("User account is corrupted. Please contact support."))
+        return Fail(
+            AuthenticationError("User account is corrupted. Please contact support.")
+        )
 
     try:
         if verify_password(credentials.password, hashed_pwd):
@@ -319,7 +331,9 @@ def _validate_user_password(
 
 @router.post("/auth/login", response_model=ApiResponse[TokenResponse])
 @result_to_response(success_status=200)
-async def login(credentials: UserLogin, request: Request) -> Result[dict[str, Any], Exception]:
+async def login(
+    credentials: UserLogin, request: Request
+) -> Result[dict[str, Any], Exception]:
     """
     User login endpoint with enhanced security and monitoring.
 
@@ -376,7 +390,9 @@ async def login(credentials: UserLogin, request: Request) -> Result[dict[str, An
         # Check active status
         if not user.get("is_active", True):
             logger.error("User account is deactivated")
-            return Fail(AuthorizationError("Account is deactivated. Please contact support."))
+            return Fail(
+                AuthorizationError("Account is deactivated. Please contact support.")
+            )
 
         # Generate tokens
         logger.info("Generating tokens...")
@@ -412,7 +428,9 @@ async def _find_user_by_fast_lookup(
         return None
     # Verify secure hash to protect against SHA-256 collision
     if not verify_password(pin, found_user.get("pin_hash", "")):
-        logger.warning(f"Hash collision or data corruption for user {found_user.get('username')}")
+        logger.warning(
+            f"Hash collision or data corruption for user {found_user.get('username')}"
+        )
         return None
     return found_user
 
@@ -421,7 +439,9 @@ async def _find_user_by_legacy_scan(
     db: Any, pin: str, lookup_hash: str
 ) -> Optional[dict[str, Any]]:
     """Find user via O(N) legacy PIN scan with opportunistic migration."""
-    users_with_pin = await db.users.find({"pin_hash": {"$exists": True}}).to_list(length=1000)
+    users_with_pin = await db.users.find({"pin_hash": {"$exists": True}}).to_list(
+        length=1000
+    )
     for user in users_with_pin:
         if verify_password(pin, user.get("pin_hash", "")):
             # Opportunistic migration for next time
@@ -500,7 +520,9 @@ async def login_with_pin(
         # Check active status
         if not found_user.get("is_active", True):
             logger.error("User account is deactivated")
-            return Fail(AuthorizationError("Account is deactivated. Please contact support."))
+            return Fail(
+                AuthorizationError("Account is deactivated. Please contact support.")
+            )
 
         # Generate tokens
         logger.info("Generating tokens...")
@@ -543,7 +565,9 @@ async def _handle_login_failure(
     return Fail(cast(Exception, return_error))
 
 
-async def _migrate_legacy_password(db: Any, user: dict[str, Any], password: str) -> None:
+async def _migrate_legacy_password(
+    db: Any, user: dict[str, Any], password: str
+) -> None:
     """Helper to migrate legacy password field."""
     if "password" in user and "hashed_password" not in user:
         try:
@@ -555,10 +579,14 @@ async def _migrate_legacy_password(db: Any, user: dict[str, Any], password: str)
                 },
             )
         except Exception as e:
-            logger.error(f"Failed to migrate legacy password for user {user.get('_id')}: {e}")
+            logger.error(
+                f"Failed to migrate legacy password for user {user.get('_id')}: {e}"
+            )
 
 
-def _build_login_response(tokens: dict[str, Any], user: dict[str, Any]) -> dict[str, Any]:
+def _build_login_response(
+    tokens: dict[str, Any], user: dict[str, Any]
+) -> dict[str, Any]:
     """Helper to build the login response dictionary."""
     return {
         "access_token": tokens["access_token"],
@@ -586,4 +614,188 @@ async def get_me(
         "full_name": current_user["full_name"],
         "role": current_user["role"],
         "permissions": current_user.get("permissions", []),
+    }
+
+
+@router.get("/auth/heartbeat")
+async def heartbeat(
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
+    """
+    Session heartbeat endpoint.
+    Returns current session status and user information.
+    """
+    from datetime import datetime, timezone
+
+    return {
+        "success": True,
+        "data": {
+            "status": "alive",
+            "username": current_user["username"],
+            "user_id": str(current_user["_id"]),
+            "session_valid": True,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    }
+
+
+@router.post("/auth/change-pin")
+async def change_pin(
+    request: Request,
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
+    """
+    Change user PIN.
+    Validates current PIN before allowing change.
+    """
+    body = await request.json()
+    current_pin = body.get("current_pin")
+    new_pin = body.get("new_pin")
+
+    if not current_pin or not new_pin:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "MISSING_FIELDS",
+                "message": "Both current_pin and new_pin are required",
+            },
+        )
+
+    # Validate new PIN format (must be 4 digits)
+    if not new_pin.isdigit() or len(new_pin) != 4:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "INVALID_PIN_FORMAT",
+                "message": "PIN must be exactly 4 digits",
+            },
+        )
+
+    # Check for weak PINs (sequential, repeated, common)
+    weak_pins = [
+        "1234",
+        "0000",
+        "1111",
+        "2222",
+        "3333",
+        "4444",
+        "5555",
+        "6666",
+        "7777",
+        "8888",
+        "9999",
+        "4321",
+    ]
+    if new_pin in weak_pins:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "WEAK_PIN",
+                "message": "PIN is too weak. Avoid sequential or repeated digits.",
+            },
+        )
+
+    # Verify current PIN
+    db = get_db()
+    user = await db.users.find_one({"username": current_user["username"]})
+
+    if not user or "pin_hash" not in user:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "NO_PIN_SET",
+                "message": "No PIN is currently set for this user",
+            },
+        )
+
+    if not verify_password(current_pin, user["pin_hash"]):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "WRONG_CURRENT_PIN",
+                "message": "Current PIN is incorrect",
+            },
+        )
+
+    # Update PIN
+    new_pin_hash = get_password_hash(new_pin)
+    await db.users.update_one(
+        {"username": current_user["username"]},
+        {"$set": {"pin_hash": new_pin_hash, "updated_at": datetime.now()}},
+    )
+
+    logger.info(f"PIN changed for user: {current_user['username']}")
+
+    return {
+        "success": True,
+        "message": "PIN changed successfully",
+    }
+
+
+@router.post("/auth/change-password")
+async def change_password(
+    request: Request,
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
+    """
+    Change user password.
+    Validates current password before allowing change.
+    """
+    body = await request.json()
+    current_password = body.get("current_password")
+    new_password = body.get("new_password")
+
+    if not current_password or not new_password:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "MISSING_FIELDS",
+                "message": "Both current_password and new_password are required",
+            },
+        )
+
+    # Validate new password strength
+    if len(new_password) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "WEAK_PASSWORD",
+                "message": "Password must be at least 8 characters",
+            },
+        )
+
+    # Verify current password
+    db = get_db()
+    user = await db.users.find_one({"username": current_user["username"]})
+
+    if not user or "hashed_password" not in user:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "NO_PASSWORD_SET",
+                "message": "No password is currently set for this user",
+            },
+        )
+
+    if not verify_password(current_password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "WRONG_CURRENT_PASSWORD",
+                "message": "Current password is incorrect",
+            },
+        )
+
+    # Update password
+    new_password_hash = get_password_hash(new_password)
+    await db.users.update_one(
+        {"username": current_user["username"]},
+        {"$set": {"hashed_password": new_password_hash, "updated_at": datetime.now()}},
+    )
+
+    logger.info(f"Password changed for user: {current_user['username']}")
+
+    return {
+        "success": True,
+        "message": "Password changed successfully",
     }

@@ -1,5 +1,6 @@
 import axios from "axios";
 import Constants from "expo-constants";
+import { useAuthStore } from "./authStore";
 
 // Logic to determine the backend URL
 // Priority:
@@ -65,7 +66,7 @@ apiClient.interceptors.request.use(
   },
 );
 
-// Add response interceptor for debugging
+// Add response interceptor for debugging and session handling
 apiClient.interceptors.response.use(
   (response) => {
     const fullUrl = toFullUrl(response.config.baseURL, response.config.url);
@@ -79,6 +80,12 @@ apiClient.interceptors.response.use(
         `[API Error] ${error.response.status} ${fullUrl}`,
         error.response.data,
       );
+
+      // Handle session expiration (401 Unauthorized)
+      if (error.response.status === 401) {
+        console.warn("[API] Session expired or unauthorized. Logging out...");
+        useAuthStore.getState().logout();
+      }
     } else if (error.request) {
       const fullUrl = toFullUrl(error.config?.baseURL, error.config?.url);
       console.error(`[API Error] No response received for ${fullUrl}`);

@@ -12,17 +12,17 @@ import { StatusBar } from "expo-status-bar";
 import { useAuthStore } from "../src/store/authStore";
 import { initializeNetworkListener } from "../src/services/networkService";
 import { initializeSyncService } from "../src/services/syncService";
+import { registerBackgroundSync } from "../src/services/backgroundSync";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { ThemeService } from "../src/services/themeService";
 import { useSettingsStore } from "../src/store/settingsStore";
 import { useTheme } from "../src/hooks/useTheme";
 import { useSystemTheme } from "../src/hooks/useSystemTheme";
-import { ToastProvider } from "../src/components/ToastProvider";
+import { ToastProvider } from "../src/components/feedback/ToastProvider";
 import { initializeBackendURL } from "../src/utils/backendUrl";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../src/services/queryClient";
 
-// import DebugPanel from '../components/DebugPanel';
 import { UnistylesThemeProvider } from "../src/theme/Provider";
 import { ThemeProvider } from "../src/theme/ThemeContext";
 import { initReactotron } from "../src/services/devtools/reactotron";
@@ -32,6 +32,7 @@ import {
 } from "../src/services/offlineQueue";
 import apiClient from "../src/services/httpClient";
 import { initSentry } from "../src/services/sentry";
+import { mmkvStorage } from "../src/services/mmkvStorage";
 
 // keep the splash screen visible while complete fetching resources
 // On web, wrap in try-catch to prevent blocking
@@ -89,6 +90,9 @@ export default function RootLayout() {
       console.log("🔵 [STEP 5] Initialize function called");
       console.log("🔵 [STEP 5] Starting async initialization...");
       try {
+        // Initialize storage first
+        await mmkvStorage.initialize();
+
         // Initialize backend URL discovery first with timeout
         try {
           const backendUrlPromise = initializeBackendURL();
@@ -141,6 +145,15 @@ export default function RootLayout() {
             );
           }
           // Continue anyway - will use defaults
+        }
+
+        // Register background sync task
+        try {
+          await registerBackgroundSync();
+        } catch (syncError) {
+          if (__DEV__) {
+            console.warn("⚠️ Background sync registration failed:", syncError);
+          }
         }
 
         // Initialize theme
@@ -485,7 +498,6 @@ export default function RootLayout() {
           <UnistylesThemeProvider>
             <ToastProvider>
               <StatusBar style={theme.isDark ? "light" : "dark"} />
-              {/* {__DEV__ && flags.enableDebugPanel && <DebugPanel />} */}
               <Stack
                 screenOptions={{
                   headerShown: false,
@@ -496,30 +508,6 @@ export default function RootLayout() {
                 <Stack.Screen name="login" options={{ headerShown: false }} />
                 <Stack.Screen name="welcome" />
                 <Stack.Screen name="register" />
-                <Stack.Screen name="staff/home" />
-                <Stack.Screen name="staff/scan" />
-                <Stack.Screen name="staff/item-detail" />
-                <Stack.Screen name="staff/history" />
-                <Stack.Screen name="staff/appearance" />
-                <Stack.Screen name="supervisor/dashboard" />
-                <Stack.Screen name="supervisor/sessions" />
-                <Stack.Screen name="supervisor/session/[id]" />
-                <Stack.Screen name="supervisor/settings" />
-                <Stack.Screen name="supervisor/appearance" />
-                <Stack.Screen name="supervisor/db-mapping" />
-                <Stack.Screen name="supervisor/activity-logs" />
-                <Stack.Screen name="supervisor/error-logs" />
-                <Stack.Screen name="supervisor/export-schedules" />
-                <Stack.Screen name="supervisor/export-results" />
-                <Stack.Screen name="supervisor/sync-conflicts" />
-                <Stack.Screen name="supervisor/offline-queue" />
-                <Stack.Screen name="admin/permissions" />
-                <Stack.Screen name="admin/metrics" />
-                <Stack.Screen name="admin/control-panel" />
-                <Stack.Screen name="admin/logs" />
-                <Stack.Screen name="admin/sql-config" />
-                <Stack.Screen name="admin/reports" />
-                <Stack.Screen name="admin/security" />
                 <Stack.Screen name="help" />
                 <Stack.Screen name="+not-found" />
               </Stack>

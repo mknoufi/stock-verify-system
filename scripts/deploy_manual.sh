@@ -3,7 +3,7 @@ set -e
 
 # Configuration
 PROJECT_ROOT="$(pwd)"
-MONGO_DATA_DIR="$PROJECT_ROOT/mongodb_data"
+MONGO_DATA_DIR="$PROJECT_ROOT/backend/data/db"
 LOG_DIR="$PROJECT_ROOT/logs"
 BACKEND_PORT=8001
 # Use the user's detected IP
