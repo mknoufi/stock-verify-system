@@ -17,6 +17,42 @@ import * as Haptics from "expo-haptics";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { colors, spacing, gradients } from "@/styles/globalStyles";
 import { useAuthStore } from "@/store/authStore";
+import { getRouteForRole, type UserRole } from "@/utils/roleNavigation";
+
+const GlassSurface = ({
+  children,
+  style,
+  intensity = 20,
+  tint = "light",
+}: {
+  children: React.ReactNode;
+  style?: any;
+  intensity?: number;
+  tint?: "light" | "dark" | "default";
+}) => {
+  if (Platform.OS === "web") {
+    return (
+      <View
+        style={[
+          style,
+          {
+            backgroundColor: "rgba(255,255,255,0.08)",
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.12)",
+          },
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <BlurView intensity={intensity} tint={tint} style={style}>
+      {children}
+    </BlurView>
+  );
+};
 
 const FeatureCard = ({
   icon,
@@ -31,12 +67,12 @@ const FeatureCard = ({
     entering={FadeInDown.delay(delay).springify()}
     style={styles.featureWrapper}
   >
-    <BlurView intensity={20} tint="light" style={styles.featureCard}>
+    <GlassSurface intensity={20} tint="light" style={styles.featureCard}>
       <View style={styles.iconCircle}>
         <Ionicons name={icon} size={24} color={colors.primary} />
       </View>
       <Text style={styles.featureText}>{title}</Text>
-    </BlurView>
+    </GlassSurface>
   </Animated.View>
 );
 
@@ -54,21 +90,15 @@ export default function WelcomeScreen() {
         console.log("🔄 [WELCOME] User already logged in, redirecting:", {
           role: user.role,
         });
-      if (
-        Platform.OS === "web" &&
-        (user.role === "supervisor" || user.role === "admin")
-      ) {
-        router.replace("/admin/metrics" as any);
-      } else if (user.role === "supervisor" || user.role === "admin") {
-        router.replace("/supervisor/dashboard" as any);
-      } else {
-        router.replace("/staff/home" as any);
-      }
+      const target = getRouteForRole(user.role as UserRole);
+      router.replace(target as any);
     }
   }, [user, isLoading, router]);
 
   const handlePress = (route: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     router.push(route as any);
   };
 
@@ -154,9 +184,9 @@ export default function WelcomeScreen() {
             activeOpacity={0.7}
             style={styles.registerButtonWrapper}
           >
-            <BlurView intensity={10} tint="light" style={styles.registerButton}>
+            <GlassSurface intensity={10} tint="light" style={styles.registerButton}>
               <Text style={styles.registerButtonText}>Create Account</Text>
-            </BlurView>
+            </GlassSurface>
           </TouchableOpacity>
         </Animated.View>
 

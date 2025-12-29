@@ -1,7 +1,7 @@
 import logging
-from typing import Any, List
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from backend.auth.dependencies import get_current_user
 from backend.sql_server_connector import sql_connector
@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/locations", tags=["Locations"])
 
 
-@router.get("/warehouses", response_model=List[dict[str, Any]])
-async def get_warehouses(
+@router.get("/warehouses", response_model=list[dict[str, Any]])
+def get_warehouses(
     zone: str = None, current_user: dict = Depends(get_current_user)
 ):
     """Fetch all warehouses from ERP, optionally filtered by zone"""
@@ -22,11 +22,35 @@ async def get_warehouses(
             warehouses = sql_connector.get_all_warehouses()
             # Basic in-memory filtering if SQL query doesn't support it yet
             if zone:
-                warehouses = [
-                    w
-                    for w in warehouses
-                    if zone.lower() in w.get("warehouse_name", "").lower()
-                ]
+                z = zone.strip().lower()
+                logger.info(f"Filtering warehouses for zone: {zone}. Total warehouses: {len(warehouses)}")
+
+                if "showroom" in z:
+                    # Showroom usually contains floors
+                    # User Requirement: Explicitly return Ground, First, and Second floors
+                    # regardless of what is in the DB for now, as these are the logical units.
+                    # We map them to virtual IDs that the frontend might expect (based on fallback).
+                    return [
+                        {"warehouse_name": "Ground Floor", "id": "fl_ground"},
+                        {"warehouse_name": "First Floor", "id": "fl_first"},
+                        {"warehouse_name": "Second Floor", "id": "fl_second"},
+                    ]
+                elif "godown" in z:
+                    # Godowns usually contain 'godown'
+                    # User Requirement: Explicitly return Top Godown, Main Godown, and Damage Area
+                    return [
+                        {"warehouse_name": "Top Godown", "id": "wh_top"},
+                        {"warehouse_name": "Main Godown", "id": "wh_main"},
+                        {"warehouse_name": "Damage Area", "id": "wh_damage"},
+                    ]
+                else:
+                    # Generic filter
+                    warehouses = [
+                        w
+                        for w in warehouses
+                        if z in w.get("warehouse_name", "").lower()
+                    ]
+
             return warehouses
 
         # Fallback if connection unavailable
@@ -62,8 +86,8 @@ async def get_warehouses(
         ]
 
 
-@router.get("/zones", response_model=List[dict[str, Any]])
-async def get_zones(current_user: dict = Depends(get_current_user)):
+@router.get("/zones", response_model=list[dict[str, Any]])
+def get_zones(current_user: dict = Depends(get_current_user)):
     """Fetch all zones (floors) from ERP, with offline fallback"""
     try:
         # Check if ERP sync is enabled/connected

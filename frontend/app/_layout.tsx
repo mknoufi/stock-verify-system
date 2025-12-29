@@ -33,6 +33,7 @@ import {
 import apiClient from "../src/services/httpClient";
 import { initSentry } from "../src/services/sentry";
 import { mmkvStorage } from "../src/services/mmkvStorage";
+import { AuthGuard } from "../src/components/auth/AuthGuard";
 
 // keep the splash screen visible while complete fetching resources
 // On web, wrap in try-catch to prevent blocking
@@ -89,9 +90,33 @@ export default function RootLayout() {
     const initialize = async (): Promise<void> => {
       console.log("🔵 [STEP 5] Initialize function called");
       console.log("🔵 [STEP 5] Starting async initialization...");
+
+      // Emergency fallback: force initialization after 3 seconds
+      const emergencyTimeout = setTimeout(() => {
+        console.error("🚨 [EMERGENCY] FORCING INITIALIZATION AFTER 3s!");
+        console.error("🚨 Current isLoading:", useAuthStore.getState().isLoading);
+        console.error("🚨 Current isInitialized:", isInitialized);
+        useAuthStore.getState().setLoading(false);
+        useAuthStore.setState({ isInitialized: true });
+        setIsInitialized(true);
+        setInitError("Initialization timed out - some features may not work");
+        SplashScreen.hideAsync().catch((e) => console.error("SplashScreen hide failed:", e));
+      }, 3000);
+
       try {
         // Initialize storage first
-        await mmkvStorage.initialize();
+        try {
+          const mmkvPromise = mmkvStorage.initialize();
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("MMKV initialization timeout")),
+              2000,
+            ),
+          );
+          await Promise.race([mmkvPromise, timeoutPromise]);
+        } catch (e) {
+          console.warn("⚠️ MMKV initialization failed or timed out:", e);
+        }
 
         // Initialize backend URL discovery first with timeout
         try {
@@ -147,18 +172,26 @@ export default function RootLayout() {
           // Continue anyway - will use defaults
         }
 
-        // Register background sync task
+        // Register background sync task (with timeout)
         try {
-          await registerBackgroundSync();
+          const syncPromise = registerBackgroundSync();
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Background sync timeout")), 1000)
+          );
+          await Promise.race([syncPromise, timeoutPromise]);
         } catch (syncError) {
           if (__DEV__) {
             console.warn("⚠️ Background sync registration failed:", syncError);
           }
         }
 
-        // Initialize theme
+        // Initialize theme (with timeout)
         try {
-          await ThemeService.initialize();
+          const themePromise = ThemeService.initialize();
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Theme initialization timeout")), 1000)
+          );
+          await Promise.race([themePromise, timeoutPromise]);
         } catch (themeError) {
           if (__DEV__) {
             console.warn("⚠️ Theme initialization failed:", themeError);
@@ -191,7 +224,9 @@ export default function RootLayout() {
 
         // Always set initialized to true, even if some steps failed
         clearTimeout(maxTimeout);
+        clearTimeout(emergencyTimeout);
         useAuthStore.getState().setLoading(false); // Ensure loading is cleared
+        useAuthStore.setState({ isInitialized: true }); // Ensure store is initialized
         setIsInitialized(true);
         setInitError(null);
         console.log("✅ [INIT] Initialization completed successfully");
@@ -220,6 +255,7 @@ export default function RootLayout() {
         // Always set initialized to true to prevent infinite loading
         console.log("⚠️ [INIT] Initialization had errors but continuing...");
         clearTimeout(maxTimeout);
+        clearTimeout(emergencyTimeout);
         useAuthStore.getState().setLoading(false);
         setIsInitialized(true);
         await SplashScreen.hideAsync();
@@ -256,114 +292,11 @@ export default function RootLayout() {
       return;
     }
 
+    // Navigation/redirect logic now handled by AuthGuard to avoid duplication
     if (__DEV__) {
-      console.log("🚀 [NAV] Starting navigation logic:", {
-        user: user ? { role: user.role, username: user.username } : null,
-        currentRoute: segments[0],
-        platform: Platform.OS,
-      });
+      console.log("🚀 [NAV] Initialization complete; navigation handled in AuthGuard");
     }
-
-    // Small delay to prevent redirect loops on web
-    const timer = setTimeout(
-      () => {
-        const currentRoute = segments[0] as string | undefined;
-        const inStaffGroup = currentRoute === "staff";
-        const inSupervisorGroup = currentRoute === "supervisor";
-        const inAdminGroup = currentRoute === "admin";
-        const isRegisterPage = currentRoute === "register";
-        const isLoginPage = currentRoute === "login";
-        const isWelcomePage = currentRoute === "welcome";
-        const isIndexPage = !currentRoute || currentRoute === "index";
-
-        // If no user, redirect to login/register/welcome only
-        if (!user) {
-          if (__DEV__) {
-            console.log("👤 [NAV] No user, checking route:", {
-              isIndexPage,
-              isRegisterPage,
-              isLoginPage,
-              isWelcomePage,
-            });
-          }
-          if (
-            !isIndexPage &&
-            !isRegisterPage &&
-            !isLoginPage &&
-            !isWelcomePage
-          ) {
-            if (__DEV__) {
-              console.log("🔄 [NAV] Redirecting to /welcome (no user)");
-            }
-            router.replace("/welcome");
-          }
-          return;
-        }
-
-        // If user exists and is on auth pages, redirect to their dashboard
-        if (isLoginPage || isRegisterPage || isIndexPage || isWelcomePage) {
-          let targetRoute: string;
-          // On web, always redirect admin/supervisor to admin panel
-          if (
-            Platform.OS === "web" &&
-            (user.role === "supervisor" || user.role === "admin")
-          ) {
-            targetRoute = "/admin/metrics";
-          } else if (user.role === "supervisor" || user.role === "admin") {
-            targetRoute = "/supervisor/dashboard";
-          } else {
-            targetRoute = "/staff/home";
-          }
-
-          if (__DEV__) {
-            console.log("🔄 [NAV] User logged in on auth page, redirecting:", {
-              from: currentRoute,
-              to: targetRoute,
-              role: user.role,
-            });
-          }
-          router.replace(targetRoute as any);
-          return;
-        }
-
-        // Ensure users stay in their role-specific areas
-        // On web, admin/supervisor should go to admin control panel
-        if (
-          Platform.OS === "web" &&
-          (user.role === "supervisor" || user.role === "admin") &&
-          !inAdminGroup
-        ) {
-          if (__DEV__) {
-            console.log(
-              "🔄 [NAV] Redirecting admin/supervisor to control panel",
-            );
-          }
-          router.replace("/admin/control-panel" as any);
-        } else if (
-          (user.role === "supervisor" || user.role === "admin") &&
-          !inSupervisorGroup &&
-          !inAdminGroup
-        ) {
-          if (__DEV__) {
-            console.log("🔄 [NAV] Redirecting supervisor/admin to dashboard");
-          }
-          router.replace("/supervisor/dashboard" as any);
-        } else if (user.role === "staff" && !inStaffGroup) {
-          if (__DEV__) {
-            console.log("🔄 [NAV] Redirecting staff to home");
-          }
-          router.replace("/staff/home" as any);
-        } else {
-          if (__DEV__) {
-            console.log("✅ [NAV] User is in correct area, no redirect needed");
-          }
-        }
-      },
-      Platform.OS === "web" ? 200 : 100,
-    );
-
-    return () => clearTimeout(timer);
-  }, [isInitialized, isLoading, router, segments, user]);
+  }, [isInitialized, isLoading, segments, user]);
 
   // Show loading state to prevent blank screen (both web and mobile)
   if (!isInitialized || isLoading) {
@@ -497,20 +430,22 @@ export default function RootLayout() {
         <ThemeProvider>
           <UnistylesThemeProvider>
             <ToastProvider>
-              <StatusBar style={theme.isDark ? "light" : "dark"} />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: "#121212" },
-                }}
-              >
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="login" options={{ headerShown: false }} />
-                <Stack.Screen name="welcome" />
-                <Stack.Screen name="register" />
-                <Stack.Screen name="help" />
-                <Stack.Screen name="+not-found" />
-              </Stack>
+              <AuthGuard>
+                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: "#121212" },
+                  }}
+                >
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="login" options={{ headerShown: false }} />
+                  <Stack.Screen name="welcome" />
+                  <Stack.Screen name="register" />
+                  <Stack.Screen name="help" />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+              </AuthGuard>
             </ToastProvider>
           </UnistylesThemeProvider>
         </ThemeProvider>

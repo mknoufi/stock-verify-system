@@ -9,10 +9,12 @@ export interface Item {
   barcode?: string;
   mrp?: number;
   stock_qty?: number;
+  current_stock?: number;
   category?: string;
   subcategory?: string;
   uom?: string;
   uom_name?: string;
+  uom_code?: string;
   item_group?: string;
   location?: string;
   warehouse?: string; // warehouse location (alias for location in some contexts)
@@ -28,6 +30,15 @@ export interface Item {
   manual_barcode?: string;
   unit2_barcode?: string;
   unit_m_barcode?: string;
+  description?: string;
+  batches?: ItemBatch[];
+  /**
+   * Metadata flags used throughout API/cache flows
+   */
+  _source?: string;
+  _cachedAt?: string;
+  _stale?: boolean;
+  _degraded?: boolean;
 }
 
 export type ScannerMode = "item" | "serial";
@@ -166,4 +177,9 @@ export interface CountLineBatch {
   condition_details?: string;
   batch_number?: string;
   expiry_date?: string;
+  batch_no?: string;
+  barcode?: string;
+  stock_qty?: number;
 }
+
+export type ItemBatch = CountLineBatch;

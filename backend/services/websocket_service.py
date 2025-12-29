@@ -4,7 +4,6 @@ Handles real-time connections and broadcasting for stock updates.
 """
 
 import logging
-from typing import Dict, List, Optional
 
 from fastapi import WebSocket
 
@@ -18,11 +17,11 @@ class ConnectionManager:
     """
 
     def __init__(self):
-        # Store active connections: user_id -> List[WebSocket]
+        # Store active connections: user_id -> list[WebSocket]
         # A user might be connected from multiple devices/tabs
-        self.active_connections: Dict[str, List[WebSocket]] = {}
+        self.active_connections: dict[str, list[WebSocket]] = {}
         # Store role mapping: user_id -> role
-        self.user_roles: Dict[str, str] = {}
+        self.user_roles: dict[str, str] = {}
 
     async def connect(self, websocket: WebSocket, user_id: str, role: str):
         """Accept a new WebSocket connection."""

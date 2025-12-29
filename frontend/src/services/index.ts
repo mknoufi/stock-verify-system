@@ -16,7 +16,7 @@ export {
 } from "./api";
 
 // Auth services
-export { useAuthStore } from "./authStore";
+export { useAuthStore } from "../store/authStore";
 
 // Toast service
 export {

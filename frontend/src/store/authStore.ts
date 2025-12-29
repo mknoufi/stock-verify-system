@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { secureStorage } from "../services/storage/secureStorage";
 import apiClient from "../services/httpClient";
 import { useSettingsStore } from "./settingsStore";
+import { setUnauthorizedHandler } from "../services/authUnauthorizedHandler";
 
 interface User {
   id: string;
@@ -204,10 +205,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (loading: boolean) => set({ isLoading: loading }),
 
   loadStoredAuth: async () => {
+    console.log('🔐 [AUTH] Loading stored auth...');
     set({ isLoading: true });
     try {
       const storedUser = await secureStorage.getItem(AUTH_STORAGE_KEY);
+      console.log('🔐 [AUTH] Stored user retrieved:', !!storedUser);
       const storedToken = await secureStorage.getItem(TOKEN_STORAGE_KEY);
+      console.log('🔐 [AUTH] Stored token retrieved:', !!storedToken);
 
       if (storedUser && storedToken) {
         const user = JSON.parse(storedUser) as User;
@@ -220,17 +224,25 @@ export const useAuthStore = create<AuthState>((set) => ({
           isInitialized: true,
         });
       } else {
+        console.log('🔐 [AUTH] No stored credentials found');
         set({
           isLoading: false,
           isInitialized: true,
         });
       }
     } catch (error) {
-      console.error("Failed to load stored auth:", error);
+      console.error("🔐 [AUTH] Failed to load stored auth:", error);
       set({
         isLoading: false,
         isInitialized: true,
       });
+    } finally {
+      console.log('🔐 [AUTH] loadStoredAuth completed');
     }
   },
 }));
+
+// Register a global unauthorized handler for the HTTP client without creating a circular dependency.
+setUnauthorizedHandler(() => {
+  void useAuthStore.getState().logout();
+});

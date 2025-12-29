@@ -18,33 +18,49 @@ import {
   getItemFromCache,
   cacheCountLine,
   getCountLinesBySessionFromCache,
+  isCacheStale,
+  type DataSource,
 } from "../offline/offlineStorage";
+import { createOfflineCountLine, setDeviceContext } from "../offline/offlineCountLine";
+import {
+  isOnline as checkIsOnline,
+  getNetworkStatus,
+  isDefinitelyOffline,
+  type NetworkStatus
+} from "../../utils/network";
+import { AppError } from "../../utils/errors";
+import { createLogger } from "../logging";
+import { generateOfflineId } from "../../utils/uuid";
 
-// Check if online - simplified logic for better reliability
+const log = createLogger('ApiService');
+
+/**
+ * Response with source metadata for transparency about data freshness
+ */
+export interface ApiResponseWithSource<T> {
+  data: T;
+  _source: DataSource;
+  _cachedAt?: string | null;
+  _stale?: boolean;
+  _degraded?: boolean;
+}
+
+// Check if online - uses three-state network model for better reliability
 export const isOnline = () => {
-  const state = useNetworkStore.getState();
-  const online = state.isOnline && state.isInternetReachable !== false;
+  const { status, isOnline: rawOnline, isInternetReachable, connectionType } = getNetworkStatus();
 
   // Debug logging
-  __DEV__ &&
-    console.log("🌐 Network Status Check:", {
-      isOnline: state.isOnline,
-      isInternetReachable: state.isInternetReachable,
-      connectionType: state.connectionType,
-      result: online,
-    });
+  log.debug("Network Status Check", {
+    status,
+    isOnline: rawOnline,
+    isInternetReachable,
+    connectionType,
+  });
 
-  // If network state is unknown or null, assume online (fail-safe for API calls)
-  if (state.isOnline === undefined || state.isOnline === null) {
-    __DEV__ &&
-      console.log("🌐 Network state unknown, assuming ONLINE for API calls");
-    return true;
-  }
-
-  return online;
+  // Use three-state logic: only skip API if definitely offline
+  return status !== 'OFFLINE';
 };
 
-// Create session (with offline support)
 // Create session (with offline support)
 export const createSession = async (
   params: string | { warehouse: string; type?: string },
@@ -52,25 +68,27 @@ export const createSession = async (
   const warehouse = typeof params === "string" ? params : params.warehouse;
   const sessionType = typeof params !== "string" ? params.type : undefined;
 
+  // Helper to create offline session - single source of truth
+  const createOfflineSession = () => ({
+    id: generateOfflineId(),
+    warehouse,
+    status: "OPEN",
+    type: sessionType || "STANDARD",
+    staff_user: "offline_user",
+    staff_name: "Offline User",
+    started_at: new Date().toISOString(),
+    total_items: 0,
+    total_variance: 0,
+    _source: 'offline' as DataSource,
+    _createdOffline: true,
+  });
+
   try {
     if (!isOnline()) {
-      // Create offline session
-      // Create offline session
-      const offlineSession = {
-        id: `offline_${Date.now()}`,
-        warehouse,
-        status: "OPEN",
-        type: sessionType || "STANDARD",
-        staff_user: "offline_user",
-        staff_name: "Offline User",
-        started_at: new Date().toISOString(),
-        total_items: 0,
-        total_variance: 0,
-      };
-
+      log.info('Creating offline session', { warehouse, type: sessionType });
+      const offlineSession = createOfflineSession();
       await cacheSession(offlineSession);
       await addToOfflineQueue("session", offlineSession);
-
       return offlineSession;
     }
 
@@ -83,30 +101,14 @@ export const createSession = async (
     await cacheSession(response.data);
     return response.data;
   } catch (error) {
-    // Use warn instead of error to avoid blocking the UI with LogBox since we have a fallback
-    __DEV__ &&
-      console.warn(
-        "Error creating session (switching to offline mode):",
-        error,
-      );
+    log.warn("Error creating session, switching to offline mode", {
+      error: error instanceof Error ? error.message : String(error),
+    });
 
-    // Fallback to offline mode
-    // Fallback to offline mode
-    const offlineSession = {
-      id: `offline_${Date.now()}`,
-      warehouse,
-      status: "OPEN",
-      type: sessionType || "STANDARD",
-      staff_user: "offline_user",
-      staff_name: "Offline User",
-      started_at: new Date().toISOString(),
-      total_items: 0,
-      total_variance: 0,
-    };
-
+    // Fallback to offline mode using same helper
+    const offlineSession = createOfflineSession();
     await cacheSession(offlineSession);
     await addToOfflineQueue("session", offlineSession);
-
     return offlineSession;
   }
 };
@@ -177,8 +179,11 @@ export const getSessions = async (page: number = 1, pageSize: number = 20) => {
       items: sessions,
       pagination,
     };
-  } catch (error) {
-    __DEV__ && console.error("Error getting sessions:", error);
+  } catch (error: any) {
+    // Suppress logging for 401 errors as they are handled by the interceptor
+    if (error?.response?.status !== 401) {
+      __DEV__ && console.error("Error getting sessions:", error);
+    }
 
     // Fallback to cache
     const cache = await getSessionsCache();
@@ -394,7 +399,7 @@ export const getSessionsAnalytics = async () => {
     const response = await api.get("/api/sessions/analytics");
     return response.data;
   } catch (error: unknown) {
-    __DEV__ && console.error("Get sessions analytics error:", error);
+    log.error("Get sessions analytics error", { error: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 };
@@ -402,71 +407,78 @@ export const getSessionsAnalytics = async () => {
 // Get item by barcode (with offline support, retry, and auto recovery)
 /**
  * Lookup an item by barcode with validation, retry and cache fallback.
+ * Returns item with source metadata indicating freshness.
  * @param barcode Barcode string scanned/entered
  * @param retryCount Number of retries for transient failures
  */
 export const getItemByBarcode = async (
   barcode: string,
   retryCount: number = 3,
-) => {
+): Promise<Item & { _source?: DataSource; _cachedAt?: string; _stale?: boolean }> => {
   // Validate and normalize barcode before making API call
   const validation = validateBarcode(barcode);
   if (!validation.valid || !validation.value) {
-    throw new Error(validation.error || "Invalid barcode format");
+    throw new AppError({
+      code: 'INVALID_BARCODE',
+      severity: 'USER',
+      message: validation.error || "Invalid barcode format",
+      userMessage: 'Please check the barcode and try again.',
+      context: { barcode },
+    });
   }
 
   // Use normalized barcode if available (6-digit format for numeric barcodes)
   const trimmedBarcode = validation.value;
 
-  __DEV__ &&
-    console.log(
-      `🔍 Looking up barcode: ${trimmedBarcode} (original: ${barcode})`,
-    );
+  log.debug(`Looking up barcode: ${trimmedBarcode}`, { original: barcode });
+
+  // Helper to return cached item with source metadata
+  const returnCachedItem = (cached: any): Item & { _source: DataSource; _cachedAt: string; _stale: boolean } => {
+    const stale = isCacheStale(cached.cached_at);
+    const stockValue = cached.current_stock ?? cached.stock_qty ?? 0;
+    return {
+      id: cached.item_code,
+      name: cached.item_name,
+      item_code: cached.item_code,
+      barcode: cached.barcode,
+      item_name: cached.item_name,
+      description: cached.description,
+      stock_qty: stockValue,
+      current_stock: stockValue, // Also set current_stock for item-detail.tsx compatibility
+      uom_name: cached.uom_name ?? cached.uom,
+      mrp: cached.mrp,
+      sales_price: cached.sales_price,
+      category: cached.category,
+      subcategory: cached.subcategory,
+      // Source metadata
+      _source: 'cache',
+      _cachedAt: cached.cached_at,
+      _stale: stale,
+    };
+  };
 
   // Check if offline first - only use cache if truly offline
   if (!isOnline()) {
-    __DEV__ && console.log("📱 Offline mode - searching cache");
-    try {
-      const items = await searchItemsInCache(trimmedBarcode);
-      if (items.length > 0) {
-        __DEV__ && console.log("✅ Found in cache:", items[0]?.item_code);
-        const cached = items[0];
-        if (!cached) {
-          throw new Error(
-            "Offline: Cache returned an empty item. Connect to internet to search server.",
-          );
-        }
-        return {
-          id: cached.item_code,
-          name: cached.item_name,
-          item_code: cached.item_code,
-          barcode: cached.barcode,
-          item_name: cached.item_name,
-          description: cached.description,
-          stock_qty: cached.current_stock,
-          uom_name: cached.uom_name ?? cached.uom,
-          mrp: cached.mrp,
-          sales_price: cached.sales_price,
-          category: cached.category,
-          subcategory: cached.subcategory,
-        };
-      }
-      throw new Error(
-        "Item not found in offline cache. Connect to internet to search server.",
-      );
-    } catch {
-      throw new Error(
-        "Offline: Item not found in cache. Connect to internet to search server.",
-      );
+    log.debug("Offline mode - searching cache");
+    const items = await searchItemsInCache(trimmedBarcode);
+    if (items.length > 0 && items[0]) {
+      log.debug("Found in cache", { itemCode: items[0].item_code });
+      return returnCachedItem(items[0]);
     }
+    throw new AppError({
+      code: 'ITEM_CACHE_MISS',
+      severity: 'USER',
+      message: `Item not found in offline cache: ${trimmedBarcode}`,
+      userMessage: 'Item not found in offline cache. Connect to internet to search.',
+      context: { barcode: trimmedBarcode },
+    });
   }
 
   // Online - try API first, then cache as fallback
   try {
-    __DEV__ && console.log("🌐 Online mode - calling API");
+    log.debug("Online mode - calling API");
 
-    // Direct API call with retry
-    // Use enhanced v2 endpoint for better performance and metadata
+    // Direct API call with retry (only retries transient errors)
     const response = await retryWithBackoff(
       () =>
         api.get(
@@ -475,6 +487,16 @@ export const getItemByBarcode = async (
       {
         retries: retryCount,
         backoffMs: 1000,
+        // Only retry on server errors and network issues, not client errors
+        shouldRetry: (error: any) => {
+          const status = error?.response?.status;
+          // Don't retry 4xx errors (client errors like 404, 400)
+          if (status && status >= 400 && status < 500) {
+            return false;
+          }
+          // Retry network errors and 5xx server errors
+          return true;
+        },
       },
     );
 
@@ -483,43 +505,56 @@ export const getItemByBarcode = async (
 
     // Check if we actually got an item
     if (!itemData || !itemData.item_code) {
-      throw new Error(
-        `Item not found: Barcode '${trimmedBarcode}' not in database`,
-      );
+      throw new AppError({
+        code: 'ITEM_NOT_FOUND',
+        severity: 'USER',
+        message: `Item not found: Barcode '${trimmedBarcode}' not in database`,
+        userMessage: `No item found for barcode ${trimmedBarcode}`,
+        context: { barcode: trimmedBarcode },
+      });
     }
 
     // Normalize backend fields to the canonical frontend Item interface.
-    // Backend field names can vary (e.g. uom vs uom_name, sale_price vs sales_price).
     const displayName =
       itemData.item_name || itemData.category || `Item ${itemData.item_code}`;
 
-    const normalizedItem: any = {
-      ...itemData,
+    // Fix: Use proper fallback chain without redundancy
+    const stockQty = itemData.stock_qty ?? itemData.current_stock ?? 0;
+
+    const normalizedItem: Item & { _source: DataSource } = {
       id: itemData.id || itemData._id || itemData.item_code,
       name: itemData.name || displayName,
+      item_code: itemData.item_code,
+      barcode: itemData.barcode,
       item_name: itemData.item_name || displayName,
-      // Prefer the human-readable UOM if available.
       uom_name: itemData.uom_name ?? itemData.uom ?? itemData.uom_code,
-      // Prefer sales_price, but accept alternate backend names.
-      sales_price:
-        itemData.sales_price ?? itemData.sale_price ?? itemData.standard_rate,
+      uom: itemData.uom_name ?? itemData.uom ?? itemData.uom_code,
+      sales_price: itemData.sales_price ?? itemData.sale_price ?? itemData.standard_rate,
+      sale_price: itemData.sale_price ?? itemData.sales_price,
       mrp: itemData.mrp,
       category: itemData.category,
       subcategory: itemData.subcategory,
-      // Normalize stock quantity naming differences.
-      stock_qty:
-        itemData.stock_qty ?? itemData.current_stock ?? itemData.stock_qty,
+      warehouse: itemData.warehouse,
+      stock_qty: stockQty,
+      current_stock: stockQty, // Also set current_stock for item-detail.tsx compatibility
+      batch_id: itemData.batch_id,
+      manual_barcode: itemData.manual_barcode,
+      unit2_barcode: itemData.unit2_barcode,
+      unit_m_barcode: itemData.unit_m_barcode,
+      // Source metadata
+      _source: 'api',
     };
 
-    __DEV__ && console.log("✅ Found via API:", normalizedItem.item_code);
+    log.debug("Found via API", { itemCode: normalizedItem.item_code });
+
 
     // Cache the item for future offline use
     try {
       await cacheItem({
         item_code: normalizedItem.item_code,
         barcode: normalizedItem.barcode,
-        item_name: normalizedItem.item_name,
-        description: normalizedItem.description,
+        item_name: normalizedItem.item_name || normalizedItem.name || normalizedItem.item_code || '',
+        description: (normalizedItem as any).description,
         uom: normalizedItem.uom ?? normalizedItem.uom_code ?? normalizedItem.uom_name,
         uom_name: normalizedItem.uom_name,
         mrp: normalizedItem.mrp,
@@ -533,116 +568,102 @@ export const getItemByBarcode = async (
         unit_m_barcode: normalizedItem.unit_m_barcode,
         batch_id: normalizedItem.batch_id,
         current_stock:
-          normalizedItem.current_stock || normalizedItem.stock_qty, // Handle field name difference
+          normalizedItem.current_stock || normalizedItem.stock_qty,
       });
     } catch (cacheError) {
-      __DEV__ && console.warn("Failed to cache item:", cacheError);
+      log.warn("Failed to cache item", { error: cacheError instanceof Error ? cacheError.message : String(cacheError) });
       // Don't fail the whole operation for cache errors
     }
 
     return normalizedItem;
   } catch (apiError: any) {
     const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
-    __DEV__ && console.error("❌ API call failed:", errorMessage);
+    log.error("API call failed", { error: errorMessage });
 
-    // Only fallback to cache if API fails
-    __DEV__ && console.log("🔄 API failed, trying cache fallback");
+    // Only fallback to cache if API fails (degraded mode)
+    log.debug("API failed, trying cache fallback");
     try {
       const items = await searchItemsInCache(trimmedBarcode);
-      if (items.length > 0) {
-        __DEV__ &&
-          console.log("✅ Found in cache fallback:", items[0]?.item_code);
-        return items[0];
+      if (items.length > 0 && items[0]) {
+        log.debug("Found in cache fallback", { itemCode: items[0].item_code });
+        // Return with degraded metadata to indicate stale data
+        return {
+          ...returnCachedItem(items[0]),
+          _source: 'cache' as DataSource,
+          _degraded: true, // API failed, cache fallback
+        } as any;
       }
-
       // Cache is empty too
-      throw new Error("Item not found in cache");
+      throw new AppError({
+        code: 'ITEM_NOT_FOUND',
+        severity: 'USER',
+        message: "Item not found in cache",
+        userMessage: `Barcode ${trimmedBarcode} not found. Please try again when online.`,
+        context: { barcode: trimmedBarcode },
+      });
     } catch (cacheError: any) {
-      if (cacheError.message !== "Item not found in cache") {
-        __DEV__ && console.error("❌ Cache fallback also failed:", cacheError);
-      } else {
-        __DEV__ && console.log("ℹ️ Item not found in cache either");
+      // If it's already an AppError, just rethrow
+      if (cacheError instanceof AppError) {
+        throw cacheError;
       }
 
-      // Provide helpful error message
-      if (apiError.response?.status === 404) {
-        throw new Error(
-          `Item not found: Barcode '${trimmedBarcode}' not in database`,
-        );
-      } else if (apiError.response?.status === 400) {
-        __DEV__ &&
-          console.error("❌ API Bad Request Details:", apiError.response?.data);
-        throw new Error(
-          apiError.response?.data?.detail?.message ||
-          "Invalid request parameters",
-        );
-      } else if (
-        apiError.code === "ECONNABORTED" ||
-        apiError.message?.includes("timeout")
-      ) {
-        throw new Error("Connection timeout. Check your internet connection.");
-      } else if (apiError.code === "ECONNREFUSED" || !apiError.response) {
-        throw new Error(
-          "Cannot connect to server. Check if backend is running.",
-        );
-      } else {
-        const errorMsg =
-          apiError.response?.data?.detail ||
-          apiError.message ||
-          "Unknown error";
-        throw new Error(
-          `Barcode lookup failed: ${typeof errorMsg === "object" ? JSON.stringify(errorMsg) : errorMsg}`,
-        );
-      }
+      log.error("Cache fallback also failed", { error: cacheError.message });
+
+      // Provide helpful error message based on API error type
+      throw AppError.fromApiError(apiError, {
+        barcode: trimmedBarcode,
+        fallbackAttempted: true,
+      });
     }
   }
 };
 
 // Search items (with offline support)
-export const searchItems = async (query: string): Promise<Item[]> => {
+/**
+ * Search items by query with offline fallback.
+ * Returns items with source metadata.
+ */
+export const searchItems = async (query: string): Promise<(Item & { _source?: DataSource })[]> => {
+  // Helper to map cached items to frontend Item interface
+  const mapCachedItems = (items: any[], source: DataSource = 'cache'): (Item & { _source: DataSource })[] => {
+    return items.map((item) => ({
+      id: item.item_code,
+      name: item.item_name,
+      item_code: item.item_code,
+      barcode: item.barcode,
+      item_name: item.item_name,
+      description: item.description,
+      uom: item.uom,
+      stock_qty: item.current_stock,
+      manual_barcode: item.manual_barcode,
+      unit2_barcode: item.unit2_barcode,
+      unit_m_barcode: item.unit_m_barcode,
+      batch_id: item.batch_id,
+      _source: source,
+    }));
+  };
+
   try {
     if (!isOnline()) {
-      // Search in cache
+      log.debug("Offline mode - searching cache", { query });
       const cachedItems = await searchItemsInCache(query);
-      return cachedItems.map((item) => ({
-        id: item.item_code,
-        name: item.item_name,
-        item_code: item.item_code,
-        barcode: item.barcode,
-        item_name: item.item_name,
-        description: item.description,
-        uom: item.uom,
-        stock_qty: item.current_stock,
-        manual_barcode: item.manual_barcode,
-        unit2_barcode: item.unit2_barcode,
-        unit_m_barcode: item.unit_m_barcode,
-        batch_id: item.batch_id,
-      }));
+      return mapCachedItems(cachedItems, 'cache');
     }
 
     // Use new optimized search endpoint (fallback to cache on network errors)
     let response;
     try {
+      log.debug("Searching via API", { query });
       response = await api.get("/api/items/search/optimized", {
         params: { q: query },
       });
-    } catch (error) {
-      __DEV__ && console.warn("Search API failed, falling back to cache:", error);
+    } catch (error: any) {
+      log.warn("Search API failed, falling back to cache", { error: error.message });
       const cachedItems = await searchItemsInCache(query);
-      return cachedItems.map((item) => ({
-        id: item.item_code,
-        name: item.item_name,
-        item_code: item.item_code,
-        barcode: item.barcode,
-        item_name: item.item_name,
-        description: item.description,
-        uom: item.uom,
-        stock_qty: item.current_stock,
-        manual_barcode: item.manual_barcode,
-        unit2_barcode: item.unit2_barcode,
-        unit_m_barcode: item.unit_m_barcode,
-        batch_id: item.batch_id,
-      }));
+      return mapCachedItems(cachedItems, 'cache').map(item => ({
+        ...item,
+        _degraded: true, // API failed
+      } as any));
     }
 
     // Handle ApiResponse wrapper
@@ -651,8 +672,8 @@ export const searchItems = async (query: string): Promise<Item[]> => {
     const items = data.items || [];
 
     // Map backend fields to frontend Item interface
-    const mappedItems: Item[] = items.map((item: Record<string, unknown>) => {
-      const mapped = { ...item } as unknown as Item;
+    const mappedItems: (Item & { _source: DataSource })[] = items.map((item: Record<string, unknown>) => {
+      const mapped = { ...item } as unknown as Item & { _source: DataSource };
       if (item.item_name && !mapped.name) {
         mapped.name = item.item_name as string;
       }
@@ -664,8 +685,11 @@ export const searchItems = async (query: string): Promise<Item[]> => {
       } else if (item.item_code && !mapped.id) {
         mapped.id = item.item_code as string;
       }
+      mapped._source = 'api';
       return mapped;
     });
+
+    log.debug("Found items via API", { count: mappedItems.length });
 
     // Cache the items
     for (const item of mappedItems) {
@@ -673,7 +697,7 @@ export const searchItems = async (query: string): Promise<Item[]> => {
         item_code: item.item_code!,
         barcode: item.barcode,
         item_name: item.item_name || item.name,
-        description: (item as any).description, // Maintain legacy fields if needed
+        description: (item as any).description,
         uom: (item as any).uom_name || (item as any).uom,
         current_stock: item.stock_qty,
         mrp: item.mrp,
@@ -689,25 +713,18 @@ export const searchItems = async (query: string): Promise<Item[]> => {
     }
 
     return mappedItems;
-  } catch (error) {
-    __DEV__ && console.error("Error searching items:", error);
+  } catch (error: any) {
+    log.error("Error searching items", { error: error.message });
 
     // Fallback to cache
     try {
       const cachedItems = await searchItemsInCache(query);
-      return cachedItems.map((item) => ({
-        id: item.item_code,
-        name: item.item_name,
-        item_code: item.item_code,
-        barcode: item.barcode,
-        item_name: item.item_name,
-        description: item.description,
-        uom: item.uom,
-        stock_qty: item.current_stock,
-        // Map other necessary fields or leave undefined
-      }));
-    } catch (fallbackError) {
-      __DEV__ && console.error("Cache fallback error:", fallbackError);
+      return mapCachedItems(cachedItems, 'cache').map(item => ({
+        ...item,
+        _degraded: true,
+      } as any));
+    } catch (fallbackError: any) {
+      log.error("Cache fallback error", { error: fallbackError.message });
       return [];
     }
   }
@@ -979,129 +996,133 @@ export const identifyItem = async (imageUri: string): Promise<Item[]> => {
 };
 
 // Create count line (with offline support)
-export const createCountLine = async (countData: CreateCountLinePayload) => {
+/**
+ * Create a count line with offline fallback.
+ * Uses createOfflineCountLine helper for consistent offline object creation.
+ */
+export const createCountLine = async (countData: CreateCountLinePayload): Promise<any & { _source?: DataSource; _offline?: boolean }> => {
+  // Helper to resolve item name from cache
+  const resolveItemName = async (): Promise<string> => {
+    try {
+      const cachedItem = await getItemFromCache(countData.item_code);
+      if (cachedItem) return cachedItem.item_name;
+    } catch {
+      // Ignore cache lookup error
+    }
+    return "Unknown Item";
+  };
+
+  // Get user context once
+  const user = useAuthStore.getState().user;
+
   try {
     if (!isOnline()) {
-      // Create offline count line
-      const user = useAuthStore.getState().user;
+      log.debug("Offline mode - creating offline count line");
 
-      // Try to get item name from cache if not available
-      let itemName = "Unknown Item";
-      try {
-        const cachedItem = await getItemFromCache(countData.item_code);
-        if (cachedItem) itemName = cachedItem.item_name;
-      } catch {
-        // Ignore cache lookup error
-      }
-
-      const offlineCountLine = {
-        _id: `offline_${Date.now()}`,
-        ...countData,
-        rack_no: countData.rack_no || undefined,
-        floor_no: countData.floor_no || undefined,
-        mark_location: countData.mark_location || undefined,
-        sr_no: countData.sr_no || undefined,
-        manufacturing_date: countData.manufacturing_date || undefined,
-        variance_reason: countData.variance_reason || undefined,
-        variance_note: countData.variance_note || undefined,
-        remark: countData.remark || undefined,
-        damage_included: countData.damage_included || undefined,
-        damaged_qty: countData.damaged_qty || undefined,
-        non_returnable_damaged_qty: countData.non_returnable_damaged_qty || undefined,
-        item_name: itemName,
-        counted_by: user?.username || "offline_user",
-        counted_at: new Date().toISOString(),
-      };
+      const itemName = await resolveItemName();
+      const offlineCountLine = (await createOfflineCountLine(countData, {
+        username: user?.username,
+        itemName,
+      })) as any;
 
       await cacheCountLine(offlineCountLine);
       await addToOfflineQueue("count_line", offlineCountLine);
 
-      return offlineCountLine;
+      log.debug("Created offline count line", { id: offlineCountLine._id });
+      return {
+        ...offlineCountLine,
+        _source: 'local' as DataSource,
+        _offline: true,
+      };
     }
 
+    // Online - make API call
+    log.debug("Online mode - creating count line via API");
     const response = await api.post("/api/count-lines", countData);
     await cacheCountLine(response.data);
-    return response.data;
-  } catch (error) {
-    __DEV__ && console.error("Error creating count line:", error);
 
-    // Fallback to offline mode
-    const user = useAuthStore.getState().user;
-
-    // Try to get item name from cache if not available
-    let itemName = "Unknown Item";
-    try {
-      const cachedItem = await getItemFromCache(countData.item_code);
-      if (cachedItem) itemName = cachedItem.item_name;
-    } catch {
-      // Ignore cache lookup error
-    }
-
-    const offlineCountLine = {
-      _id: `offline_${Date.now()}`,
-      ...countData,
-      rack_no: countData.rack_no || undefined,
-      floor_no: countData.floor_no || undefined,
-      mark_location: countData.mark_location || undefined,
-      sr_no: countData.sr_no || undefined,
-      manufacturing_date: countData.manufacturing_date || undefined,
-      variance_reason: countData.variance_reason || undefined,
-      variance_note: countData.variance_note || undefined,
-      remark: countData.remark || undefined,
-      damage_included: countData.damage_included || undefined,
-      damaged_qty: countData.damaged_qty || undefined,
-      non_returnable_damaged_qty: countData.non_returnable_damaged_qty || undefined,
-      item_name: itemName,
-      counted_by: user?.username || "offline_user",
-      counted_at: new Date().toISOString(),
+    log.debug("Created count line via API", { id: response.data._id || response.data.id });
+    return {
+      ...response.data,
+      _source: 'api' as DataSource,
     };
+  } catch (error: any) {
+    log.error("Error creating count line, falling back to offline", {
+      error: error instanceof Error ? error.message : String(error)
+    });
+
+    // Fallback to offline mode using the same helper
+    const itemName = await resolveItemName();
+    const offlineCountLine = (await createOfflineCountLine(countData, {
+      username: user?.username,
+      itemName,
+    })) as any; // Cast to any to avoid double Promise confusion
 
     await cacheCountLine(offlineCountLine);
     await addToOfflineQueue("count_line", offlineCountLine);
 
-    return offlineCountLine;
+    log.debug("Created offline count line as fallback", { id: offlineCountLine._id });
+    return {
+      ...offlineCountLine,
+      _source: 'local' as DataSource,
+      _offline: true,
+      _degraded: true, // API failed, fallback
+    } as any;
   }
 };
 
 // Get count lines by session (with offline support)
+/**
+ * Get count lines for a session with proper pagination support (including offline).
+ */
 export const getCountLines = async (
   sessionId: string,
   page: number = 1,
   pageSize: number = 50,
   verified?: boolean,
-) => {
+): Promise<{ items: any[]; pagination: any; _source?: DataSource; _stale?: boolean; _degraded?: boolean }> => {
+  // Helper to create proper paginated response from array
+  const paginateItems = (
+    items: any[],
+    requestedPage: number,
+    requestedPageSize: number,
+    source: DataSource = 'cache',
+    stale: boolean = false,
+  ) => {
+    const total = items.length;
+    const totalPages = Math.ceil(total / requestedPageSize);
+    const startIndex = (requestedPage - 1) * requestedPageSize;
+    const endIndex = startIndex + requestedPageSize;
+    const pageItems = items.slice(startIndex, endIndex);
+
+    return {
+      items: pageItems,
+      pagination: {
+        page: requestedPage,
+        page_size: requestedPageSize,
+        total,
+        total_pages: totalPages,
+        has_next: requestedPage < totalPages,
+        has_prev: requestedPage > 1,
+      },
+      _source: source,
+      _stale: stale,
+    };
+  };
+
   try {
     if (!isOnline()) {
-      // Return cached count lines
+      log.debug("Offline mode - returning cached count lines with pagination");
+
+      // Return cached count lines with proper pagination
       const cachedLines = await getCountLinesBySessionFromCache(sessionId);
+
       // Filter by verified status if provided
-      if (verified !== undefined) {
-        const filtered = cachedLines.filter(
-          (line) => line.verified === verified,
-        );
-        return {
-          items: filtered,
-          pagination: {
-            page: 1,
-            page_size: filtered.length,
-            total: filtered.length,
-            total_pages: 1,
-            has_next: false,
-            has_prev: false,
-          },
-        };
-      }
-      return {
-        items: cachedLines,
-        pagination: {
-          page: 1,
-          page_size: cachedLines.length,
-          total: cachedLines.length,
-          total_pages: 1,
-          has_next: false,
-          has_prev: false,
-        },
-      };
+      const filteredLines = verified !== undefined
+        ? cachedLines.filter((line) => line.verified === verified)
+        : cachedLines;
+
+      return paginateItems(filteredLines, page, pageSize, 'cache', true);
     }
 
     let url = `/api/count-lines/session/${sessionId}?page=${page}&page_size=${pageSize}`;
@@ -1109,6 +1130,7 @@ export const getCountLines = async (
       url += `&verified=${verified}`;
     }
 
+    log.debug("Fetching count lines from API", { sessionId, page, pageSize });
     const response = await api.get(url);
 
     // Cache count lines
@@ -1123,38 +1145,25 @@ export const getCountLines = async (
       }
     }
 
-    return response.data;
-  } catch (error) {
-    __DEV__ && console.error("Error getting count lines:", error);
-
-    // Fallback to cache
-    const cachedLines = await getCountLinesBySessionFromCache(sessionId);
-    if (verified !== undefined) {
-      const filtered = cachedLines.filter(
-        (line) => line.verified === verified,
-      );
-      return {
-        items: filtered,
-        pagination: {
-          page: 1,
-          page_size: filtered.length,
-          total: filtered.length,
-          total_pages: 1,
-          has_next: false,
-          has_prev: false,
-        },
-      };
-    }
     return {
-      items: cachedLines,
-      pagination: {
-        page: 1,
-        page_size: cachedLines.length,
-        total: cachedLines.length,
-        total_pages: 1,
-        has_next: false,
-        has_prev: false,
-      },
+      ...response.data,
+      _source: 'api' as DataSource,
+    };
+  } catch (error: any) {
+    log.error("Error getting count lines, falling back to cache", {
+      error: error instanceof Error ? error.message : String(error)
+    });
+
+    // Fallback to cache with proper pagination
+    const cachedLines = await getCountLinesBySessionFromCache(sessionId);
+
+    const filteredLines = verified !== undefined
+      ? cachedLines.filter((line) => line.verified === verified)
+      : cachedLines;
+
+    return {
+      ...paginateItems(filteredLines, page, pageSize, 'cache', true),
+      _degraded: true, // API failed, using cache
     };
   }
 };
@@ -2801,8 +2810,10 @@ export const getZones = async () => {
   try {
     const response = await api.get("/api/locations/zones");
     return response.data;
-  } catch (error) {
-    console.error("Error fetching zones:", error);
+  } catch (error: any) {
+    if (error?.response?.status !== 401) {
+      console.error("Error fetching zones:", error);
+    }
     throw error;
   }
 };
@@ -2813,8 +2824,10 @@ export const getWarehouses = async (zone?: string) => {
     const url = zone ? `/api/locations/warehouses?zone=${zone}` : "/api/locations/warehouses";
     const response = await api.get(url);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching warehouses:", error);
+  } catch (error: any) {
+    if (error?.response?.status !== 401) {
+      console.error("Error fetching warehouses:", error);
+    }
     throw error;
   }
 };

@@ -25,8 +25,8 @@ import * as Sharing from "expo-sharing";
 import {
   ItemVerificationAPI,
   VarianceItem,
-} from "../../src/services/api/itemVerificationApi";
-import { ItemFilters, FilterValues } from "../../src/components/ItemFilters";
+} from "../../src/domains/inventory/services/itemVerificationApi";
+import { ItemFilters, FilterValues } from "../../src/domains/inventory/components/ItemFilters";
 import { exportVariancesToCSV, downloadCSV } from "../../src/utils/csvExport";
 import {
   ScreenContainer,

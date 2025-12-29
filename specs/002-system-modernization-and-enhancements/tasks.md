@@ -21,13 +21,13 @@
 - [x] **[Auth]** Update `User` model with `pin_hash`. <!-- id: 8 -->
 - [x] **[Auth]** Implement `POST /api/auth/pin/change` endpoint. <!-- id: 9 -->
 - [x] **[Auth]** Implement `POST /api/auth/login/pin` endpoint. <!-- id: 10 -->
-- [ ] **[Test]** Add tests for PIN change and login flows. <!-- id: 23 -->
+- [x] **[Test]** Add tests for PIN change and login flows. <!-- id: 23 -->
 
 ## Phase 3: Backend: User Preferences & Items
-- [ ] **[Model]** Create `UserPreferences` model in `backend/models/preferences.py`. <!-- id: 11 -->
-- [ ] **[API]** Implement `PUT /api/users/me/preferences` endpoint. <!-- id: 12 -->
-- [ ] **[Test]** Add tests for UserPreferences CRUD. <!-- id: 24 -->
-- [ ] **[API]** Create `backend/api/enhanced_item_api.py` with optimized search. <!-- id: 13 -->
+- [x] **[Model]** Create `UserPreferences` model in `backend/models/preferences.py`. <!-- id: 11 -->
+- [x] **[API]** Implement `PUT /api/users/me/preferences` endpoint. <!-- id: 12 -->
+- [x] **[Test]** Add tests for UserPreferences CRUD. <!-- id: 24 -->
+- [x] **[API]** Create `backend/api/enhanced_item_api.py` with optimized search. <!-- id: 13 -->
 - [ ] **[Test]** Add performance/load tests for enhanced item search. <!-- id: 25 -->
 
 ## Phase 4: Frontend: Core & Settings
@@ -37,7 +37,19 @@
 - [ ] **[UI]** Create `SettingsScreen.tsx` with Theme and Font controls. <!-- id: 16 -->
 - [ ] **[UI]** Integrate `UserPreferences` API with Settings screen. <!-- id: 17 -->
 
-## Phase 6: Polish & Documentation
+## Phase 5: Offline Support
+- [ ] **[Lib]** Setup local database (expo-sqlite) in `frontend/src/services/offline/db.ts`. <!-- id: 18 -->
+- [ ] **[Service]** Implement `SyncQueueService` for offline mutations. <!-- id: 19 -->
+- [ ] **[UI]** Add Offline Mode indicator and Sync status UI. <!-- id: 20 -->
+- [ ] **[Test]** Add tests for offline storage and sync logic. <!-- id: 27 -->
+
+## Phase 6: Analytics & Reporting
+- [ ] **[API]** Create `backend/api/analytics_api.py` endpoints. <!-- id: 31 -->
+- [ ] **[Service]** Implement `backend/services/analytics_service.py` (Variance/Accuracy). <!-- id: 32 -->
+- [ ] **[UI]** Create `AnalyticsDashboard` screen in frontend. <!-- id: 33 -->
+- [ ] **[Test]** Add tests for analytics service. <!-- id: 34 -->
+
+## Phase 7: Polish & Documentation
 - [ ] **[Docs]** Update `docs/codebase_memory_v2.1.md` with new models and API endpoints. <!-- id: 28 -->
 - [ ] **[Docs]** Update `CHANGELOG.md`. <!-- id: 29 -->
 - [ ] **[Verify]** Run full regression test suite. <!-- id: 30 -->

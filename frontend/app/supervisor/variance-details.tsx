@@ -14,7 +14,7 @@ import { StatusBar } from "expo-status-bar";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
-import { ItemVerificationAPI } from "../../src/services/api/itemVerificationApi";
+import { ItemVerificationAPI } from "../../src/domains/inventory/services/itemVerificationApi";
 import {
   ScreenContainer,
   GlassCard,

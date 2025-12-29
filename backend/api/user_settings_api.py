@@ -26,7 +26,7 @@ router = APIRouter(prefix="/api/user", tags=["User Settings"])
 
 
 # Default settings for new users
-DEFAULT_SETTINGS = {
+DEFAULT_SETTINGS: dict[str, Any] = {
     "theme": "light",
     "font_size": "medium",
     "primary_color": "#1976D2",
@@ -151,6 +151,8 @@ async def update_user_settings(
 
         # Fetch and return updated settings
         updated_doc = await db.user_settings.find_one({"user_id": user_id})
+        if not updated_doc:
+            raise HTTPException(status_code=500, detail="Failed to retrieve updated settings")
 
         return UserSettingsResponse(
             status="success",

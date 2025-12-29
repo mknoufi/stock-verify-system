@@ -8,50 +8,41 @@
  */
 
 import React, { useState } from "react";
-import { Stack, useRouter, Slot } from "expo-router";
+import { Stack, Slot } from "expo-router";
 import {
   View,
   StyleSheet,
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { auroraTheme } from "../../src/theme/auroraTheme";
-import { useAuthStore } from "../../src/store/authStore";
-import { SupervisorSidebar } from "../../src/components/navigation";
+import { auroraTheme } from "@/theme/auroraTheme";
+import { RoleLayoutGuard } from "@/components/auth/RoleLayoutGuard";
+import { SupervisorSidebar } from "@/components/navigation";
 
 export default function SupervisorLayout() {
-  const router = useRouter();
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 1024 && Platform.OS === "web";
-  const { user } = useAuthStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Redirect non-supervisor users
-  React.useEffect(() => {
-    if (user && !["supervisor", "admin"].includes(user.role)) {
-      router.replace("/login");
-    }
-  }, [user, router]);
-
-
-  // Web/Tablet: Use sidebar layout
-  if (isLargeScreen) {
-    return (
-      <View style={styles.webContainer}>
-        <SupervisorSidebar
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-        <View style={styles.mainContent}>
-          <Slot />
-        </View>
-      </View>
-    );
-  }
-
-  // Mobile: Use stack navigation
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <RoleLayoutGuard
+      allowedRoles={["supervisor", "admin"]}
+      layoutName="SupervisorLayout"
+    >
+      {isLargeScreen ? (
+        <View style={styles.webContainer}>
+          <SupervisorSidebar
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+          <View style={styles.mainContent}>
+            <Slot />
+          </View>
+        </View>
+      ) : (
+        <Stack screenOptions={{ headerShown: false }} />
+      )}
+    </RoleLayoutGuard>
   );
 }
 

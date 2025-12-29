@@ -23,6 +23,9 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
+    "types": [
+      "jest"
+    ],
     "plugins": [
       {
         "name": "./typescript-plugin-filter-text-errors.js"
@@ -39,9 +42,7 @@
     "**/*.ts",
     "**/*.tsx",
     "**/*.d.ts",
-    "react-native-text-override.d.ts",
-    "expo-env.d.ts",
-    ".expo/types/**/*.ts"
+    "react-native-text-override.d.ts"
   ],
   "exclude": [
     "node_modules",

@@ -23,6 +23,7 @@ class ApiResponse(BaseModel, Generic[T]):
         None, description="Error details if success is false"
     )
     message: Optional[str] = Field(None, description="Human-readable message")
+    payload_version: str = Field("1.0", description="API Payload Version")
     timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="Response timestamp"
     )

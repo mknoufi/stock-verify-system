@@ -46,6 +46,7 @@ export interface Settings {
   requireAuth: boolean;
   sessionTimeout: number;
   biometricAuth: boolean;
+  operationalMode: "live_audit" | "routine" | "training";
 
   // Performance
   imageCache: boolean;
@@ -81,6 +82,7 @@ const DEFAULT_SETTINGS: Settings = {
   requireAuth: true,
   sessionTimeout: 30,
   biometricAuth: false,
+  operationalMode: "routine",
   imageCache: true,
   lazyLoading: true,
   debounceDelay: 300,

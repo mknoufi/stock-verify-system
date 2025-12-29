@@ -29,6 +29,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Set up for OpenTelemetry tracing
+os.environ["LANGSMITH_OTEL_ENABLED"] = "true"
+os.environ["LANGSMITH_TRACING"] = "true"
+os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "http://localhost:4318"
+
 # Project-specific context
 PROJECT_CONTEXT = """
 Stock Verify is a multi-database inventory management system with:

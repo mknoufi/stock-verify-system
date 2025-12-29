@@ -3,10 +3,17 @@ import os
 from dotenv import load_dotenv
 from agent_framework import ChatAgent
 from agent_framework.openai import OpenAIChatClient
+from agent_framework.observability import setup_observability
 from openai import AsyncOpenAI
 
 # Load environment variables
 load_dotenv()
+
+# Set up for OpenTelemetry tracing
+setup_observability(
+    otlp_endpoint="http://localhost:4317",  # AI Toolkit gRPC endpoint
+    enable_sensitive_data=True  # Enable capturing prompts and completions
+)
 
 async def main():
     github_token = os.getenv("GITHUB_TOKEN")

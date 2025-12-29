@@ -4,6 +4,7 @@ Tests for PIN Authentication endpoints
 
 import pytest
 from fastapi.testclient import TestClient
+
 from backend.tests.utils.in_memory_db import setup_server_with_in_memory_db
 from server import app
 

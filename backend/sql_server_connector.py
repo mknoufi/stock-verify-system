@@ -288,8 +288,8 @@ class SQLServerConnector:
         return self._apply_optional_sections(template)
 
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
+        stop=stop_after_attempt(2),
+        wait=wait_exponential(multiplier=1, min=1, max=3),
         reraise=True,
     )
     def connect(
@@ -575,7 +575,7 @@ class SQLServerConnector:
         if not cursor.description or not row:
             return {}
         columns = [column[0] for column in cursor.description]
-        result = dict(zip(columns, row, strict=False))
+        result = dict(zip(columns, row))
 
         # Synthesize image URL if item_name exists
         if "item_name" in result and result["item_name"]:

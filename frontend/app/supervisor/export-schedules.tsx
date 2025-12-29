@@ -4,7 +4,7 @@
  * Refactored to use Deep Ocean Design System
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -22,7 +22,7 @@ import { StatusBar } from "expo-status-bar";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
-import { usePermissions } from "../../src/hooks/usePermissions";
+import { usePermission } from "../../src/hooks/usePermission";
 import {
   getExportSchedules,
   createExportSchedule,
@@ -52,7 +52,7 @@ interface ExportSchedule {
 
 export default function ExportSchedulesScreen() {
   const router = useRouter();
-  const { hasPermission } = usePermissions();
+  const { hasPermission } = usePermission();
   const [loading, setLoading] = useState(true);
   const [schedules, setSchedules] = useState<ExportSchedule[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -66,6 +66,18 @@ export default function ExportSchedulesScreen() {
     format: "excel",
   });
 
+  const loadSchedules = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getExportSchedules();
+      setSchedules(response.data?.schedules || []);
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to load export schedules");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!hasPermission("export.schedule")) {
       Alert.alert(
@@ -76,20 +88,7 @@ export default function ExportSchedulesScreen() {
       return;
     }
     loadSchedules();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadSchedules = async () => {
-    try {
-      setLoading(true);
-      const response = await getExportSchedules();
-      setSchedules(response.data?.schedules || []);
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to load export schedules");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [hasPermission, router, loadSchedules]);
 
   const handleCreateSchedule = async () => {
     try {

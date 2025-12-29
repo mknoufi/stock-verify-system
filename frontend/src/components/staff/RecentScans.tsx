@@ -37,9 +37,11 @@ export const RecentScans: React.FC<RecentScansProps> = ({ sessionId, onRefresh }
 
   const handlePress = (item: any) => {
     triggerHaptic('impactLight');
+    // Use barcode for navigation (what was originally scanned), fallback to item_code
+    const navigationBarcode = item.barcode || item.item_code;
     router.push({
       pathname: '/staff/item-detail',
-      params: { barcode: item.item_code, sessionId },
+      params: { barcode: navigationBarcode, sessionId },
     } as any);
   };
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { API_BASE_URL } from '../services/httpClient';
-import { useAuthStore } from '../services/authStore';
+import { useAuthStore } from '../store/authStore';
 import { storage } from '../services/storage/asyncStorageService';
 
 interface WebSocketMessage {

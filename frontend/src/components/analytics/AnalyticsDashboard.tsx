@@ -4,7 +4,7 @@
  * Phase 0: Advanced Analytics Dashboard
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -36,7 +36,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [dashboardData, trends, users, logs] = await Promise.all([
@@ -58,12 +58,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [timeRange]);
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange]);
+  }, [loadData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

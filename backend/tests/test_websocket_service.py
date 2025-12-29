@@ -2,9 +2,11 @@
 Unit tests for WebSocket Connection Manager
 """
 
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 from fastapi import WebSocket
+
 from backend.services.websocket_service import ConnectionManager
 
 

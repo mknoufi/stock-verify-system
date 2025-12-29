@@ -13,9 +13,9 @@ import jwt
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 from starlette.requests import Request
 
 # Add project root to path for direct execution (debugging)
@@ -30,14 +30,26 @@ if str(project_root) not in sys.path:
 # New feature services
 from backend.config import settings  # noqa: E402
 from backend.error_messages import get_error_message  # noqa: E402
-from backend.services.activity_log import ActivityLogService  # noqa: E402
 
 # Service type imports
-from backend.services.cache_service import CacheService  # noqa: E402
-
 # Production services
 # from backend.services.connection_pool import SQLServerConnectionPool  # Legacy pool removed
 from backend.services.database_optimizer import DatabaseOptimizer  # noqa: E402
+from backend.api.schemas import (  # noqa: E402
+    ApiResponse,
+    CorrectionMetadata,
+    CorrectionReason,
+    CountLineCreate,
+    PhotoProof,
+    Session,
+    SessionCreate,
+    TokenResponse,
+    UnknownItem,
+    UnknownItemCreate,
+    UserInfo,
+    UserLogin,
+    UserRegister,
+)
 from backend.services.errors import (  # noqa: E402
     AuthenticationError,
     AuthorizationError,
@@ -46,7 +58,27 @@ from backend.services.errors import (  # noqa: E402
     RateLimitExceededError,
     ValidationError,
 )
-from backend.services.refresh_token import RefreshTokenService  # noqa: E402
+
+# Global service instances (injected by main.py)
+db: Any = None
+cache_service: Any = None
+activity_log_service: Any = None
+refresh_token_service: Any = None
+db_optimizer: Any = None
+
+# Global service placeholders for injection
+rate_limiter: Any = None
+concurrent_handler: Any = None
+error_log_service: Any = None
+batch_operations: Any = None
+migration_manager: Any = None
+scheduled_export_service: Any = None
+sync_conflicts_service: Any = None
+monitoring_service: Any = None
+database_health_service: Any = None
+auto_sync_manager: Any = None
+enterprise_audit_service: Any = None
+enterprise_security_service: Any = None
 
 # Phase 1-3: New Services
 # Utils
@@ -107,20 +139,6 @@ except Exception:
 T = TypeVar("T")
 E = TypeVar("E", bound=Exception)
 R = TypeVar("R")
-
-
-class ApiResponse(BaseModel, Generic[T]):
-    success: bool
-    data: Optional[T] = None
-    error: Optional[dict[str, Optional[Any]]] = None
-
-    @classmethod
-    def success_response(cls, data: T):
-        return cls(success=True, data=data)
-
-    @classmethod
-    def error_response(cls, error: dict[str, Any]):
-        return cls(success=False, error=error)
 
 
 RUNNING_UNDER_PYTEST = "pytest" in sys.modules
@@ -224,137 +242,12 @@ security = HTTPBearer(auto_error=False)
 # Initialize production services
 # Enhanced Connection pool (if using SQL Server)
 
-from backend.core import globals as g
 
 # Core Service Instances (properly cast for type checking)
-activity_log_service: ActivityLogService = cast(
-    ActivityLogService, g.activity_log_service
-)
-cache_service: CacheService = cast(CacheService, g.cache_service)
-refresh_token_service: RefreshTokenService = cast(
-    RefreshTokenService, g.refresh_token_service
-)
-
-# Placeholder for DB instance (injected by lifespan)
-db: AsyncIOMotorDatabase = cast(AsyncIOMotorDatabase, None)
+# These are injected by lifespan or defined globally at the top
 
 # Create API router (used for inline routes)
 api_router = APIRouter()
-
-
-class UserInfo(BaseModel):
-    id: str
-    username: str
-    full_name: str
-    role: str
-    email: Optional[str] = None
-    is_active: bool = True
-    permissions: list[str] = Field(default_factory=list)
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    expires_in: int
-    user: UserInfo
-
-
-class UserRegister(BaseModel):
-    username: str
-    password: str
-    full_name: str
-    role: str
-
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
-
-
-class CorrectionReason(BaseModel):
-    code: str
-    description: str
-
-
-class PhotoProof(BaseModel):
-    id: Optional[str] = None
-    url: Optional[str] = None  # This will hold the base64 string from frontend
-    photo_base64: Optional[str] = None  # Keep for backward compatibility if needed
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-    description: Optional[str] = None
-
-
-class CorrectionMetadata(BaseModel):
-    correction_type: str
-    original_value: Optional[float] = None
-    corrected_value: Optional[float] = None
-    approved_by: Optional[str] = None
-
-
-class CountLineCreate(BaseModel):
-    session_id: str
-    item_code: str
-    counted_qty: float
-    damaged_qty: Optional[float] = 0
-    damage_included: Optional[bool] = None
-    item_condition: Optional[str] = None
-    floor_no: Optional[str] = None
-    rack_no: Optional[str] = None
-    mark_location: Optional[str] = None
-    sr_no: Optional[str] = None
-    manufacturing_date: Optional[str] = None
-    variance_reason: Optional[str] = None
-    variance_note: Optional[str] = None
-    remark: Optional[str] = None
-    photo_base64: Optional[str] = None
-    mrp_counted: Optional[float] = None
-    split_section: Optional[str] = None
-    serial_numbers: Optional[list[str]] = None
-    correction_reason: Optional[CorrectionReason] = None
-    photo_proofs: Optional[list[PhotoProof]] = None
-    correction_metadata: Optional[CorrectionMetadata] = None
-    category_correction: Optional[str] = None
-    subcategory_correction: Optional[str] = None
-
-
-class Session(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    warehouse: str
-    staff_user: str
-    staff_name: str
-    status: str = "OPEN"  # OPEN, RECONCILE, CLOSED
-    type: str = "STANDARD"  # STANDARD, BLIND, STRICT
-    started_at: datetime = Field(default_factory=datetime.utcnow)
-    closed_at: Optional[datetime] = None
-    total_items: int = 0
-    total_variance: float = 0
-
-
-class SessionCreate(BaseModel):
-    warehouse: str
-    type: Optional[str] = "STANDARD"
-
-
-class UnknownItem(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    session_id: str
-    barcode: Optional[str] = None
-    description: str
-    counted_qty: float
-    photo_base64: Optional[str] = None
-    remark: Optional[str] = None
-    reported_by: str
-    reported_at: datetime = Field(default_factory=datetime.utcnow)
-
-
-class UnknownItemCreate(BaseModel):
-    session_id: str
-    barcode: Optional[str] = None
-    description: str
-    counted_qty: float
-    photo_base64: Optional[str] = None
-    remark: Optional[str] = None
 
 
 # Note: verify_password and get_password_hash are imported from backend.utils.auth_utils (line 72)
@@ -960,7 +853,7 @@ async def bulk_close_sessions(
             try:
                 result = await db.sessions.update_one(
                     {"id": session_id},
-                    {"$set": {"status": "closed", "ended_at": datetime.utcnow()}},
+                    {"$set": {"status": "CLOSED", "closed_at": datetime.utcnow()}},
                 )
                 if result.modified_count > 0:
                     updated_count += 1
@@ -1007,7 +900,7 @@ async def bulk_reconcile_sessions(
                     {"id": session_id},
                     {
                         "$set": {
-                            "status": "reconciled",
+                            "status": "ACTIVE",
                             "reconciled_at": datetime.utcnow(),
                         }
                     },

@@ -210,37 +210,3 @@ declare module "expo-image" {
   export const Image: React.FC<ImageProps>;
   export default Image;
 }
-
-declare module "react-native-awesome-gallery" {
-  import { ViewProps } from "react-native";
-
-  export interface GalleryProps<T = unknown> extends ViewProps {
-    data: T[];
-    renderItem: (props: { item: T; index: number }) => React.ReactElement;
-    keyExtractor?: (item: T, index: number) => string;
-    initialIndex?: number;
-    onIndexChange?: (index: number) => void;
-    onSwipeToClose?: () => void;
-    loop?: boolean;
-    onTap?: () => void;
-    onDoubleTap?: () => void;
-    onScaleChange?: (scale: number) => void;
-    maxScale?: number;
-    pinchEnabled?: boolean;
-    swipeEnabled?: boolean;
-    doubleTapEnabled?: boolean;
-    disableTransitionOnScaledImage?: boolean;
-    hideAdjacentImagesOnScaledImage?: boolean;
-    disableVerticalSwipe?: boolean;
-    disableSwipeUp?: boolean;
-    containerDimensions?: { width: number; height: number };
-    style?: ViewProps["style"];
-    emptySpaceWidth?: number;
-    doubleTapScale?: number;
-    doubleTapInterval?: number;
-  }
-
-  export default function Gallery<T = unknown>(
-    props: GalleryProps<T>,
-  ): React.ReactElement;
-}

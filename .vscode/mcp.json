@@ -1,0 +1,31 @@
+{
+  "servers": {
+    "mongodb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-mongo-server"
+      ],
+      "env": {
+        "MCP_MONGODB_URI": "${env:MONGO_URL}",
+        "MCP_MONGODB_READONLY": "true"
+      }
+    },
+    "mongodb-dev": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-mongo-server",
+        "mongodb://localhost:27017/stock_verification"
+      ]
+    }
+  },
+  "inputs": [
+    {
+      "id": "mongoUri",
+      "type": "promptString",
+      "description": "MongoDB connection URI",
+      "default": "mongodb://localhost:27017/stock_verification"
+    }
+  ]
+}

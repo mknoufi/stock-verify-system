@@ -2,10 +2,17 @@
 Tests for PIN Authentication API
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from backend.api.pin_auth_api import (
+    PinChangeRequest,
+    PinLoginRequest,
+    change_pin,
+    login_with_pin,
+)
 from fastapi import HTTPException
-from backend.api.pin_auth_api import change_pin, login_with_pin, PinChangeRequest, PinLoginRequest
+from pydantic import ValidationError
 
 
 @pytest.mark.asyncio
@@ -70,3 +77,38 @@ async def test_login_with_pin_invalid_pin():
 
         assert exc.value.status_code == 401
         assert exc.value.detail == "Invalid PIN"
+
+
+@pytest.mark.asyncio
+async def test_change_pin_service_failure():
+    mock_db = AsyncMock()
+    mock_user = {"_id": "user123", "username": "testuser"}
+    request = PinChangeRequest(current_password="password", new_pin="123456")
+
+    with patch("backend.api.pin_auth_api.PINAuthService") as MockService:
+        mock_instance = MockService.return_value
+        mock_instance.set_pin = AsyncMock(return_value=False)
+
+        with pytest.raises(HTTPException) as exc:
+            await change_pin(request, mock_user, mock_db)
+
+        assert exc.value.status_code == 500
+        assert exc.value.detail == "Failed to set PIN"
+
+
+def test_pin_change_request_validation():
+    # Valid PIN
+    request = PinChangeRequest(current_password="password", new_pin="1234")
+    assert request.new_pin == "1234"
+
+    # Too short
+    with pytest.raises(ValidationError):
+        PinChangeRequest(current_password="password", new_pin="123")
+
+    # Too long
+    with pytest.raises(ValidationError):
+        PinChangeRequest(current_password="password", new_pin="1234567")
+
+    # Non-numeric
+    with pytest.raises(ValidationError):
+        PinChangeRequest(current_password="password", new_pin="abcd")

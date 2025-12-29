@@ -22,8 +22,8 @@ import * as Haptics from "expo-haptics";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
-import { ItemVerificationAPI } from "../../src/services/api/itemVerificationApi";
-import { ItemFilters, FilterValues } from "../../src/components/ItemFilters";
+import { ItemVerificationAPI } from "../../src/domains/inventory/services/itemVerificationApi";
+import { ItemFilters, FilterValues } from "../../src/domains/inventory/components/ItemFilters";
 import { exportItemsToCSV, downloadCSV } from "../../src/utils/csvExport";
 import {
   ScreenContainer,

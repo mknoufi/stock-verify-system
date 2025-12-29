@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { ActivityIndicator, Platform, StyleSheet, View, Text } from "react-native";
+import { ActivityIndicator, StyleSheet, View, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -9,30 +9,25 @@ import { AuroraBackground } from "../src/components/ui/AuroraBackground";
 import { GlassCard } from "../src/components/ui/GlassCard";
 import { useThemeContext } from "../src/theme/ThemeContext";
 import type { AppTheme } from "../src/theme/themes";
+import { getRouteForRole, UserRole } from "../src/utils/roleNavigation";
 
 export default function Index() {
   const router = useRouter();
-  const { user, isLoading } = useAuthStore();
+  const { user, isLoading, isInitialized } = useAuthStore();
   const { theme } = useThemeContext();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   useEffect(() => {
-    if (isLoading) return;
-    if (!user) {
+    if (isLoading || !isInitialized) return;
+
+    // Explicitly navigate away from the splash once auth check finishes
+    if (user) {
+      const target = getRouteForRole(user.role as UserRole);
+      router.replace(target as any);
+    } else {
       router.replace("/welcome");
-      return;
     }
-
-    const isSupervisor = user.role === "supervisor" || user.role === "admin";
-    const targetRoute =
-      Platform.OS === "web" && isSupervisor
-        ? "/admin/metrics"
-        : isSupervisor
-          ? "/supervisor/dashboard"
-          : "/staff/home";
-
-    router.replace(targetRoute as any);
-  }, [isLoading, user, router]);
+  }, [isLoading, isInitialized, router, user]);
 
   return (
     <AuroraBackground variant="primary" intensity="high" animated>

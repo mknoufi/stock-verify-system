@@ -33,11 +33,11 @@ import {
 import { RecentItemsService } from "@/services/enhancedFeatures";
 import { handleErrorWithRecovery } from "@/services/errorRecovery";
 import { CreateCountLinePayload } from "@/types/scan";
-import { scanDeduplicationService } from "@/services/scanDeduplicationService";
+import { scanDeduplicationService } from "@/domains/inventory/services/scanDeduplicationService";
 import {
   normalizeSerialValue,
 } from "@/utils/scanUtils";
-import { useItemState } from "@/hooks/scan";
+import { useItemState } from "@/domains/inventory/hooks/scan";
 import { useNetworkStore } from "@/store/networkStore";
 import { localDb } from "@/db/localDb";
 import { OfflineIndicator } from "@/components/common/OfflineIndicator";
@@ -77,6 +77,7 @@ export default function ItemDetailScreen() {
     null,
   );
   const refreshErrorCountRef = useRef<number>(0);
+  const itemCodeRef = useRef<string | null>(null); // Track item_code for stable callback
   const MAX_REFRESH_ERRORS = 3; // Stop auto-refresh after 3 consecutive errors
   const AUTO_REFRESH_INTERVAL = 60000; // 60 seconds (reduced frequency)
 
@@ -125,7 +126,14 @@ export default function ItemDetailScreen() {
         }
 
         if (itemData) {
-          console.log("Item data received:", itemData);
+          console.log("=== ITEM DATA RECEIVED ===");
+          console.log("Full itemData:", JSON.stringify(itemData, null, 2));
+          console.log("item_name:", itemData.item_name);
+          console.log("barcode:", itemData.barcode);
+          console.log("sales_price:", itemData.sales_price);
+          console.log("mrp:", itemData.mrp);
+          console.log("current_stock:", itemData.current_stock);
+          console.log("stock_qty:", itemData.stock_qty);
           setItem(itemData);
 
           // Add to recent scans
@@ -162,13 +170,20 @@ export default function ItemDetailScreen() {
     } else {
       console.log("Effect triggered but no barcode yet");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [barcode, router]);
+  }, [barcode, router, setLoading, setItem, setMrp, setCategory, setSubCategory, sessionId]);
+
+  // Keep itemCodeRef in sync with item.item_code
+  useEffect(() => {
+    itemCodeRef.current = item?.item_code ?? null;
+  }, [item?.item_code]);
 
   const handleRefreshStock = useCallback(
     async (silent: boolean = false) => {
+      // Use ref for stable item_code reference
+      const currentItemCode = itemCodeRef.current;
+
       // Guard against undefined item_code to prevent crashes
-      if (!item || !item.item_code) {
+      if (!currentItemCode) {
         if (!silent) {
           console.warn("handleRefreshStock called without valid item_code");
         }
@@ -183,7 +198,7 @@ export default function ItemDetailScreen() {
 
       setRefreshingStock(true);
       try {
-        const result = await refreshItemStock(item.item_code);
+        const result = await refreshItemStock(currentItemCode);
         if (result.success && result.item) {
           setItem(result.item);
           refreshErrorCountRef.current = 0; // Reset error count on success
@@ -217,14 +232,18 @@ export default function ItemDetailScreen() {
         setRefreshingStock(false);
       }
     },
-    [item],
+    [], // Stable function - uses refs internally
   );
 
   // Auto-refresh stock every 30 seconds
+  // Note: We intentionally exclude handleRefreshStock from deps to prevent infinite loop
+  // The interval is re-created only when item_code or sessionType changes
   useEffect(() => {
     if (item?.item_code && sessionType !== "BLIND") {
-      // Initial silent refresh
-      handleRefreshStock(true);
+      // Initial silent refresh (delayed to avoid race with initial load)
+      const initialRefreshTimeout = setTimeout(() => {
+        handleRefreshStock(true);
+      }, 1000);
 
       // Set up interval for auto-refresh
       refreshIntervalRef.current = setInterval(() => {
@@ -232,6 +251,7 @@ export default function ItemDetailScreen() {
       }, AUTO_REFRESH_INTERVAL);
 
       return () => {
+        clearTimeout(initialRefreshTimeout);
         if (refreshIntervalRef.current) {
           clearInterval(refreshIntervalRef.current);
           refreshIntervalRef.current = null;
@@ -239,7 +259,8 @@ export default function ItemDetailScreen() {
       };
     }
     return undefined;
-  }, [item?.item_code, sessionType, handleRefreshStock]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.item_code, sessionType]); // Exclude handleRefreshStock to prevent infinite loop
 
   // Adjust serial number inputs when quantity changes
   useEffect(() => {
@@ -900,6 +921,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: theme.colors.text.primary,
+    letterSpacing: 0.5,
   },
   header: {
     flexDirection: "row",
@@ -914,198 +936,253 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "800",
     color: theme.colors.text.primary,
+    letterSpacing: -0.5,
   },
   content: {
-    padding: 20,
-    paddingBottom: 100,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 140,
   },
+  // Premium Info Card
   infoCard: {
-    marginBottom: 24,
-    padding: 16,
+    marginBottom: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    borderRadius: 18,
   },
   itemHeader: {
     marginBottom: 16,
   },
   itemName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     color: theme.colors.text.primary,
-    marginBottom: 4,
+    marginBottom: 8,
+    letterSpacing: -0.3,
+    lineHeight: 26,
   },
   itemBarcode: {
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.text.primary,
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    letterSpacing: 1,
   },
   barcodeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   categoryText: {
-    fontSize: 12,
+    fontSize: 13,
     color: theme.colors.text.secondary,
-    marginBottom: 12,
+    marginTop: 4,
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
+  // Identifiers Section
   identifiersContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginBottom: 16,
-    padding: 12,
+    marginBottom: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
   },
   identifierBadge: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.05)",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingVertical: 5,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   identifierLabel: {
     color: theme.colors.text.tertiary,
-    marginRight: 4,
+    marginRight: 5,
     fontSize: 10,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   identifierValue: {
     color: theme.colors.text.secondary,
     fontWeight: "600",
     fontSize: 10,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
+  // Stock Display - Premium Style
   stockRow: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   stockItem: {
-    backgroundColor: "rgba(15, 23, 42, 0.5)",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "rgba(14, 165, 233, 0.2)",
   },
   stockLabel: {
-    fontSize: 14,
+    fontSize: 11,
     color: theme.colors.text.secondary,
     marginBottom: 4,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   stockValueRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   stockValue: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: "700",
     color: "#0EA5E9",
-    marginRight: 8,
+    marginRight: 6,
+    letterSpacing: -0.5,
   },
   stockUom: {
     fontSize: 16,
     color: "#0EA5E9",
-    marginRight: 8,
+    marginRight: 10,
+    fontWeight: "600",
+    opacity: 0.8,
   },
   miniRefreshButton: {
-    padding: 8,
+    padding: 10,
     marginLeft: "auto",
+    backgroundColor: "rgba(14, 165, 233, 0.15)",
+    borderRadius: 12,
   },
   refreshButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
+  // Price Cards - Premium Style
   priceRow: {
     flexDirection: "row",
-    gap: 16,
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 14,
   },
   priceItem: {
     flex: 1,
     backgroundColor: "rgba(15, 23, 42, 0.5)",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   priceLabel: {
-    fontSize: 14,
+    fontSize: 11,
     color: theme.colors.text.secondary,
     marginBottom: 4,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   priceValue: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: theme.colors.text.primary,
+    letterSpacing: -0.3,
   },
+  // Blind Mode Indicator
   blindModeIndicator: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(245, 158, 11, 0.1)",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 14,
     gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.25)",
   },
   blindModeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#F59E0B",
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 1.5,
   },
   itemCode: {
     fontSize: 12,
     color: theme.colors.text.secondary,
+    fontWeight: "500",
   },
+  // Detail Rows - Premium
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   detailItem: {
     alignItems: "center",
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: theme.colors.text.secondary,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
   detailValue: {
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 22,
+    fontWeight: "700",
     color: "#0EA5E9",
+    letterSpacing: -0.5,
   },
+  // Sections - Enhanced
   section: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeader: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: theme.colors.text.primary,
-    marginBottom: 16,
+    marginBottom: 14,
+    letterSpacing: -0.2,
   },
   toggleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 16,
+    marginVertical: 14,
+    paddingVertical: 2,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     color: theme.colors.text.primary,
+    fontWeight: "600",
   },
+  // Damage Box - Enhanced
   damageBox: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    borderRadius: 12,
+    marginTop: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(239, 68, 68, 0.06)",
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(239, 68, 68, 0.2)",
   },
@@ -1117,97 +1194,120 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   mainInput: {
-    fontSize: 28,
+    fontSize: 32,
     textAlign: "center",
+    fontWeight: "700",
   },
   submitButton: {
-    marginTop: 24,
+    marginTop: 28,
+    borderRadius: 16,
+    overflow: "hidden",
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "800",
     color: theme.colors.text.primary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  // Count controls layout
+  // Count Controls - Premium Style
   countRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
+    gap: 12,
   },
   countButton: {
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderRadius: 16,
-    paddingVertical: 20,
+    backgroundColor: "rgba(14, 165, 233, 0.1)",
+    borderRadius: 14,
+    paddingVertical: 18,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
     minWidth: 64,
+    borderWidth: 1,
+    borderColor: "rgba(14, 165, 233, 0.2)",
   },
   countButtonText: {
     fontSize: 32,
     fontWeight: "700",
-    color: theme.colors.text.primary,
+    color: "#0EA5E9",
   },
   countInputWrapper: {
     flex: 1,
+    minWidth: 120,
   },
   varianceText: {
     marginTop: 8,
-    fontSize: 16,
+    fontSize: 13,
     color: theme.colors.text.secondary,
+    fontWeight: "600",
+    textAlign: "center",
   },
   countSection: {
-    marginBottom: 24,
-    padding: 20,
+    marginBottom: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    borderRadius: 18,
   },
   sectionCard: {
-    marginBottom: 24,
-    padding: 16,
+    marginBottom: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 18,
   },
   detailItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   detailToggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   detailIcon: {
-    width: 24,
+    width: 28,
     textAlign: 'center',
   },
   expandedContent: {
-    paddingBottom: 8,
+    paddingBottom: 10,
   },
   conditionContainer: {
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 18,
+    marginBottom: 10,
   },
   subLabel: {
-    fontSize: 14,
-    marginBottom: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    marginBottom: 14,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   conditionScroll: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
+  // Session Badge - Premium
   sessionBadge: {
-    marginBottom: 16,
-    padding: 12,
+    marginBottom: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "rgba(14, 165, 233, 0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(14, 165, 233, 0.12)",
   },
   sessionInfo: {
     flexDirection: 'row',
@@ -1217,31 +1317,43 @@ const styles = StyleSheet.create({
   locationGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   sessionText: {
     fontSize: 14,
+    fontWeight: "500",
+    color: theme.colors.text.secondary,
   },
   bold: {
-    fontWeight: '700',
+    fontWeight: '800',
+    color: theme.colors.text.primary,
   },
   separator: {
     width: 1,
-    height: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    height: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginHorizontal: 4,
   },
   finishRackBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(34, 197, 94, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(34, 197, 94, 0.25)",
   },
   finishRackText: {
     fontSize: 12,
     fontWeight: '700',
+    color: "#22C55E",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   helpText: {
     fontSize: 11,
-    marginTop: 4,
+    marginTop: 6,
     fontStyle: 'italic',
+    color: theme.colors.text.tertiary,
+    lineHeight: 16,
   },
 });

@@ -27,6 +27,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import Modal from "react-native-modal";
 import { Ionicons } from "@expo/vector-icons";
 import { useCameraPermissions, CameraView } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
@@ -56,7 +57,7 @@ import {
   searchItems,
   updateSessionStatus,
 } from "@/services/api/api";
-import { scanDeduplicationService } from "@/services/scanDeduplicationService";
+import { scanDeduplicationService } from "@/domains/inventory/services/scanDeduplicationService";
 import { RecentItemsService } from "@/services/enhancedFeatures";
 import { searchItemsSemantic, identifyItem } from "@/services/api/api";
 import { hapticService } from "@/services/hapticService";
@@ -67,7 +68,7 @@ import { OfflineIndicator } from "@/components/common/OfflineIndicator";
 import { validateBarcode } from "@/utils/validation";
 
 export default function ScanScreen() {
-  const { theme: appTheme } = useThemeContext();
+  const { theme: appTheme, isDark } = useThemeContext();
   const { colors } = appTheme;
   const { width } = useWindowDimensions();
   const { sessionId: rawSessionId } = useLocalSearchParams();
@@ -96,6 +97,8 @@ export default function ScanScreen() {
   const [isAISearching, setIsAISearching] = useState(false);
   const [_searchMethod, setSearchMethod] = useState<"standard" | "semantic">("standard");
   const [scanned, setScanned] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [recentItems, setRecentItems] = useState<any[]>([]);
@@ -161,10 +164,10 @@ export default function ScanScreen() {
         setShowResults(true);
         hapticService.scanSuccess();
       } else {
-        Alert.alert("AI Search", "No semantic matches found for your query.");
+        toastService.show("No semantic matches found for your query", { type: "info" });
       }
     } catch {
-      Alert.alert("AI Search Error", "Failed to perform semantic search.");
+      toastService.show("Failed to perform semantic search", { type: "error" });
     } finally {
       setIsAISearching(false);
     }
@@ -193,12 +196,12 @@ export default function ScanScreen() {
           setSearchQuery(""); // Clear text search when using visual
           hapticService.scanSuccess();
         } else {
-          Alert.alert("Visual AI", "Could not identify the item. Please try a different angle or manual search.");
+          toastService.show("Could not identify the item. Please try a different angle or manual search.", { type: "warning" });
         }
       }
     } catch (error) {
       console.error("Visual search error:", error);
-      Alert.alert("Visual AI Error", "Failed to process image for identification.");
+      toastService.show("Failed to process image for identification", { type: "error" });
     } finally {
       setIsAISearching(false);
       setLoading(false);
@@ -369,14 +372,18 @@ export default function ScanScreen() {
         }
         await loadRecentItems();
 
-        // Navigate to detail
-        console.log("Navigating to item detail with:", {
-          barcode: item.item_code,
-          sessionId,
-        });
+        // Navigate to detail - use barcode (what was scanned) not item_code
+        // The barcode is what the user scanned and what the API can look up
+        const navigationBarcode = item.barcode || sanitized;
+        console.log("=== NAVIGATION DEBUG ===");
+        console.log("item.barcode:", item.barcode);
+        console.log("sanitized input:", sanitized);
+        console.log("final navigationBarcode:", navigationBarcode);
+        console.log("Full item before navigation:", JSON.stringify(item, null, 2));
+
         router.push({
           pathname: "/staff/item-detail",
-          params: { barcode: item.item_code, sessionId: sessionId as string },
+          params: { barcode: navigationBarcode, sessionId: sessionId as string },
         } as any);
       } else {
         hapticService.scanError();
@@ -410,7 +417,15 @@ export default function ScanScreen() {
   };
 
   const handleSearchResultPress = async (item: any) => {
+    // Debug: Log the full item to understand what fields are available
+    console.log("=== handleSearchResultPress DEBUG ===");
+    console.log("Full item:", JSON.stringify(item, null, 2));
+    console.log("item.barcode:", item.barcode);
+    console.log("item.item_code:", item.item_code);
+
     const code = item.barcode || item.item_code;
+    console.log("Using code for lookup:", code);
+
     if (!code) return;
     // Keep results visible until lookup finishes to avoid layout jump at the bottom
     await handleLookup(code);
@@ -426,53 +441,36 @@ export default function ScanScreen() {
 
   const _handleLogout = () => {
     hapticService.impact("medium");
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: logout,
-      },
-    ]);
+    setShowLogoutModal(true);
   };
 
   const [isFinishing, setIsFinishing] = useState(false);
 
+  const confirmFinishRack = async () => {
+    if (!sessionId) return;
+
+    setIsFinishing(true);
+    try {
+      await updateSessionStatus(sessionId, "closed");
+      hapticService.notification("success");
+      toastService.show("Rack marked as complete!", { type: "success" });
+      router.replace("/staff/home");
+    } catch (error: any) {
+      console.error("Failed to finish rack:", error);
+      toastService.show(error.message || "Failed to close session", { type: "error" });
+    } finally {
+      setIsFinishing(false);
+      setShowCloseSessionModal(false);
+    }
+  };
+
   const handleFinishRack = () => {
     hapticService.impact("medium");
-    Alert.alert(
-      "Finish Rack",
-      "Are you sure you want to mark this rack as complete? You won't be able to add more items to this section.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Finish Rack",
-          style: "default",
-          onPress: async () => {
-            if (!sessionId) {
-              Alert.alert("Error", "No active session to close.");
-              return;
-            }
-            setIsFinishing(true);
-            try {
-              await updateSessionStatus(sessionId, "closed");
-              hapticService.notification("success");
-              Alert.alert("Success", "Rack marked as complete!", [
-                {
-                  text: "OK",
-                  onPress: () => router.replace("/staff/home"),
-                },
-              ]);
-            } catch (error: any) {
-              console.error("Failed to finish rack:", error);
-              Alert.alert("Error", error.message || "Failed to close session.");
-            } finally {
-              setIsFinishing(false);
-            }
-          },
-        },
-      ],
-    );
+    if (!sessionId) {
+      toastService.show("No active session to close", { type: "error" });
+      return;
+    }
+    setShowCloseSessionModal(true);
   };
 
   if (isScanning) {
@@ -916,6 +914,242 @@ export default function ScanScreen() {
           />
         </LinearGradient>
       </TouchableOpacity>
+
+      {/* Logout Confirmation Modal */}
+      {/* @ts-ignore */}
+      <Modal
+        isVisible={showLogoutModal}
+        onBackdropPress={() => setShowLogoutModal(false)}
+        onBackButtonPress={() => setShowLogoutModal(false)}
+        style={{ margin: 0, justifyContent: 'center', padding: 20 }}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        backdropOpacity={0.5}
+        useNativeDriver
+        hideModalContentWhileAnimating
+        statusBarTranslucent
+      >
+        <View
+          style={{
+            backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+            borderRadius: 20,
+            padding: 24,
+            alignItems: "center",
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+          }}
+        >
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: "#EF444420",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <Ionicons name="log-out" size={32} color="#EF4444" />
+          </View>
+
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              color: isDark ? "#F8FAFC" : "#0F172A",
+              marginBottom: 8,
+              textAlign: "center",
+            }}
+          >
+            Log Out
+          </Text>
+
+          <Text
+            style={{
+              fontSize: 15,
+              color: isDark ? "#94A3B8" : "#64748B",
+              textAlign: "center",
+              marginBottom: 24,
+              lineHeight: 22,
+            }}
+          >
+            Are you sure you want to log out?{"\n"}Any unsaved progress will be lost.
+          </Text>
+
+          <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                borderRadius: 12,
+                backgroundColor: isDark ? "#334155" : "#F1F5F9",
+                alignItems: "center",
+              }}
+              onPress={() => setShowLogoutModal(false)}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: isDark ? "#F8FAFC" : "#0F172A",
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                borderRadius: 12,
+                backgroundColor: "#EF4444",
+                alignItems: "center",
+              }}
+              onPress={() => {
+                setShowLogoutModal(false);
+                logout();
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: "#FFFFFF",
+                }}
+              >
+                Log Out
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Close Session Confirmation Modal */}
+      {/* @ts-ignore */}
+      <Modal
+        isVisible={showCloseSessionModal}
+        onBackdropPress={() => setShowCloseSessionModal(false)}
+        onBackButtonPress={() => setShowCloseSessionModal(false)}
+        style={{ margin: 0, justifyContent: 'center', padding: 20 }}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        backdropOpacity={0.5}
+        useNativeDriver
+        hideModalContentWhileAnimating
+        statusBarTranslucent
+      >
+        <View
+          style={{
+            backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+            borderRadius: 20,
+            padding: 24,
+            alignItems: "center",
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+          }}
+        >
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: "#10B98120",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <Ionicons name="checkmark-circle" size={32} color="#10B981" />
+          </View>
+
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              color: isDark ? "#F8FAFC" : "#0F172A",
+              marginBottom: 8,
+              textAlign: "center",
+            }}
+          >
+            Finish Rack
+          </Text>
+
+          <Text
+            style={{
+              fontSize: 15,
+              color: isDark ? "#94A3B8" : "#64748B",
+              textAlign: "center",
+              marginBottom: 24,
+              lineHeight: 22,
+            }}
+          >
+            Are you sure you want to mark this rack as complete?{"\n"}You won't be able to add more items to this section.
+          </Text>
+
+          <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                borderRadius: 12,
+                backgroundColor: isDark ? "#334155" : "#F1F5F9",
+                alignItems: "center",
+              }}
+              onPress={() => setShowCloseSessionModal(false)}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: isDark ? "#F8FAFC" : "#0F172A",
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                borderRadius: 12,
+                backgroundColor: "#10B981",
+                alignItems: "center",
+              }}
+              onPress={confirmFinishRack}
+              disabled={isFinishing}
+            >
+              {isFinishing ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  Finish Rack
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer >
   );
 }
@@ -930,30 +1164,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingBottom: 16,
+    paddingBottom: 14,
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 14,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: theme.colors.text.primary,
+    letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: theme.colors.text.secondary,
     marginTop: 2,
+    fontWeight: "500",
   },
   headerSubtitleRow: {
     flexDirection: "row",
@@ -973,17 +1211,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#EF4444",
   },
   modeBadgeText: {
-    fontSize: 10,
-    fontWeight: "bold",
+    fontSize: 9,
+    fontWeight: "700",
     color: "#FFF",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   logoutButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   scrollView: {
     flex: 1,
@@ -992,30 +1234,31 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   searchCard: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: theme.colors.text.primary,
-    marginBottom: 16,
+    marginBottom: 14,
+    letterSpacing: -0.2,
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: theme.colors.background.paper,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
+    paddingHorizontal: 14,
+    height: 46,
     borderWidth: 1,
     borderColor: theme.colors.border.light,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.text.primary,
   },
   clearButton: {
@@ -1028,7 +1271,7 @@ const styles = StyleSheet.create({
   },
   aiButton: {
     padding: 8,
-    borderRadius: 20,
+    borderRadius: 12,
     backgroundColor: theme.colors.gradients.shimmer[0],
   },
   semanticSearchContainer: {
@@ -1042,15 +1285,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     backgroundColor: theme.colors.gradients.shimmer[0],
     borderWidth: 1,
     borderColor: theme.colors.primary[200],
   },
   semanticSearchText: {
     color: theme.colors.primary[500],
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
   },
   photoIdentifyButton: {
@@ -1107,56 +1350,60 @@ const styles = StyleSheet.create({
   },
   resultName: {
     color: theme.colors.text.primary,
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "600",
   },
   resultCode: {
     color: theme.colors.text.secondary,
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: "500",
   },
   noResultsText: {
     color: theme.colors.text.tertiary,
-    fontSize: 13,
+    fontSize: 12,
     textAlign: "center",
     padding: 10,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
     color: theme.colors.text.primary,
-    marginBottom: 16,
+    marginBottom: 14,
+    letterSpacing: -0.2,
   },
   recentItemsContainer: {
-    paddingBottom: 16,
-    gap: 16,
+    paddingBottom: 14,
+    gap: 14,
   },
   recentItemCard: {
-    width: 120,
+    width: 110,
     alignItems: "center",
     justifyContent: "center",
   },
   recentItemIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: "rgba(15, 23, 42, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   recentItemCode: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "700",
     color: theme.colors.text.primary,
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
   recentItemName: {
-    fontSize: 12,
+    fontSize: 11,
     color: theme.colors.text.secondary,
     textAlign: "center",
+    fontWeight: "500",
   },
   statsCard: {
-    marginTop: 20,
+    marginTop: 18,
   },
   statsRow: {
     flexDirection: "row",
@@ -1168,19 +1415,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "700",
     color: "#0EA5E9",
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: theme.colors.text.secondary,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   statDivider: {
     width: 1,
-    height: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    height: 36,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
   floatingButtonContainer: {
     position: "absolute",
@@ -1189,19 +1440,19 @@ const styles = StyleSheet.create({
   },
   quickActionsContainer: {
     position: "absolute",
-    bottom: 120,
+    bottom: 110,
     alignSelf: "center",
     flexDirection: "row",
-    gap: 16,
+    gap: 14,
   },
   quickActionButton: {
     alignItems: "center",
     gap: 4,
   },
   quickActionGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
@@ -1211,9 +1462,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   quickActionLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: theme.colors.text.secondary,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   quickActionsToggle: {
     position: "absolute",
@@ -1221,9 +1472,9 @@ const styles = StyleSheet.create({
     right: 24,
   },
   quickActionsToggleGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
@@ -1311,7 +1562,7 @@ const styles = StyleSheet.create({
   },
   // Finish Rack Button Styles
   finishRackButton: {
-    marginTop: 16,
+    marginTop: 14,
     marginHorizontal: 20,
     borderRadius: 12,
     overflow: "hidden",
@@ -1325,17 +1576,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
   },
   finishRackText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: "#FFF",
   },
   resultCodeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     marginTop: 2,
   },
   batchBadge: {
@@ -1347,9 +1598,11 @@ const styles = StyleSheet.create({
     borderColor: "rgba(14, 165, 233, 0.2)",
   },
   batchBadgeText: {
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 9,
+    fontWeight: "700",
     color: "#0EA5E9",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   mrpBadge: {
     backgroundColor: "rgba(245, 158, 11, 0.15)",
@@ -1360,9 +1613,11 @@ const styles = StyleSheet.create({
     borderColor: "rgba(245, 158, 11, 0.3)",
   },
   mrpBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
     color: "#F59E0B",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   altBarcodesRow: {
     flexDirection: "row",
@@ -1379,8 +1634,10 @@ const styles = StyleSheet.create({
     borderColor: "rgba(16, 185, 129, 0.2)",
   },
   otherBarcodeText: {
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 9,
+    fontWeight: "700",
     color: "#10B981",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
 });

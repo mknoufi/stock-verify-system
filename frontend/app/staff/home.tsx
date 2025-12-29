@@ -6,10 +6,10 @@ import {
   Alert,
   StyleSheet,
   Platform,
-  Modal,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import Modal from "react-native-modal";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -28,6 +28,7 @@ import {
   ScreenContainer,
 } from "../../src/components/ui";
 import { SectionLists } from "./components/SectionLists";
+import { toastService } from "../../src/services/utils/toastService";
 
 interface Zone {
   id: string;
@@ -56,6 +57,7 @@ export default function StaffHome() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [_lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [showFloorPicker, setShowFloorPicker] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Dynamic Location State
   const [zones, setZones] = useState<Zone[]>([]);
@@ -87,6 +89,30 @@ export default function StaffHome() {
     [sessions],
   );
 
+  // Compute display floors for the floor picker modal
+  // This ensures fallback data is always available based on locationType
+  const displayFloors = useMemo(() => {
+    if (warehouses.length > 0) {
+      return warehouses;
+    }
+    if (!locationType) {
+      return [];
+    }
+    // Fallback floors based on location type
+    if (locationType.toLowerCase().includes("showroom")) {
+      return [
+        { warehouse_name: "Ground Floor", id: "fl_ground" },
+        { warehouse_name: "First Floor", id: "fl_first" },
+        { warehouse_name: "Second Floor", id: "fl_second" },
+      ];
+    }
+    return [
+      { warehouse_name: "Main Godown", id: "wh_main" },
+      { warehouse_name: "Top Godown", id: "wh_top" },
+      { warehouse_name: "Damage Area", id: "wh_damage" },
+    ];
+  }, [warehouses, locationType]);
+
   // Effects
   useEffect(() => {
     if (sessionsData && !isLoadingSessions) {
@@ -110,17 +136,7 @@ export default function StaffHome() {
   const _handleLogout = async () => {
     if (Platform.OS !== "web")
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/login");
-        },
-      },
-    ]);
+    setShowLogoutModal(true);
   };
 
   const { setActiveSession } = useScanSessionStore();
@@ -178,21 +194,21 @@ export default function StaffHome() {
     if (!locationType) {
       if (Platform.OS !== "web")
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert("Select Location", "Please select Showroom or Godown");
+      toastService.show("Please select Showroom or Godown", { type: "warning" });
       return;
     }
 
     if (!selectedFloor) {
       if (Platform.OS !== "web")
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert("Select Floor", "Please select a floor/area");
+      toastService.show("Please select a floor/area", { type: "warning" });
       return;
     }
 
     if (!rackName.trim()) {
       if (Platform.OS !== "web")
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert("Enter Rack", "Please enter the rack/shelf identifier");
+      toastService.show("Please enter the rack/shelf identifier", { type: "warning" });
       return;
     }
 
@@ -201,10 +217,7 @@ export default function StaffHome() {
     if (trimmedRack.length < 1 || trimmedRack.length > 20) {
       if (Platform.OS !== "web")
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
-        "Invalid Rack Name",
-        "Rack name must be between 1-20 characters",
-      );
+      toastService.show("Rack name must be between 1-20 characters", { type: "warning" });
       return;
     }
 
@@ -212,10 +225,7 @@ export default function StaffHome() {
     if (!/^[a-zA-Z0-9\-_]+$/.test(trimmedRack)) {
       if (Platform.OS !== "web")
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
-        "Invalid Rack Name",
-        "Rack name can only contain letters, numbers, dashes, and underscores",
-      );
+      toastService.show("Rack name can only contain letters, numbers, dashes, and underscores", { type: "warning" });
       return;
     }
 
@@ -248,7 +258,7 @@ export default function StaffHome() {
       console.error("Create section error:", error);
       if (Platform.OS !== "web")
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", "Failed to start new section");
+      toastService.show("Failed to start new section", { type: "error" });
     } finally {
       setIsCreatingSession(false);
     }
@@ -271,12 +281,26 @@ export default function StaffHome() {
   // Fetch Zones on mount
   useEffect(() => {
     const fetchZones = async () => {
+      // Set fallback zones immediately so UI is usable
+      const fallbackZones = [
+        { zone_name: "Showroom", id: "zone_showroom" },
+        { zone_name: "Godown", id: "zone_godown" },
+      ];
+      setZones(fallbackZones);
+      console.log("🗺️ Set fallback zones:", fallbackZones.map(z => z.zone_name));
+
       try {
         setIsLoadingLocations(true);
         const data = await getZones();
-        setZones(data);
-      } catch (error) {
-        console.error("Failed to fetch zones", error);
+        if (Array.isArray(data) && data.length > 0) {
+          setZones(data);
+          console.log("🗺️ Updated zones from API:", data.map((z: any) => z.zone_name));
+        }
+      } catch (error: any) {
+        if (error?.response?.status !== 401) {
+          console.error("Failed to fetch zones (using fallback)", error);
+        }
+        // Fallback already set above
       } finally {
         setIsLoadingLocations(false);
       }
@@ -289,15 +313,35 @@ export default function StaffHome() {
     setLocationType(type);
     setSelectedFloor(null); // Reset floor when location type changes
 
-    // Fetch warehouses for the selected zone
+    // Immediately set fallback data so UI is responsive
+    const fallback = type.toLowerCase().includes("showroom")
+      ? [
+          { warehouse_name: "Ground Floor", id: "fl_ground" },
+          { warehouse_name: "First Floor", id: "fl_first" },
+          { warehouse_name: "Second Floor", id: "fl_second" },
+        ]
+      : [
+          { warehouse_name: "Main Godown", id: "wh_main" },
+          { warehouse_name: "Top Godown", id: "wh_top" },
+          { warehouse_name: "Damage Area", id: "wh_damage" },
+        ];
+    setWarehouses(fallback);
+    console.log("🏢 Set fallback warehouses for", type, ":", fallback.length);
+
+    // Try to fetch from API (will update if successful)
     try {
       setIsLoadingLocations(true);
       const data = await getWarehouses(type);
       console.log("🔍 Warehouse Data for type", type, ":", JSON.stringify(data));
-      setWarehouses(data);
-    } catch (error) {
-      console.error("Failed to fetch warehouses", error);
-      Alert.alert("Error", "Failed to load floor data");
+      const warehouseList = Array.isArray(data) ? data : [];
+
+      // Only update if API returned data
+      if (warehouseList.length > 0) {
+        setWarehouses(warehouseList);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch warehouses (using fallback)", error);
+      // Fallback already set above
     } finally {
       setIsLoadingLocations(false);
     }
@@ -305,6 +349,25 @@ export default function StaffHome() {
 
   const handleOpenFloorPicker = () => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
+    console.log("🚪 handleOpenFloorPicker called. warehouses:", warehouses.length, "locationType:", locationType);
+
+    // Ensure we have floors to show if warehouses is empty
+    if (locationType && warehouses.length === 0) {
+      const fallback = locationType.toLowerCase().includes("showroom")
+        ? [
+            { warehouse_name: "Ground Floor", id: "fl_ground" },
+            { warehouse_name: "First Floor", id: "fl_first" },
+            { warehouse_name: "Second Floor", id: "fl_second" },
+          ]
+        : [
+            { warehouse_name: "Main Godown", id: "wh_main" },
+            { warehouse_name: "Top Godown", id: "wh_top" },
+            { warehouse_name: "Damage Area", id: "wh_damage" },
+          ];
+      console.log("🏢 Setting warehouses to fallback:", fallback.map(f => f.warehouse_name));
+      setWarehouses(fallback);
+    }
+
     setShowFloorPicker(true);
   };
 
@@ -379,19 +442,20 @@ export default function StaffHome() {
       <View style={{ height: 100 }} />
 
       {/* New Section Modal */}
+      {/* @ts-ignore */}
       <Modal
-        visible={showNewSectionForm}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowNewSectionForm(false)}
+        isVisible={showNewSectionForm}
+        onBackdropPress={() => setShowNewSectionForm(false)}
+        onBackButtonPress={() => setShowNewSectionForm(false)}
+        style={{ margin: 0, justifyContent: 'flex-end' }}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        backdropOpacity={0.5}
+        swipeDirection="down"
+        onSwipeComplete={() => setShowNewSectionForm(false)}
+        useNativeDriver
+        hideModalContentWhileAnimating
       >
-        <View style={styles.modalOverlay}>
-          {/* Tap outside to close */}
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPress={() => setShowNewSectionForm(false)}
-          />
           <View
             style={[
               styles.newSectionModalContent,
@@ -687,23 +751,24 @@ export default function StaffHome() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
       </Modal >
 
       {/* Floor Picker Modal */}
-      < Modal
-        visible={showFloorPicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowFloorPicker(false)
-        }
+      {/* @ts-ignore */}
+      <Modal
+        isVisible={showFloorPicker}
+        onBackdropPress={() => setShowFloorPicker(false)}
+        onBackButtonPress={() => setShowFloorPicker(false)}
+        style={{ margin: 0, justifyContent: 'flex-end' }}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        backdropOpacity={0.5}
+        swipeDirection="down"
+        onSwipeComplete={() => setShowFloorPicker(false)}
+        useNativeDriver
+        hideModalContentWhileAnimating
+        statusBarTranslucent
       >
-        <View style={styles.floorPickerOverlay}>
-          <TouchableOpacity
-            style={styles.floorPickerBackdrop}
-            activeOpacity={1}
-            onPress={() => setShowFloorPicker(false)}
-          />
           <View
             style={[
               styles.modalContent,
@@ -713,14 +778,21 @@ export default function StaffHome() {
           >
             <View style={styles.dragHandle} />
             <View style={styles.modalHeader}>
-              <Text
-                style={[
-                  styles.modalTitle,
-                  { color: isDark ? "#F8FAFC" : "#0F172A" },
-                ]}
-              >
-                Select Floor
-              </Text>
+              <View>
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    { color: isDark ? "#F8FAFC" : "#0F172A" },
+                  ]}
+                >
+                  Select Floor
+                </Text>
+                {locationType && (
+                  <Text style={{ color: isDark ? "#94A3B8" : "#64748B", fontSize: 12, marginTop: 2 }}>
+                    for {locationType}
+                  </Text>
+                )}
+              </View>
               <TouchableOpacity onPress={() => setShowFloorPicker(false)}>
                 <Ionicons
                   name="close"
@@ -729,61 +801,186 @@ export default function StaffHome() {
                 />
               </TouchableOpacity>
             </View>
-            <ScrollView>
-              {isLoadingLocations ? (
-                <ActivityIndicator color={isDark ? "#F8FAFC" : "#0F172A"} style={{ padding: 20 }} />
-              ) : warehouses.length === 0 ? (
+            <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+              {displayFloors.length === 0 ? (
                 <View style={{ padding: 20, alignItems: "center" }}>
-                  <Text style={{ color: isDark ? "#94A3B8" : "#64748B", fontSize: 16 }}>
-                    No floors available
+                  <Ionicons name="folder-open-outline" size={48} color={isDark ? "#475569" : "#CBD5E1"} style={{ marginBottom: 12 }} />
+                  <Text style={{ color: isDark ? "#94A3B8" : "#64748B", fontSize: 16, marginBottom: 8 }}>
+                    Select a zone first
                   </Text>
                 </View>
               ) : (
-                warehouses.map((floor) => (
-                  <TouchableOpacity
-                    key={floor.id || floor.warehouse_name}
-                    style={[
-                      styles.modalOption,
-                      {
-                        backgroundColor:
-                          selectedFloor === floor.warehouse_name
-                            ? "#0EA5E910"
-                            : "transparent",
-                      },
-                    ]}
-                    onPress={() => {
-                      setSelectedFloor(floor.warehouse_name);
-                      setShowFloorPicker(false);
-                      if (Platform.OS !== "web") Haptics.selectionAsync();
-                    }}
-                  >
-                    <Text
+                <>
+                  {displayFloors.map((floor) => (
+                    <TouchableOpacity
+                      key={floor.id || floor.warehouse_name}
                       style={[
-                        styles.modalOptionText,
+                        styles.modalOption,
                         {
-                          color:
+                          backgroundColor:
                             selectedFloor === floor.warehouse_name
-                              ? "#0EA5E9"
-                              : isDark
-                                ? "#F8FAFC"
-                                : "#0F172A",
-                          fontWeight: selectedFloor === floor.warehouse_name ? "700" : "400",
+                              ? "#0EA5E910"
+                              : "transparent",
                         },
                       ]}
+                      onPress={() => {
+                        setSelectedFloor(floor.warehouse_name);
+                        setShowFloorPicker(false);
+                        if (Platform.OS !== "web") Haptics.selectionAsync();
+                      }}
                     >
-                      {floor.warehouse_name}
-                    </Text>
-                    {selectedFloor === floor.warehouse_name && (
-                      <Ionicons name="checkmark" size={20} color="#0EA5E9" />
-                    )}
-                  </TouchableOpacity>
-                ))
-              )
-              }
+                      <Text
+                        style={[
+                          styles.modalOptionText,
+                          {
+                            color:
+                              selectedFloor === floor.warehouse_name
+                                ? "#0EA5E9"
+                                : isDark
+                                  ? "#F8FAFC"
+                                  : "#0F172A",
+                            fontWeight: selectedFloor === floor.warehouse_name ? "700" : "400",
+                          },
+                        ]}
+                      >
+                        {floor.warehouse_name}
+                      </Text>
+                      {selectedFloor === floor.warehouse_name && (
+                        <Ionicons name="checkmark" size={20} color="#0EA5E9" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                  {__DEV__ && (
+                    <View style={{ padding: 10, marginTop: 10, borderTopWidth: 1, borderColor: isDark ? "#334155" : "#E2E8F0" }}>
+                      <Text style={{ fontSize: 10, color: isDark ? "#94A3B8" : "#64748B", fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+                        Debug: {displayFloors.length} floors available
+                        {"\n"}Location: {locationType}
+                        {"\n"}Warehouses: {warehouses.length}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
             </ScrollView>
           </View>
-        </View>
       </Modal >
+
+      {/* Logout Confirmation Modal */}
+      {/* @ts-ignore */}
+      <Modal
+        isVisible={showLogoutModal}
+        onBackdropPress={() => setShowLogoutModal(false)}
+        onBackButtonPress={() => setShowLogoutModal(false)}
+        style={{ margin: 0, justifyContent: 'center', padding: 20 }}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        backdropOpacity={0.5}
+        useNativeDriver
+        hideModalContentWhileAnimating
+        statusBarTranslucent
+      >
+        <View
+          style={{
+            backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+            borderRadius: 20,
+            padding: 24,
+            alignItems: "center",
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+          }}
+        >
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: "#EF444420",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <Ionicons name="log-out" size={32} color="#EF4444" />
+          </View>
+
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              color: isDark ? "#F8FAFC" : "#0F172A",
+              marginBottom: 8,
+              textAlign: "center",
+            }}
+          >
+            Log Out
+          </Text>
+
+          <Text
+            style={{
+              fontSize: 15,
+              color: isDark ? "#94A3B8" : "#64748B",
+              textAlign: "center",
+              marginBottom: 24,
+              lineHeight: 22,
+            }}
+          >
+            Are you sure you want to log out?{"\n"}Any unsaved progress will be lost.
+          </Text>
+
+          <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                borderRadius: 12,
+                backgroundColor: isDark ? "#334155" : "#F1F5F9",
+                alignItems: "center",
+              }}
+              onPress={() => setShowLogoutModal(false)}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: isDark ? "#F8FAFC" : "#0F172A",
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                borderRadius: 12,
+                backgroundColor: "#EF4444",
+                alignItems: "center",
+              }}
+              onPress={() => {
+                setShowLogoutModal(false);
+                logout();
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: "#FFFFFF",
+                }}
+              >
+                Log Out
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer >
   );
 }
@@ -795,13 +992,13 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingBottom: 24,
+    paddingBottom: 20,
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 18,
   },
   userInfo: {
     flexDirection: "row",
@@ -811,22 +1008,24 @@ const styles = StyleSheet.create({
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 16,
-    backgroundColor: "#0EA5E920",
+    borderRadius: 14,
+    backgroundColor: "rgba(14, 165, 233, 0.12)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#0EA5E940",
+    borderColor: "rgba(14, 165, 233, 0.25)",
   },
   welcomeText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#94A3B8",
     marginBottom: 2,
+    fontWeight: "500",
   },
   userName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: "#F8FAFC",
+    letterSpacing: -0.3,
   },
   headerActions: {
     flexDirection: "row",
@@ -841,58 +1040,62 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   statsGrid: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   statCard: {
     flex: 1,
-    padding: 16,
-    borderRadius: 20,
+    padding: 14,
+    borderRadius: 14,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.05)",
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     color: "#F8FAFC",
+    letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#94A3B8",
-    fontWeight: "500",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 28,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: "#F8FAFC",
+    letterSpacing: -0.2,
   },
   newSectionButton: {
     flexDirection: "row",
@@ -909,12 +1112,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   createCard: {
-    padding: 20,
-    borderRadius: 24,
+    padding: 18,
+    borderRadius: 18,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.05)",
-    marginBottom: 24,
+    marginBottom: 20,
   },
   cardHeader: {
     flexDirection: "row",
@@ -923,28 +1126,31 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: "#F8FAFC",
+    letterSpacing: -0.2,
   },
   cardSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#94A3B8",
-    marginBottom: 20,
+    marginBottom: 18,
   },
   modeSection: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     color: "#94A3B8",
     marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   modeSelector: {
     flexDirection: "row",
     backgroundColor: "rgba(0, 0, 0, 0.2)",
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 4,
     marginBottom: 8,
   },
@@ -967,7 +1173,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   modeDescription: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748B",
     fontStyle: "italic",
     textAlign: "center",
@@ -976,7 +1182,7 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   startButton: {
     marginTop: 8,
@@ -1000,31 +1206,31 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 2,
+    borderRadius: 14,
+    borderWidth: 1,
     position: "relative",
   },
   locationIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
   },
   locationTypeText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   checkBadge: {
     position: "absolute",
     top: 8,
     right: 8,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: "#0EA5E9",
     alignItems: "center",
     justifyContent: "center",
@@ -1033,12 +1239,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingLeft: 16,
+    paddingLeft: 14,
     paddingRight: 4,
     paddingVertical: 12,
     borderRadius: 12,
-    borderWidth: 1.5,
-    minHeight: 56,
+    borderWidth: 1,
+    minHeight: 52,
   },
   dropdownContent: {
     flexDirection: "row",
@@ -1047,8 +1253,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dropdownText: {
-    fontSize: 15,
+    fontSize: 14,
     flex: 1,
+    fontWeight: "500",
   },
   dropdownChevron: {
     width: 32,
@@ -1058,27 +1265,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  floorPickerOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "flex-end",
-    zIndex: 10,
-  },
-  floorPickerBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  modalBackdrop: {
-    flex: 1,
-  },
+
   dragHandle: {
     width: 40,
     height: 4,
@@ -1089,16 +1276,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
     paddingBottom: 40,
   },
   floorPickerContent: {
     maxHeight: "65%",
   },
   newSectionModalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
     maxHeight: "85%",
   },
   modalBody: {
@@ -1114,7 +1301,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
   },
   modalHeaderLeft: {
     flexDirection: "row",
@@ -1122,29 +1309,31 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   headerIconContainer: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 42,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
+    letterSpacing: -0.2,
   },
   modalSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 2,
+    fontWeight: "500",
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   stepContainer: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   stepHeader: {
     flexDirection: "row",
@@ -1155,17 +1344,17 @@ const styles = StyleSheet.create({
   stepNumber: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
   stepNumberText: {
     color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
   },
   stepLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
   },
   startSectionButton: {
@@ -1173,12 +1362,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: 14,
+    borderRadius: 12,
   },
   startButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
   },
   modalOption: {
@@ -1189,6 +1378,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   modalOptionText: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: "500",
   },
 });

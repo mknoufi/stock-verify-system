@@ -87,6 +87,15 @@ async def check_rate_limit(ip_address: str) -> Result[bool, Exception]:
     return Ok(True)
 
 
+async def reset_rate_limit(ip_address: str) -> None:
+    """Clear rate-limit counters for an IP after successful auth."""
+    cache_service = get_cache_service()
+    try:
+        await cache_service.delete("login_attempts", ip_address)
+    except Exception as exc:
+        logger.debug(f"Failed to reset rate limit for {ip_address}: {exc}")
+
+
 async def find_user_by_username(username: str) -> Result[dict[str, Any], Exception]:
     """Find a user by username with error handling."""
     db = get_db()

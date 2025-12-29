@@ -57,6 +57,9 @@ def init_tracing(service_name: Optional[str] = None) -> None:
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
             OTLPSpanExporter,
         )
+        from opentelemetry.instrumentation.logging import LoggingInstrumentor
+        from opentelemetry.instrumentation.pymongo import PymongoInstrumentor
+        from opentelemetry.instrumentation.requests import RequestsInstrumentor
         from opentelemetry.sdk.resources import SERVICE_NAME, Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -86,6 +89,15 @@ def init_tracing(service_name: Optional[str] = None) -> None:
     provider.add_span_processor(span_processor)
 
     trace.set_tracer_provider(provider)
+
+    # Instrument libraries
+    try:
+        LoggingInstrumentor().instrument(set_logging_format=True)
+        RequestsInstrumentor().instrument()
+        PymongoInstrumentor().instrument()
+        logger.info("Instrumented Logging, Requests, and PyMongo")
+    except Exception:
+        logger.warning("Failed to instrument some libraries", exc_info=True)
 
     logger.info(
         "Tracing initialized with OTLP endpoint %s and service name %s",
@@ -119,3 +131,21 @@ def instrument_fastapi_app(app) -> None:
     except Exception:
         # Tracing should never break app startup
         logger.exception("Failed to instrument FastAPI app for tracing")
+
+
+def trace_span(name: str, attributes: Optional[dict] = None, **kwargs):
+    """Decorator/Context manager for tracing a span (dummy implementation)."""
+    from contextlib import nullcontext
+    return nullcontext()
+
+
+def trace_report_generation(report_type: str):
+    """Decorator for tracing report generation (dummy implementation)."""
+    from contextlib import nullcontext
+    return nullcontext()
+
+
+def trace_dashboard_query(query_type: str):
+    """Decorator for tracing dashboard queries (dummy implementation)."""
+    from contextlib import nullcontext
+    return nullcontext()

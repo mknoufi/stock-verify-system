@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from backend.auth.dependencies import get_current_user
+from backend.db.runtime import get_db
 
 router = APIRouter(prefix="/api/mapping", tags=["Database Mapping"])
 logger = logging.getLogger(__name__)
@@ -168,8 +169,8 @@ async def get_columns(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/test")
-async def test_mapping(
+@router.post("/preview")
+async def preview_mapping(
     host: str,
     database: str,
     config: MappingConfig,
@@ -218,7 +219,7 @@ async def test_mapping(
         columns = [column[0] for column in cursor.description]
         results = []
         for row in cursor.fetchall():
-            results.append(dict(zip(columns, row, strict=False)))
+            results.append(dict(zip(columns, row)))
 
         conn.close()
         return {"success": True, "sample_data": results}
@@ -231,15 +232,18 @@ async def test_mapping(
 
 @router.post("/save")
 async def save_mapping(
-    data: dict[str, Any], current_user: dict = Depends(get_current_user)
+    data: dict[str, Any],
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
 ):
     """
     Saves both connection parameters and mapping configuration.
     Expects data = { "connection": {...}, "mapping": {...} }
     """
-    from backend.server import db
-
     try:
+        if current_user.get("role") not in {"admin", "supervisor"}:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+
         connection = data.get("connection", {})
         mapping = data.get("mapping", {})
 
@@ -274,8 +278,11 @@ async def save_mapping(
 
 
 @router.get("/current")
-async def get_current_mapping(current_user: dict = Depends(get_current_user)):
-    from backend.server import db
+async def get_current_mapping(
+    current_user: dict = Depends(get_current_user), db=Depends(get_db)
+):
+    if current_user.get("role") not in {"admin", "supervisor"}:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     try:
         doc = await db.config.find_one({"_id": "erp_mapping"})

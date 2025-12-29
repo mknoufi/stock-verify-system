@@ -129,6 +129,15 @@ async def create_count_line(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
+    # Enforce session status
+    # Allow OPEN or ACTIVE. Reject CLOSED or RECONCILE (if we consider RECONCILE as closed for counting)
+    if session.get("status") not in ["OPEN", "ACTIVE"]:
+        raise HTTPException(status_code=400, detail="Session is not active")
+
+    # Check if session is in reconciliation mode (ACTIVE but reconciled_at is set)
+    if session.get("reconciled_at"):
+        raise HTTPException(status_code=400, detail="Session is in reconciliation mode")
+
     # Get ERP item (support both async and sync mocks)
     result_item = db.erp_items.find_one({"item_code": line_data.item_code})
     erp_item = await result_item if inspect.isawaitable(result_item) else result_item
@@ -151,6 +160,10 @@ async def create_count_line(
 
     # Detect risk flags
     risk_flags = detect_risk_flags(erp_item, line_data, variance)
+
+    # Enforce strict mode validation
+    if session.get("type") == "STRICT" and abs(variance) > 0:
+        risk_flags.append("STRICT_MODE_VARIANCE")
 
     # Calculate financial impact
     counted_mrp = line_data.mrp_counted or erp_item["mrp"]
@@ -413,12 +426,16 @@ async def approve_count_line(
     db = _get_db_client()
 
     try:
+        query = {"$or": [{"id": line_id}]}
+        if ObjectId.is_valid(line_id):
+            query["$or"].append({"_id": ObjectId(line_id)})
+
         result = await db.count_lines.update_one(
-            {"_id": ObjectId(line_id)},
+            query,
             {
                 "$set": {
                     "status": "APPROVED",
-                    "approval_status": "approved",
+                    "approval_status": "APPROVED",
                     "approved_by": current_user["username"],
                     "approved_at": datetime.utcnow(),
                     "verified": True,
@@ -449,12 +466,16 @@ async def reject_count_line(
     db = _get_db_client()
 
     try:
+        query = {"$or": [{"id": line_id}]}
+        if ObjectId.is_valid(line_id):
+            query["$or"].append({"_id": ObjectId(line_id)})
+
         result = await db.count_lines.update_one(
-            {"_id": ObjectId(line_id)},
+            query,
             {
                 "$set": {
                     "status": "REJECTED",
-                    "approval_status": "rejected",
+                    "approval_status": "REJECTED",
                     "rejected_by": current_user["username"],
                     "rejected_at": datetime.utcnow(),
                     "verified": False,

@@ -83,6 +83,12 @@ const ADMIN_GROUPS: SidebarGroup[] = [
     title: "Monitoring",
     items: [
       {
+        key: "live-view",
+        label: "Live View",
+        icon: "pulse",
+        route: "/admin/live-view",
+      },
+      {
         key: "activity-logs",
         label: "Activity Logs",
         icon: "list",

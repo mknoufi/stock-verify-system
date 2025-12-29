@@ -81,7 +81,11 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
       <Animated.View entering={FadeInDown.delay(350).springify()}>
         <GlassCard variant="medium" padding={0} style={styles.section}>
           <FontSizeSlider
-            value={settings.fontSizeValue}
+            value={
+              typeof settings.fontSizeValue === "number"
+                ? settings.fontSizeValue
+                : 16
+            }
             onValueChange={handleFontSizeChange}
           />
         </GlassCard>

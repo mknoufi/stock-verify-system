@@ -11,14 +11,14 @@ import {
 } from "@/components/ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { usePermissions } from "../../src/hooks/usePermissions";
+import { usePermission } from "../../src/hooks/usePermission";
 import { getServiceLogs } from "../../src/services/api";
 import { auroraTheme } from "../../src/theme/auroraTheme";
 
 export default function LogsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { hasRole } = usePermissions();
+  const { hasRole } = usePermission();
   const service = (params.service as string) || "backend";
 
   const [loading, setLoading] = useState(true);

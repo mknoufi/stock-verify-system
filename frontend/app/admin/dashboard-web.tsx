@@ -139,7 +139,6 @@ export default function DashboardWeb() {
     try {
       if (isRefresh) setRefreshing(true);
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [
         servicesRes,
         statsRes,

@@ -21,12 +21,14 @@ logger = logging.getLogger(__name__)
 
 # These will be initialized at runtime
 db: AsyncIOMotorDatabase = None
+cache_service = None
 
 
-def init_verification_api(database):
+def init_verification_api(database, cache_svc=None):
     """Initialize verification API with dependencies"""
-    global db
+    global db, cache_service
     db = database
+    cache_service = cache_svc
 
 
 verification_router = APIRouter(prefix="/api/v2/erp/items", tags=["Item Verification"])
@@ -163,6 +165,15 @@ async def update_item_master(
 
         await db.erp_items.update_one({"item_code": item_code}, update_doc)
 
+        # Invalidate cache for this item
+        if cache_service:
+            # Try to invalidate by barcode if available, otherwise by item_code
+            barcode = item.get("barcode")
+            if barcode:
+                await cache_service.delete_async("items", f"enhanced_{barcode}")
+            # Also invalidate by item_code just in case
+            await cache_service.delete_async("items", f"enhanced_{item_code}")
+
         # Log the change
         await db.audit_logs.insert_one(
             {
@@ -176,6 +187,8 @@ async def update_item_master(
 
         return {"success": True, "message": "Item details updated successfully"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error updating item master {item_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -292,6 +305,15 @@ async def verify_item(
         update_doc = _build_item_update_doc(request, current_user, item)
 
         await db.erp_items.update_one({"item_code": item_code}, update_doc)
+
+        # Invalidate cache for this item
+        if cache_service:
+            # Try to invalidate by barcode if available, otherwise by item_code
+            barcode = item.get("barcode")
+            if barcode:
+                await cache_service.delete_async("items", f"enhanced_{barcode}")
+            # Also invalidate by item_code just in case
+            await cache_service.delete_async("items", f"enhanced_{item_code}")
 
         # Get the actual is_serialized value that was set in the update_doc
         is_serialized_from_update = update_doc["$set"].get("is_serialized")

@@ -2,9 +2,11 @@
 Unit tests for WebSocket Manager (Core)
 """
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 from fastapi import WebSocket
+
 from backend.core.websocket_manager import WebSocketManager
 
 

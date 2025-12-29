@@ -20,7 +20,7 @@ import { StatusBar } from "expo-status-bar";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
-import { usePermissions } from "../../src/hooks/usePermissions";
+import { usePermission } from "../../src/hooks/usePermission";
 import {
   getExportResults,
   downloadExportResult,
@@ -48,7 +48,7 @@ interface ExportResult {
 
 export default function ExportResultsScreen() {
   const router = useRouter();
-  const { hasPermission } = usePermissions();
+  const { hasPermission } = usePermission();
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<ExportResult[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");

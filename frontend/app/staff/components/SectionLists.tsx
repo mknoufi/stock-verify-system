@@ -73,6 +73,7 @@ export function SectionLists({
   onResumeSection,
 }: SectionListsProps) {
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const [showAllFinished, setShowAllFinished] = React.useState(false);
   const topActiveSections = React.useMemo(() => activeSections.slice(0, 3), [activeSections]);
   const overflowActiveSections = React.useMemo(
     () => activeSections.slice(3),
@@ -240,7 +241,7 @@ export function SectionLists({
               color="#10B981"
             />
             <Text style={[styles.sectionTitle, { color: "#F8FAFC" }]}>
-              Finished Sections
+              Previous Sessions
             </Text>
           </View>
           <TouchableOpacity
@@ -255,7 +256,7 @@ export function SectionLists({
             onPress={onToggleSearch}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Toggle finished sections search"
+            accessibilityLabel="Toggle previous sessions search"
           >
             <Ionicons
               name="search"
@@ -272,12 +273,12 @@ export function SectionLists({
             <Ionicons name="search" size={18} color="#94A3B8" />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search finished sections..."
+              placeholder="Search previous sessions..."
               placeholderTextColor="#64748B"
               value={finishedSearchQuery}
               onChangeText={onSearchQueryChange}
               autoFocus
-              accessibilityLabel="Search finished sections"
+              accessibilityLabel="Search previous sessions"
             />
             {finishedSearchQuery.length > 0 && (
               <TouchableOpacity onPress={() => onSearchQueryChange("")} accessibilityRole="button">
@@ -289,7 +290,7 @@ export function SectionLists({
 
         {finishedSections.length > 0 ? (
           <View style={styles.listContainer}>
-            {finishedSections.slice(0, 3).map((session, index) => (
+            {(showAllFinished ? finishedSections : finishedSections.slice(0, 3)).map((session, index) => (
               <Animated.View
                 key={session.id || session.session_id}
                 entering={FadeInUp.delay(200 + index * 50)}
@@ -338,15 +339,22 @@ export function SectionLists({
               </Animated.View>
             ))}
             {finishedSections.length > 3 && (
-              <Text style={styles.moreText}>
-                +{finishedSections.length - 3} more sections
-              </Text>
+              <TouchableOpacity
+                onPress={() => setShowAllFinished(!showAllFinished)}
+                style={{ paddingVertical: 8, alignItems: "center" }}
+              >
+                <Text style={styles.moreText}>
+                  {showAllFinished
+                    ? "Show Less"
+                    : `+${finishedSections.length - 3} more sessions`}
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         ) : (
           <View style={styles.emptyStateSmall}>
             <Text style={styles.emptyTextSmall}>
-              {finishedSearchQuery ? "No matching sections found" : "No finished sections yet"}
+              {finishedSearchQuery ? "No matching sessions found" : "No previous sessions yet"}
             </Text>
           </View>
         )}

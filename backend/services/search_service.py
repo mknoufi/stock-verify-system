@@ -367,11 +367,28 @@ _search_service: Optional[SearchService] = None
 
 
 def get_search_service() -> SearchService:
-    """Get the search service singleton"""
+    """Get the search service singleton, lazily initializing if needed.
+
+    The startup hook should call ``init_search_service`` with the database.
+    However, in some dev runs (hot reloads, missing startup), the singleton
+    can be empty, which previously caused a 503 ("Search service unavailable").
+    We now attempt a best-effort lazy init from the active DB to avoid hard
+    failures. If DB is unavailable, we still surface a RuntimeError.
+    """
+    global _search_service
+
     if _search_service is None:
-        raise RuntimeError(
-            "SearchService not initialized. Call init_search_service first."
-        )
+        try:
+            from backend.db.runtime import get_db
+
+            db = get_db()
+            _search_service = SearchService(db)
+            logger.warning("SearchService lazily initialized at runtime")
+        except Exception as exc:
+            raise RuntimeError(
+                "SearchService not initialized. Call init_search_service first."
+            ) from exc
+
     return _search_service
 
 

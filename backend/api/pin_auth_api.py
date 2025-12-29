@@ -2,12 +2,20 @@
 Auth API Endpoints (PIN Extensions)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from backend.auth.dependencies import get_current_user
-from backend.services.pin_auth_service import PINAuthService
-from backend.core.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pydantic import BaseModel, Field
+
+from backend.api.auth import (
+    check_rate_limit,
+    generate_auth_tokens,
+    find_user_by_username,
+    reset_rate_limit,
+)
+from backend.auth.dependencies import get_current_user
+from backend.db.runtime import get_db
+from backend.services.pin_auth_service import PINAuthService
+from backend.utils.auth_utils import verify_password
 
 router = APIRouter()
 
@@ -31,8 +39,13 @@ async def change_pin(
     """Change the current user's PIN."""
     pin_service = PINAuthService(db)
 
-    # Verify password first (implementation depends on existing auth service)
-    # For now, we assume the user is authenticated via JWT
+    # Verify current password before allowing PIN change
+    hashed_password = current_user.get("hashed_password")
+    if not hashed_password or not verify_password(request.current_password, hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect",
+        )
 
     success = await pin_service.set_pin(str(current_user["_id"]), request.new_pin)
     if not success:
@@ -47,15 +60,31 @@ async def change_pin(
 @router.post("/auth/login/pin")
 async def login_with_pin(
     request: PinLoginRequest,
+    http_request: Request,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Login with PIN."""
-    # This requires finding the user by username first to get user_id
-    user = await db.users.find_one({"username": request.username})
-    if not user:
+    # Rate limit login attempts by IP
+    ip_address = http_request.client.host if http_request and http_request.client else "unknown"
+    rate_result = await check_rate_limit(ip_address)
+    if rate_result.is_err:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(rate_result._error),
+        )
+
+    # Find user and validate status
+    user_result = await find_user_by_username(request.username)
+    if user_result.is_err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
+        )
+    user = user_result.unwrap()
+    if not user.get("is_active", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated",
         )
 
     pin_service = PINAuthService(db)
@@ -67,9 +96,28 @@ async def login_with_pin(
             detail="Invalid PIN",
         )
 
-    # Generate JWT token (reuse existing logic)
-    # from backend.auth.jwt_provider import create_access_token
-    # access_token = create_access_token(data={"sub": str(user["_id"]), "role": user["role"]})
-    # return {"access_token": access_token, "token_type": "bearer"}
+    # Generate JWT + refresh tokens using existing auth flow
+    token_result = await generate_auth_tokens(user, ip_address, http_request)
+    if token_result.is_err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate tokens",
+        )
+    tokens = token_result.unwrap()
 
-    return {"message": "PIN verified"}  # Placeholder until JWT integration
+    # Reset rate limit for successful PIN login
+    try:
+        await reset_rate_limit(ip_address)
+    except Exception:
+        pass
+
+    return {
+        **tokens,
+        "token_type": "bearer",
+        "user": {
+            "username": user.get("username"),
+            "role": user.get("role"),
+            "full_name": user.get("full_name"),
+            "is_active": user.get("is_active", True),
+        },
+    }
