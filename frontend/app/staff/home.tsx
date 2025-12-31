@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import Modal from "react-native-modal";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,7 +26,7 @@ import { useSessionsQuery } from "../../src/hooks/useSessionsQuery";
 import { SESSION_PAGE_SIZE } from "../../src/constants/config";
 import { PremiumInput } from "../../src/components/premium/PremiumInput";
 import { SessionType } from "../../src/types";
-import { useThemeContext } from "../../src/theme/ThemeContext";
+import { useThemeContext } from "@/context/ThemeContext";
 import {
   FloatingScanButton,
   SyncStatusPill,
@@ -100,27 +101,121 @@ export default function StaffHome() {
 
   // Compute display floors for the floor picker modal
   // This ensures fallback data is always available based on locationType
+  // Deduplicate and compute display floors
   const displayFloors = useMemo(() => {
+    let list: Warehouse[] = [];
+
     if (warehouses.length > 0) {
-      return warehouses;
+      list = warehouses;
+    } else if (locationType) {
+      // Fallback floors based on location type
+      if (locationType.toLowerCase().includes("showroom")) {
+        list = [
+          { warehouse_name: "Ground Floor", id: "fl_ground" },
+          { warehouse_name: "First Floor", id: "fl_first" },
+          { warehouse_name: "Second Floor", id: "fl_second" },
+        ];
+      } else {
+        list = [
+          { warehouse_name: "Main Godown", id: "wh_main" },
+          { warehouse_name: "Top Godown", id: "wh_top" },
+          { warehouse_name: "Damage Area", id: "wh_damage" },
+        ];
+      }
     }
-    if (!locationType) {
-      return [];
-    }
-    // Fallback floors based on location type
-    if (locationType.toLowerCase().includes("showroom")) {
-      return [
-        { warehouse_name: "Ground Floor", id: "fl_ground" },
-        { warehouse_name: "First Floor", id: "fl_first" },
-        { warehouse_name: "Second Floor", id: "fl_second" },
-      ];
-    }
-    return [
-      { warehouse_name: "Main Godown", id: "wh_main" },
-      { warehouse_name: "Top Godown", id: "wh_top" },
-      { warehouse_name: "Damage Area", id: "wh_damage" },
-    ];
+
+    // Deduplicate by ID or Name
+    const uniqueMap = new Map();
+    list.forEach(item => {
+      const key = item.id || item.warehouse_name;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, item);
+      }
+    });
+
+    const uniqueList = Array.from(uniqueMap.values());
+    return uniqueList;
   }, [warehouses, locationType]);
+
+  // ... (render)
+
+  {
+    displayFloors.length === 0 ? (
+      <View style={{ padding: 20, alignItems: "center" }}>
+        <Ionicons
+          name="folder-open-outline"
+          size={48}
+          color={isDark ? "#475569" : "#CBD5E1"}
+          style={{ marginBottom: 12 }}
+        />
+        <Text
+          style={{
+            color: isDark ? "#94A3B8" : "#64748B",
+            fontSize: 16,
+            marginBottom: 8,
+          }}
+        >
+          {locationType ? "No floors found" : "Select a zone first"}
+        </Text>
+      </View>
+    ) : (
+      <>
+        {displayFloors.map((floor, index) => (
+          <TouchableOpacity
+            key={`${floor.id}-${index}`}
+            style={[
+              styles.modalOption,
+              {
+                backgroundColor:
+                  selectedFloor === floor.warehouse_name
+                    ? "#0EA5E910"
+                    : isDark ? "#1E293B" : "#F1F5F9", // Explicit background for visibility
+                marginBottom: 8, // Spacing
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: isDark ? "#334155" : "#E2E8F0",
+              },
+            ]}
+            onPress={() => {
+              if (floor.warehouse_name) {
+                setSelectedFloor(floor.warehouse_name);
+                setSelectedFloorId(floor.id);
+                setShowFloorPicker(false);
+                if (Platform.OS !== "web") Haptics.selectionAsync();
+              }
+            }}
+          >
+            <Text
+              style={[
+                styles.modalOptionText,
+                {
+                  color:
+                    selectedFloor === floor.warehouse_name
+                      ? "#0EA5E9"
+                      : isDark
+                        ? "#F8FAFC"
+                        : "#0F172A",
+                  fontWeight:
+                    selectedFloor === floor.warehouse_name
+                      ? "700"
+                      : "500",
+                },
+              ]}
+            >
+              {floor.warehouse_name}
+            </Text>
+            {selectedFloor === floor.warehouse_name && (
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color="#0EA5E9"
+              />
+            )}
+          </TouchableOpacity>
+        ))}
+      </>
+    )
+  }
 
   // Handlers
   const handleRefresh = async () => {
@@ -360,15 +455,37 @@ export default function StaffHome() {
       if (__DEV__) console.error("Failed to fetch warehouses (using fallback)", error);
       // Fallback already set above
     } finally {
-      setIsLoadingWarehouses(false);
+      // Ensure specific timeout or cleanup if needed
+      if (Platform.OS !== 'web') {
+        // Small delay to ensure UI updates aren't batched aggressively
+        setTimeout(() => setIsLoadingWarehouses(false), 100);
+      }
+    }
+
+    // Auto-select "Ground Floor" if available in fallback or fetched data
+    // We check fallback first as it's immediate
+    const groundFloor = fallback.find(
+      (f) =>
+        f.warehouse_name.toLowerCase().includes("ground") ||
+        f.id.toLowerCase().includes("ground"),
+    );
+
+    if (groundFloor) {
+      setSelectedFloor(groundFloor.warehouse_name);
+      setSelectedFloorId(groundFloor.id);
     }
   };
 
   const handleOpenFloorPicker = () => {
+    if (!locationType) {
+      toastService.show("Please select a zone first.", "error");
+      return;
+    }
+
     if (Platform.OS !== "web") Haptics.selectionAsync();
 
     // Ensure we have floors to show if warehouses is empty
-    if (locationType && warehouses.length === 0) {
+    if (warehouses.length === 0) {
       const fallback = getFallbackWarehouses(locationType);
       setWarehouses(fallback);
     }
@@ -408,7 +525,7 @@ export default function StaffHome() {
                 setShowNewSectionForm(true);
               }
             }}
-            // FAB always enabled - allows creating new session when none exist
+          // FAB always enabled - allows creating new session when none exist
           />
         </View>
       }
@@ -642,7 +759,6 @@ export default function StaffHome() {
                   },
                 ]}
                 onPress={handleOpenFloorPicker}
-                disabled={!locationType}
                 activeOpacity={0.7}
               >
                 <View style={styles.dropdownContent}>
@@ -706,6 +822,8 @@ export default function StaffHome() {
                 leftIcon="grid-outline"
                 autoCapitalize="characters"
                 editable={!!selectedFloor}
+                onSubmitEditing={Keyboard.dismiss}
+                returnKeyType="done"
               />
             </View>
           </ScrollView>
@@ -798,12 +916,12 @@ export default function StaffHome() {
                 color={isDark ? "#94A3B8" : "#64748B"}
               />
             </TouchableOpacity>
-	          </View>
-	          <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-	            {displayFloors.length === 0 ? (
-	              <View style={{ padding: 20, alignItems: "center" }}>
-	                <Ionicons
-	                  name="folder-open-outline"
+          </View>
+          <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+            {displayFloors.length === 0 ? (
+              <View style={{ padding: 20, alignItems: "center" }}>
+                <Ionicons
+                  name="folder-open-outline"
                   size={48}
                   color={isDark ? "#475569" : "#CBD5E1"}
                   style={{ marginBottom: 12 }}
@@ -822,7 +940,7 @@ export default function StaffHome() {
               <>
                 {displayFloors.map((floor, index) => (
                   <TouchableOpacity
-                    key={floor.id || floor.warehouse_name || `floor-${index}`}
+                    key={index}
                     style={[
                       styles.modalOption,
                       {
@@ -872,6 +990,7 @@ export default function StaffHome() {
                       marginTop: 10,
                       borderTopWidth: 1,
                       borderColor: isDark ? "#334155" : "#E2E8F0",
+                      opacity: 0.5
                     }}
                   >
                     <Text
@@ -882,9 +1001,7 @@ export default function StaffHome() {
                           Platform.OS === "ios" ? "Menlo" : "monospace",
                       }}
                     >
-                      Debug: {displayFloors.length} floors available
-                      {"\n"}Location: {locationType}
-                      {"\n"}Warehouses: {warehouses.length}
+                      {displayFloors.length} floors available
                     </Text>
                   </View>
                 )}

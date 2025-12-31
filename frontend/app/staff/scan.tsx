@@ -51,7 +51,7 @@ import {
 } from "@/components/ui";
 import type { ScanFeedbackType } from "@/components/ui";
 import { theme } from "@/styles/modernDesignSystem";
-import { useThemeContext } from "@/theme/ThemeContext";
+import { useThemeContext } from "@/context/ThemeContext";
 import {
   getItemByBarcode,
   searchItems,
@@ -68,7 +68,7 @@ import { OfflineIndicator } from "@/components/common/OfflineIndicator";
 import { validateBarcode } from "@/utils/validation";
 
 export default function ScanScreen() {
-  const { theme: appTheme, isDark } = useThemeContext();
+  const { themeLegacy: appTheme, isDark } = useThemeContext();
   const { colors } = appTheme;
   const { width } = useWindowDimensions();
   const { sessionId: rawSessionId } = useLocalSearchParams();
@@ -419,13 +419,6 @@ export default function ScanScreen() {
         // Navigate to detail - use barcode (what was scanned) not item_code
         // The barcode is what the user scanned and what the API can look up
         const navigationBarcode = item.barcode || sanitized;
-        if (__DEV__) {
-          console.log("=== NAVIGATION DEBUG ===");
-          console.log("item.barcode:", item.barcode);
-          console.log("sanitized input:", sanitized);
-          console.log("final navigationBarcode:", navigationBarcode);
-          console.log("Full item before navigation:", JSON.stringify(item, null, 2));
-        }
 
         router.push({
           pathname: "/staff/item-detail",
@@ -470,13 +463,6 @@ export default function ScanScreen() {
   };
 
   const handleSearchResultPress = async (item: any) => {
-    // Debug: Log the full item to understand what fields are available
-    if (__DEV__) {
-      console.log("=== handleSearchResultPress DEBUG ===");
-      console.log("Full item:", JSON.stringify(item, null, 2));
-      console.log("item.barcode:", item.barcode);
-      console.log("item.item_code:", item.item_code);
-    }
 
     const code = item.barcode || item.item_code;
     __DEV__ && console.log("Using code for lookup:", code);
@@ -533,13 +519,13 @@ export default function ScanScreen() {
   if (isScanning) {
     return (
       <View style={styles.cameraFullScreen}>
-          <CameraView
-            ref={cameraRef}
-            style={styles.camera}
-            onCameraReady={() => {
-              __DEV__ && console.log("Camera is ready");
-              setIsCameraReady(true);
-            }}
+        <CameraView
+          ref={cameraRef}
+          style={styles.camera}
+          onCameraReady={() => {
+            __DEV__ && console.log("Camera is ready");
+            setIsCameraReady(true);
+          }}
           onBarcodeScanned={scanned ? undefined : handleBarcodeScan}
           barcodeScannerSettings={{
             barcodeTypes: [
@@ -838,69 +824,69 @@ export default function ScanScreen() {
                           {(item.manual_barcode ||
                             item.unit2_barcode ||
                             item.unit_m_barcode) && (
-                            <View style={styles.altBarcodesRow}>
-                              {item.manual_barcode && (
-                                <View
-                                  style={[
-                                    styles.otherBarcodeBadge,
-                                    {
-                                      backgroundColor: colors.success + "10",
-                                      borderColor: colors.success + "20",
-                                    },
-                                  ]}
-                                >
-                                  <Text
+                              <View style={styles.altBarcodesRow}>
+                                {item.manual_barcode && (
+                                  <View
                                     style={[
-                                      styles.otherBarcodeText,
-                                      { color: colors.success },
+                                      styles.otherBarcodeBadge,
+                                      {
+                                        backgroundColor: colors.success + "10",
+                                        borderColor: colors.success + "20",
+                                      },
                                     ]}
                                   >
-                                    Manual: {item.manual_barcode}
-                                  </Text>
-                                </View>
-                              )}
-                              {item.unit2_barcode && (
-                                <View
-                                  style={[
-                                    styles.otherBarcodeBadge,
-                                    {
-                                      backgroundColor: colors.success + "10",
-                                      borderColor: colors.success + "20",
-                                    },
-                                  ]}
-                                >
-                                  <Text
+                                    <Text
+                                      style={[
+                                        styles.otherBarcodeText,
+                                        { color: colors.success },
+                                      ]}
+                                    >
+                                      Manual: {item.manual_barcode}
+                                    </Text>
+                                  </View>
+                                )}
+                                {item.unit2_barcode && (
+                                  <View
                                     style={[
-                                      styles.otherBarcodeText,
-                                      { color: colors.success },
+                                      styles.otherBarcodeBadge,
+                                      {
+                                        backgroundColor: colors.success + "10",
+                                        borderColor: colors.success + "20",
+                                      },
                                     ]}
                                   >
-                                    Unit2: {item.unit2_barcode}
-                                  </Text>
-                                </View>
-                              )}
-                              {item.unit_m_barcode && (
-                                <View
-                                  style={[
-                                    styles.otherBarcodeBadge,
-                                    {
-                                      backgroundColor: colors.success + "10",
-                                      borderColor: colors.success + "20",
-                                    },
-                                  ]}
-                                >
-                                  <Text
+                                    <Text
+                                      style={[
+                                        styles.otherBarcodeText,
+                                        { color: colors.success },
+                                      ]}
+                                    >
+                                      Unit2: {item.unit2_barcode}
+                                    </Text>
+                                  </View>
+                                )}
+                                {item.unit_m_barcode && (
+                                  <View
                                     style={[
-                                      styles.otherBarcodeText,
-                                      { color: colors.success },
+                                      styles.otherBarcodeBadge,
+                                      {
+                                        backgroundColor: colors.success + "10",
+                                        borderColor: colors.success + "20",
+                                      },
                                     ]}
                                   >
-                                    UnitM: {item.unit_m_barcode}
-                                  </Text>
-                                </View>
-                              )}
-                            </View>
-                          )}
+                                    <Text
+                                      style={[
+                                        styles.otherBarcodeText,
+                                        { color: colors.success },
+                                      ]}
+                                    >
+                                      UnitM: {item.unit_m_barcode}
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+                            )}
                         </View>
                         <Ionicons
                           name="chevron-forward"
@@ -1107,7 +1093,7 @@ export default function ScanScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[...appTheme.gradients.success]}
+              colors={appTheme.gradients.success}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.finishRackGradient}
@@ -1143,7 +1129,7 @@ export default function ScanScreen() {
             activeOpacity={0.7}
           >
             <LinearGradient
-              colors={[...appTheme.gradients.accent]}
+              colors={appTheme.gradients.accent}
               style={styles.quickActionGradient}
             >
               <Ionicons name="list" size={24} color="#FFF" />
@@ -1158,7 +1144,7 @@ export default function ScanScreen() {
             activeOpacity={0.7}
           >
             <LinearGradient
-              colors={[...appTheme.gradients.success]}
+              colors={appTheme.gradients.success}
               style={styles.quickActionGradient}
             >
               <Ionicons name="checkmark-done" size={24} color="#FFF" />
@@ -1177,7 +1163,7 @@ export default function ScanScreen() {
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={[...appTheme.gradients.accent]}
+          colors={appTheme.gradients.accent}
           style={styles.quickActionsToggleGradient}
         >
           <Ionicons

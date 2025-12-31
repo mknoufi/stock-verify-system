@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../theme/ThemeContext";
+import { useThemeContext } from "../../context/ThemeContext";
 
 export interface ConflictData {
   barcode: string;
@@ -31,7 +31,7 @@ interface ConflictResolutionModalProps {
 export const ConflictResolutionModal: React.FC<
   ConflictResolutionModalProps
 > = ({ visible, conflicts, onResolve, onCancel, mode = "sync" }) => {
-  const { theme } = useTheme();
+  const { themeLegacy: theme } = useThemeContext();
   const [resolutions, setResolutions] = React.useState<
     Record<string, "local" | "server">
   >({});

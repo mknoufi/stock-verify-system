@@ -21,9 +21,7 @@ import { ToastProvider } from "../src/components/feedback/ToastProvider";
 import { initializeBackendURL } from "../src/utils/backendUrl";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../src/services/queryClient";
-
-import { UnistylesThemeProvider } from "../src/theme/Provider";
-import { ThemeProvider } from "../src/theme/ThemeContext";
+import { ThemeProvider } from "../src/context/ThemeContext";
 import { initReactotron } from "../src/services/devtools/reactotron";
 import {
   startOfflineQueue,
@@ -33,6 +31,7 @@ import apiClient from "../src/services/httpClient";
 import { initSentry } from "../src/services/sentry";
 import { mmkvStorage } from "../src/services/mmkvStorage";
 import { AuthGuard } from "../src/components/auth/AuthGuard";
+import { modernColors, modernTypography } from "../src/styles/modernDesignSystem";
 
 // keep the splash screen visible while complete fetching resources
 // On web, wrap in try-catch to prevent blocking
@@ -44,6 +43,14 @@ if (Platform.OS !== "web") {
     // Silent fail for web platform
   });
 }
+
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 
 // Debug logs only in development
 if (__DEV__) {
@@ -82,6 +89,13 @@ export default function RootLayout() {
   const { loadSettings } = useSettingsStore();
   const segments = useSegments();
   const _router = useRouter();
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [initError, setInitError] = React.useState<string | null>(null);
   const cleanupRef = React.useRef<(() => void)[]>([]);
@@ -110,6 +124,11 @@ export default function RootLayout() {
     const initialize = async (): Promise<void> => {
       __DEV__ && console.log("🔵 [STEP 5] Initialize function called");
       __DEV__ && console.log("🔵 [STEP 5] Starting async initialization...");
+
+      // Wait for fonts to load
+      if (!fontsLoaded) {
+        return;
+      }
 
       // Emergency fallback: force initialization after 3 seconds
       const emergencyTimeout = setTimeout(() => {
@@ -251,7 +270,7 @@ export default function RootLayout() {
             syncService.cleanup();
             try {
               stopOfflineQueue();
-            } catch {}
+            } catch { }
           });
         }
 
@@ -311,7 +330,7 @@ export default function RootLayout() {
     };
     // The store functions are stable but lint cannot verify it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fontsLoaded]);
 
   React.useEffect(() => {
     // Wait for initialization and loading to complete
@@ -341,19 +360,19 @@ export default function RootLayout() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#0F172A", // modernColors.background.primary
+          backgroundColor: modernColors.background.primary,
         }}
       >
         <ActivityIndicator
-          color="#3B82F6" // modernColors.primary[500]
+          color={modernColors.primary[500]}
           style={{ marginBottom: 24 }}
           size="large"
         />
         <Text
           style={{
-            color: "#F8FAFC", // modernColors.text.primary
-            fontSize: 24, // modernTypography.heading.h3.fontSize
-            fontWeight: "700", // modernTypography.heading.h3.fontWeight
+            color: modernColors.text.primary,
+            fontSize: modernTypography.h3.fontSize,
+            fontWeight: "700",
             letterSpacing: 0.5,
           }}
         >
@@ -361,8 +380,8 @@ export default function RootLayout() {
         </Text>
         <Text
           style={{
-            color: "#94A3B8", // modernColors.text.tertiary
-            fontSize: 14, // modernTypography.body.small.fontSize
+            color: modernColors.text.tertiary,
+            fontSize: modernTypography.body.small.fontSize,
             marginTop: 8,
             letterSpacing: 0.5,
           }}
@@ -375,7 +394,7 @@ export default function RootLayout() {
               marginTop: 32,
               padding: 16,
               backgroundColor: "rgba(239, 68, 68, 0.1)", // modernColors.error with opacity
-              borderRadius: 12, // modernBorderRadius.lg
+              borderRadius: 12,
               borderWidth: 1,
               borderColor: "rgba(239, 68, 68, 0.2)",
               maxWidth: 300,
@@ -383,7 +402,7 @@ export default function RootLayout() {
           >
             <Text
               style={{
-                color: "#EF4444", // modernColors.error
+                color: modernColors.error.main,
                 fontSize: 12,
                 textAlign: "center",
               }}
@@ -404,7 +423,7 @@ export default function RootLayout() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#0F172A",
+          backgroundColor: modernColors.background.primary,
           padding: 20,
         }}
       >
@@ -423,7 +442,7 @@ export default function RootLayout() {
         </View>
         <Text
           style={{
-            color: "#EF4444",
+            color: modernColors.error.main,
             fontSize: 20,
             fontWeight: "bold",
             marginBottom: 12,
@@ -433,7 +452,7 @@ export default function RootLayout() {
         </Text>
         <Text
           style={{
-            color: "#94A3B8",
+            color: modernColors.text.tertiary,
             fontSize: 14,
             marginBottom: 32,
             textAlign: "center",
@@ -451,7 +470,7 @@ export default function RootLayout() {
             borderRadius: 8,
           }}
         >
-          <Text style={{ color: "#3B82F6", fontSize: 14, fontWeight: "600" }}>
+          <Text style={{ color: modernColors.primary[500], fontSize: 14, fontWeight: "600" }}>
             Attempting to continue...
           </Text>
         </View>
@@ -463,13 +482,11 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <ThemeProvider>
-          <UnistylesThemeProvider>
-            <ToastProvider>
-              <AuthGuard>
-                <RootStack />
-              </AuthGuard>
-            </ToastProvider>
-          </UnistylesThemeProvider>
+          <ToastProvider>
+            <AuthGuard>
+              <RootStack />
+            </AuthGuard>
+          </ToastProvider>
         </ThemeProvider>
       </ErrorBoundary>
     </QueryClientProvider>

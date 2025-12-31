@@ -40,15 +40,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useAuthStore } from "../src/store/authStore";
 import { GlassCard } from "../src/components/ui";
-import {
-  modernColors,
-  modernTypography,
-  modernSpacing,
-  modernBorderRadius,
-} from "../src/styles/modernDesignSystem";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PremiumInput } from "../src/components/premium/PremiumInput";
 import { PremiumButton } from "../src/components/premium/PremiumButton";
+import { useThemeContext } from "../src/context/ThemeContext";
 
 const APP_VERSION = "2.5.0";
 const PIN_LENGTH = 4;
@@ -84,6 +79,7 @@ export default function LoginScreen() {
   const { width, height } = useWindowDimensions();
   const responsive = getResponsiveSizes(width, height);
   const { login, loginWithPin } = useAuthStore();
+  const { theme } = useThemeContext();
 
   // Login mode state (PIN is primary/default)
   const [loginMode, setLoginMode] = useState<LoginMode>("pin");
@@ -164,7 +160,6 @@ export default function LoginScreen() {
         handlePinLogin(newPin);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [pin, loading],
   );
 
@@ -224,21 +219,6 @@ export default function LoginScreen() {
     );
   };
 
-  // Toggle functions for UI (used in credentials mode JSX below)
-  const _toggleRememberMe = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setRememberMe(!rememberMe);
-  };
-
-  const _toggleShowPassword = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setShowPassword(!showPassword);
-  };
-
   const handleLogin = async () => {
     if (!username || !password) {
       Alert.alert("Error", "Please enter username and password");
@@ -270,28 +250,255 @@ export default function LoginScreen() {
     }
   };
 
+  // Styles that depend on theme
+  const themedStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+    },
+    keyboardView: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: "center",
+    },
+    contentContainer: {
+      flex: 1,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.xl,
+      alignSelf: "center",
+      width: "100%",
+    },
+    header: {
+      alignItems: "center",
+      marginBottom: theme.spacing.xl,
+    },
+    iconContainer: {
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: theme.spacing.lg,
+      borderWidth: 1.5,
+      borderColor: `${theme.colors.primary[500]}59`, // 35% opacity
+      backgroundColor: `${theme.colors.primary[500]}26`, // 15% opacity
+      position: "relative",
+    },
+    iconGlow: {
+      position: "absolute",
+      backgroundColor: `${theme.colors.primary[500]}14`, // 8% opacity
+      zIndex: -1,
+    },
+    title: {
+      ...theme.typography.h1,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.xs,
+      textAlign: "center",
+      letterSpacing: -0.5,
+    },
+    subtitle: {
+      ...theme.typography.body.medium,
+      color: theme.colors.text.secondary,
+      textAlign: "center",
+    },
+    formContainerWrapper: {
+      width: "100%",
+    },
+    glassCard: {
+      width: "100%",
+    },
+    form: {
+      width: "100%",
+    },
+    formHeader: {
+      marginBottom: theme.spacing.lg,
+    },
+    formTitle: {
+      ...theme.typography.h2,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.xs,
+    },
+    formSubtitle: {
+      ...theme.typography.body.small,
+      color: theme.colors.text.secondary,
+    },
+    inputSection: {
+      marginBottom: theme.spacing.lg,
+    },
+    optionsRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: theme.spacing.lg,
+    },
+    rememberMeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderRadius: 7,
+      borderWidth: 1.5,
+      borderColor: "rgba(255, 255, 255, 0.1)",
+      backgroundColor: "rgba(15, 23, 42, 0.6)",
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: theme.spacing.sm,
+    },
+    checkboxChecked: {
+      backgroundColor: theme.colors.primary[500],
+      borderColor: theme.colors.primary[400],
+    },
+    rememberMeText: {
+      ...theme.typography.body.small,
+      color: theme.colors.text.tertiary,
+      fontWeight: "500",
+    },
+    forgotPasswordText: {
+      ...theme.typography.body.small,
+      color: theme.colors.primary[500],
+      fontWeight: "600",
+    },
+    securityNotice: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: theme.spacing.lg,
+      gap: theme.spacing.xs,
+    },
+    securityText: {
+      ...theme.typography.label.small,
+      color: theme.colors.text.tertiary,
+    },
+    // PIN Keypad Styles
+    pinContainer: {
+      alignItems: "center",
+      paddingVertical: theme.spacing.md,
+    },
+    pinIndicators: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.xl,
+    },
+    pinDot: {
+      borderWidth: 2,
+      borderColor: "rgba(255, 255, 255, 0.1)", // Keep semi-transparent for aesthetics
+      backgroundColor: "transparent",
+    },
+    pinDotFilled: {
+      backgroundColor: theme.colors.primary[500],
+      borderColor: theme.colors.primary[400],
+    },
+    keypadContainer: {
+      gap: theme.spacing.md,
+    },
+    keypadRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: theme.spacing.md,
+    },
+    keypadButton: {
+      borderRadius: 36,
+      backgroundColor: `${theme.colors.background.paper}66`, // 40% opacity
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: "rgba(255, 255, 255, 0.05)",
+    },
+    keypadText: {
+      ...theme.typography.h2,
+      color: theme.colors.text.primary,
+      fontWeight: "600",
+    },
+    loadingText: {
+      ...theme.typography.body.small,
+      color: theme.colors.text.tertiary,
+      marginTop: theme.spacing.lg,
+      textAlign: "center",
+    },
+    modeSwitchButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm,
+    },
+    modeSwitchText: {
+      ...theme.typography.body.small,
+      color: theme.colors.primary[500],
+      fontWeight: "500",
+    },
+    footer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: theme.spacing.xl,
+      gap: theme.spacing.md,
+    },
+    versionText: {
+      ...theme.typography.label.small,
+      color: theme.colors.text.tertiary,
+    },
+    footerDivider: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: "rgba(255, 255, 255, 0.1)",
+    },
+    copyrightText: {
+      ...theme.typography.label.small,
+      color: theme.colors.text.tertiary,
+    },
+    // Decorative circles - using theme colors
+    decorativeCircle1: {
+      position: "absolute",
+      top: -120,
+      left: -120,
+      width: 450,
+      height: 450,
+      borderRadius: 225,
+      backgroundColor: theme.colors.primary[600],
+      opacity: 0.12,
+      transform: [{ scale: 1.3 }],
+    },
+    decorativeCircle2: {
+      position: "absolute",
+      bottom: -80,
+      right: -80,
+      width: 350,
+      height: 350,
+      borderRadius: 175,
+      backgroundColor: theme.colors.accent?.[600] || theme.colors.secondary[600],
+      opacity: 0.1,
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={themedStyles.container}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={["#020617", "#0F172A"]}
-        style={styles.background}
+        // Use theme gradient if available, or fall back to primary-like gradient
+        colors={theme.gradients.aurora || [theme.colors.background.default, theme.colors.background.paper]}
+        style={StyleSheet.absoluteFillObject}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
 
       {/* Decorative background elements */}
-      <View style={styles.decorativeCircle1} />
-      <View style={styles.decorativeCircle2} />
+      <View style={themedStyles.decorativeCircle1} />
+      <View style={themedStyles.decorativeCircle2} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
+        style={themedStyles.keyboardView}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
           contentContainerStyle={[
-            styles.scrollContent,
+            themedStyles.scrollContent,
             { minHeight: height - 60 },
           ]}
           keyboardShouldPersistTaps="handled"
@@ -299,7 +506,7 @@ export default function LoginScreen() {
         >
           <View
             style={[
-              styles.contentContainer,
+              themedStyles.contentContainer,
               {
                 maxWidth: responsive.maxContentWidth,
                 paddingHorizontal: responsive.horizontalPadding,
@@ -309,11 +516,11 @@ export default function LoginScreen() {
             {/* Logo & Brand Section */}
             <Animated.View
               entering={FadeInDown.delay(200).springify()}
-              style={[styles.header, logoStyle]}
+              style={[themedStyles.header, logoStyle]}
             >
               <View
                 style={[
-                  styles.iconContainer,
+                  themedStyles.iconContainer,
                   {
                     width: responsive.iconContainerSize,
                     height: responsive.iconContainerSize,
@@ -324,34 +531,34 @@ export default function LoginScreen() {
                 <Ionicons
                   name="cube"
                   size={responsive.iconSize}
-                  color="#0EA5E9"
+                  color={theme.colors.primary[500]}
                 />
-                <View style={styles.iconGlow} />
+                <View style={[themedStyles.iconGlow, { width: responsive.iconContainerSize * 1.25, height: responsive.iconContainerSize * 1.25, borderRadius: responsive.iconContainerSize * 0.375 }]} />
               </View>
-              <Text style={styles.title}>Stock Verify</Text>
-              <Text style={styles.subtitle}>Inventory Management System</Text>
+              <Text style={themedStyles.title}>Stock Verify</Text>
+              <Text style={themedStyles.subtitle}>Inventory Management System</Text>
             </Animated.View>
 
             {/* Login Form Card */}
             <Animated.View
               entering={FadeInUp.delay(400).springify()}
-              style={styles.formContainerWrapper}
+              style={themedStyles.formContainerWrapper}
             >
               <GlassCard
                 variant="strong"
                 intensity={40}
-                borderRadius={modernBorderRadius.xl}
-                padding={modernSpacing.xl}
+                borderRadius={theme.borderRadius.xl}
+                padding={theme.spacing.xl}
                 withGradientBorder={true}
                 elevation="lg"
-                style={styles.glassCard}
+                style={themedStyles.glassCard}
               >
-                <View style={styles.form}>
-                  <View style={styles.formHeader}>
-                    <Text style={styles.formTitle}>
+                <View style={themedStyles.form}>
+                  <View style={themedStyles.formHeader}>
+                    <Text style={themedStyles.formTitle}>
                       {loginMode === "pin" ? "Enter Your PIN" : "Welcome Back"}
                     </Text>
-                    <Text style={styles.formSubtitle}>
+                    <Text style={themedStyles.formSubtitle}>
                       {loginMode === "pin"
                         ? "Use your 4-digit PIN to sign in"
                         : "Sign in with your credentials"}
@@ -363,23 +570,23 @@ export default function LoginScreen() {
                     <Animated.View
                       entering={FadeIn.duration(200)}
                       exiting={FadeOut.duration(200)}
-                      style={styles.pinContainer}
+                      style={themedStyles.pinContainer}
                     >
                       {/* PIN Indicator Dots */}
                       <Animated.View
-                        style={[styles.pinIndicators, pinIndicatorStyle]}
+                        style={[themedStyles.pinIndicators, pinIndicatorStyle]}
                       >
                         {[0, 1, 2, 3].map((index) => (
                           <View
                             key={index}
                             style={[
-                              styles.pinDot,
+                              themedStyles.pinDot,
                               {
                                 width: responsive.pinDotSize,
                                 height: responsive.pinDotSize,
                                 borderRadius: responsive.pinDotSize / 2,
                               },
-                              pin.length > index && styles.pinDotFilled,
+                              pin.length > index && themedStyles.pinDotFilled,
                             ]}
                           />
                         ))}
@@ -388,14 +595,14 @@ export default function LoginScreen() {
                       {/* PIN Keypad */}
                       <View
                         style={[
-                          styles.keypadContainer,
+                          themedStyles.keypadContainer,
                           { gap: responsive.keypadGap },
                         ]}
                       >
                         {/* Row 1: 1, 2, 3 */}
                         <View
                           style={[
-                            styles.keypadRow,
+                            themedStyles.keypadRow,
                             { gap: responsive.keypadGap },
                           ]}
                         >
@@ -403,7 +610,7 @@ export default function LoginScreen() {
                             <TouchableOpacity
                               key={digit}
                               style={[
-                                styles.keypadButton,
+                                themedStyles.keypadButton,
                                 {
                                   width: responsive.keypadButtonSize,
                                   height: responsive.keypadButtonSize,
@@ -414,14 +621,14 @@ export default function LoginScreen() {
                               disabled={loading}
                               activeOpacity={0.7}
                             >
-                              <Text style={styles.keypadText}>{digit}</Text>
+                              <Text style={themedStyles.keypadText}>{digit}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
                         {/* Row 2: 4, 5, 6 */}
                         <View
                           style={[
-                            styles.keypadRow,
+                            themedStyles.keypadRow,
                             { gap: responsive.keypadGap },
                           ]}
                         >
@@ -429,7 +636,7 @@ export default function LoginScreen() {
                             <TouchableOpacity
                               key={digit}
                               style={[
-                                styles.keypadButton,
+                                themedStyles.keypadButton,
                                 {
                                   width: responsive.keypadButtonSize,
                                   height: responsive.keypadButtonSize,
@@ -440,7 +647,7 @@ export default function LoginScreen() {
                               disabled={loading}
                               activeOpacity={0.7}
                             >
-                              <Text style={styles.keypadText}>
+                              <Text style={themedStyles.keypadText}>
                                 {String(digit)}
                               </Text>
                             </TouchableOpacity>
@@ -449,7 +656,7 @@ export default function LoginScreen() {
                         {/* Row 3: 7, 8, 9 */}
                         <View
                           style={[
-                            styles.keypadRow,
+                            themedStyles.keypadRow,
                             { gap: responsive.keypadGap },
                           ]}
                         >
@@ -457,7 +664,7 @@ export default function LoginScreen() {
                             <TouchableOpacity
                               key={digit}
                               style={[
-                                styles.keypadButton,
+                                themedStyles.keypadButton,
                                 {
                                   width: responsive.keypadButtonSize,
                                   height: responsive.keypadButtonSize,
@@ -468,7 +675,7 @@ export default function LoginScreen() {
                               disabled={loading}
                               activeOpacity={0.7}
                             >
-                              <Text style={styles.keypadText}>
+                              <Text style={themedStyles.keypadText}>
                                 {String(digit)}
                               </Text>
                             </TouchableOpacity>
@@ -477,7 +684,7 @@ export default function LoginScreen() {
                         {/* Row 4: Empty, 0, Backspace */}
                         <View
                           style={[
-                            styles.keypadRow,
+                            themedStyles.keypadRow,
                             { gap: responsive.keypadGap },
                           ]}
                         >
@@ -489,7 +696,7 @@ export default function LoginScreen() {
                           />
                           <TouchableOpacity
                             style={[
-                              styles.keypadButton,
+                              themedStyles.keypadButton,
                               {
                                 width: responsive.keypadButtonSize,
                                 height: responsive.keypadButtonSize,
@@ -500,11 +707,11 @@ export default function LoginScreen() {
                             disabled={loading}
                             activeOpacity={0.7}
                           >
-                            <Text style={styles.keypadText}>{String(0)}</Text>
+                            <Text style={themedStyles.keypadText}>{String(0)}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={[
-                              styles.keypadButton,
+                              themedStyles.keypadButton,
                               {
                                 width: responsive.keypadButtonSize,
                                 height: responsive.keypadButtonSize,
@@ -522,8 +729,8 @@ export default function LoginScreen() {
                               )}
                               color={
                                 pin.length === 0
-                                  ? modernColors.text.tertiary
-                                  : modernColors.text.primary
+                                  ? theme.colors.text.tertiary
+                                  : theme.colors.text.primary
                               }
                             />
                           </TouchableOpacity>
@@ -531,7 +738,7 @@ export default function LoginScreen() {
                       </View>
 
                       {loading && (
-                        <Text style={styles.loadingText}>Verifying PIN...</Text>
+                        <Text style={themedStyles.loadingText}>Verifying PIN...</Text>
                       )}
                     </Animated.View>
                   ) : (
@@ -540,7 +747,7 @@ export default function LoginScreen() {
                       entering={FadeIn.duration(200)}
                       exiting={FadeOut.duration(200)}
                     >
-                      <View style={styles.inputSection}>
+                      <View style={themedStyles.inputSection}>
                         <PremiumInput
                           label="Username"
                           value={username}
@@ -563,9 +770,9 @@ export default function LoginScreen() {
                         />
                       </View>
 
-                      <View style={styles.optionsRow}>
+                      <View style={themedStyles.optionsRow}>
                         <TouchableOpacity
-                          style={styles.rememberMeRow}
+                          style={themedStyles.rememberMeRow}
                           onPress={() => setRememberMe(!rememberMe)}
                           activeOpacity={0.7}
                           accessibilityRole="checkbox"
@@ -574,8 +781,8 @@ export default function LoginScreen() {
                         >
                           <View
                             style={[
-                              styles.checkbox,
-                              rememberMe && styles.checkboxChecked,
+                              themedStyles.checkbox,
+                              rememberMe && themedStyles.checkboxChecked,
                             ]}
                           >
                             {rememberMe && (
@@ -586,7 +793,7 @@ export default function LoginScreen() {
                               />
                             )}
                           </View>
-                          <Text style={styles.rememberMeText}>Remember me</Text>
+                          <Text style={themedStyles.rememberMeText}>Remember me</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -594,7 +801,7 @@ export default function LoginScreen() {
                           activeOpacity={0.7}
                           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
-                          <Text style={styles.forgotPasswordText}>
+                          <Text style={themedStyles.forgotPasswordText}>
                             Forgot Password?
                           </Text>
                         </TouchableOpacity>
@@ -615,7 +822,7 @@ export default function LoginScreen() {
 
                   {/* Mode Switch Button */}
                   <TouchableOpacity
-                    style={styles.modeSwitchButton}
+                    style={themedStyles.modeSwitchButton}
                     onPress={switchLoginMode}
                     activeOpacity={0.7}
                   >
@@ -624,22 +831,22 @@ export default function LoginScreen() {
                         loginMode === "pin" ? "key-outline" : "keypad-outline"
                       }
                       size={16}
-                      color={modernColors.primary[400]}
+                      color={theme.colors.primary[400]}
                     />
-                    <Text style={styles.modeSwitchText}>
+                    <Text style={themedStyles.modeSwitchText}>
                       {loginMode === "pin"
                         ? "Use Username & Password"
                         : "Use PIN Instead"}
                     </Text>
                   </TouchableOpacity>
 
-                  <View style={styles.securityNotice}>
+                  <View style={themedStyles.securityNotice}>
                     <Ionicons
                       name="shield-checkmark-outline"
                       size={14}
-                      color={modernColors.text.tertiary}
+                      color={theme.colors.text.tertiary}
                     />
-                    <Text style={styles.securityText}>
+                    <Text style={themedStyles.securityText}>
                       Secured with 256-bit encryption
                     </Text>
                   </View>
@@ -650,11 +857,11 @@ export default function LoginScreen() {
             {/* Footer */}
             <Animated.View
               entering={FadeInUp.delay(600).springify()}
-              style={styles.footer}
+              style={themedStyles.footer}
             >
-              <Text style={styles.versionText}>Version {APP_VERSION}</Text>
-              <View style={styles.footerDivider} />
-              <Text style={styles.copyrightText}>© 2025 Stock Verify</Text>
+              <Text style={themedStyles.versionText}>Version {APP_VERSION}</Text>
+              <View style={themedStyles.footerDivider} />
+              <Text style={themedStyles.copyrightText}>© 2025 Stock Verify</Text>
             </Animated.View>
           </View>
         </ScrollView>
@@ -662,245 +869,3 @@ export default function LoginScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: modernColors.background.default,
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  decorativeCircle1: {
-    position: "absolute",
-    top: -120,
-    left: -120,
-    width: 450,
-    height: 450,
-    borderRadius: 225,
-    backgroundColor: modernColors.primary[600],
-    opacity: 0.12,
-    transform: [{ scale: 1.3 }],
-  },
-  decorativeCircle2: {
-    position: "absolute",
-    bottom: -80,
-    right: -80,
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-    backgroundColor: modernColors.accent[600],
-    opacity: 0.1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: modernSpacing.lg,
-    paddingVertical: modernSpacing.xl,
-    alignSelf: "center",
-    width: "100%",
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: modernSpacing.xl,
-  },
-  iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 28,
-    backgroundColor: "rgba(99, 102, 241, 0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: modernSpacing.lg,
-    borderWidth: 1.5,
-    borderColor: "rgba(99, 102, 241, 0.35)",
-    position: "relative",
-  },
-  iconGlow: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 36,
-    backgroundColor: "rgba(99, 102, 241, 0.08)",
-    zIndex: -1,
-  },
-  title: {
-    ...modernTypography.h1,
-    color: modernColors.text.primary,
-    marginBottom: modernSpacing.xs,
-    textAlign: "center",
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    ...modernTypography.body.medium,
-    color: modernColors.text.secondary,
-    textAlign: "center",
-  },
-  formContainerWrapper: {
-    width: "100%",
-  },
-  glassCard: {
-    width: "100%",
-  },
-  form: {
-    width: "100%",
-  },
-  formHeader: {
-    marginBottom: modernSpacing.lg,
-  },
-  formTitle: {
-    ...modernTypography.h2,
-    color: modernColors.text.primary,
-    marginBottom: modernSpacing.xs,
-  },
-  formSubtitle: {
-    ...modernTypography.body.small,
-    color: modernColors.text.secondary,
-  },
-  inputSection: {
-    marginBottom: modernSpacing.lg,
-  },
-  optionsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: modernSpacing.lg,
-  },
-  rememberMeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: modernSpacing.sm,
-  },
-  checkboxChecked: {
-    backgroundColor: "#0EA5E9",
-    borderColor: "#38BDF8",
-  },
-  rememberMeText: {
-    ...modernTypography.body.small,
-    color: "#94A3B8",
-    fontWeight: "500",
-  },
-  forgotPasswordText: {
-    ...modernTypography.body.small,
-    color: "#0EA5E9",
-    fontWeight: "600",
-  },
-  securityNotice: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: modernSpacing.lg,
-    gap: modernSpacing.xs,
-  },
-  securityText: {
-    ...modernTypography.label.small,
-    color: "#64748B",
-  },
-  // PIN Keypad Styles
-  pinContainer: {
-    alignItems: "center",
-    paddingVertical: modernSpacing.md,
-  },
-  pinIndicators: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: modernSpacing.md,
-    marginBottom: modernSpacing.xl,
-  },
-  pinDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    backgroundColor: "transparent",
-  },
-  pinDotFilled: {
-    backgroundColor: "#0EA5E9",
-    borderColor: "#38BDF8",
-  },
-  keypadContainer: {
-    gap: modernSpacing.md,
-  },
-  keypadRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: modernSpacing.md,
-  },
-  keypadButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(30, 41, 59, 0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
-  },
-  keypadButtonEmpty: {
-    width: 72,
-    height: 72,
-  },
-  keypadText: {
-    ...modernTypography.h2,
-    color: "#F8FAFC",
-    fontWeight: "600",
-  },
-  loadingText: {
-    ...modernTypography.body.small,
-    color: "#94A3B8",
-    marginTop: modernSpacing.lg,
-    textAlign: "center",
-  },
-  modeSwitchButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: modernSpacing.xs,
-    marginTop: modernSpacing.lg,
-    paddingVertical: modernSpacing.sm,
-  },
-  modeSwitchText: {
-    ...modernTypography.body.small,
-    color: "#0EA5E9",
-    fontWeight: "500",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: modernSpacing.xl,
-    gap: modernSpacing.md,
-  },
-  versionText: {
-    ...modernTypography.label.small,
-    color: "#64748B",
-  },
-  footerDivider: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-  },
-  copyrightText: {
-    ...modernTypography.label.small,
-    color: "#64748B",
-  },
-});

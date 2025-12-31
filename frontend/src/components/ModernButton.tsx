@@ -37,7 +37,7 @@ import {
   modernShadows,
   modernAnimations,
 } from "../styles/modernDesignSystem";
-import { useThemeContextSafe } from "../theme/ThemeContext";
+import { useThemeContextSafe } from "../context/ThemeContext";
 
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
@@ -88,7 +88,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
   accessibilityHint,
 }) => {
   const themeContext = useThemeContextSafe();
-  const theme = themeContext?.theme;
+  const theme = themeContext?.themeLegacy;
 
   // Animation values
   const scale = useSharedValue(1);
@@ -130,7 +130,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
   // Get button styles based on variant and size
   const getButtonStyles = (): ViewStyle => {
     const baseStyle: ViewStyle = {
-      borderRadius: theme ? theme.radius.md : modernBorderRadius.button,
+      borderRadius: theme ? theme.borderRadius.md : modernBorderRadius.button,
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",

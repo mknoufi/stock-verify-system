@@ -7,6 +7,7 @@
  * - Haptic feedback
  * - Smooth spring animations
  * - Customizable action buttons
+ * - Theme-aware styling
  */
 
 import React from "react";
@@ -22,7 +23,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
-import { auroraTheme } from "@/theme/auroraTheme";
+import { useThemeContext } from "../../context/ThemeContext";
 import { GlassCard } from "./GlassCard";
 
 const SWIPE_THRESHOLD = 80;
@@ -50,6 +51,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   style,
   onSwipeComplete: _onSwipeComplete,
 }) => {
+  const { themeLegacy: theme, getFontSize } = useThemeContext();
   const translateX = useSharedValue(0);
   const contextX = useSharedValue(0);
 
@@ -140,6 +142,27 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
     }
   };
 
+  const actionButtonStyle = {
+    width: 60,
+    height: 60,
+    borderRadius: theme.borderRadius.xl,
+    justifyContent: "center" as const, // Fix type inference
+    alignItems: "center" as const, // Fix type inference
+    // Shadow is tricky with theme string, assuming implementation handles it or use elevation style
+    // theme.shadows.md is a string e.g. "0 4px 6px...", we might need to parse or use elevation if RN
+    // For now, let's just use elevation 4 roughly equivalent to MD
+    elevation: 4,
+    shadowColor: theme.colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  };
+
+  const actionLabelStyle = {
+    fontSize: getFontSize("xs"),
+    marginTop: theme.spacing.xs,
+  };
+
   return (
     <View style={[styles.container, style]}>
       {/* Left Actions */}
@@ -147,7 +170,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
         <Animated.View
           style={[
             styles.actionsContainer,
-            styles.leftActions,
+            { left: 0, paddingLeft: theme.spacing.md, gap: theme.spacing.sm },
             leftActionsStyle,
           ]}
         >
@@ -155,7 +178,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
             <Animated.View
               key={index}
               style={[
-                styles.actionButton,
+                actionButtonStyle,
                 { backgroundColor: action.backgroundColor },
               ]}
             >
@@ -166,7 +189,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
                 onPress={() => handleActionPress(action)}
               />
               {action.label && (
-                <Text style={[styles.actionLabel, { color: action.color }]}>
+                <Text style={[actionLabelStyle, { color: action.color }]}>
                   {action.label}
                 </Text>
               )}
@@ -180,7 +203,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
         <Animated.View
           style={[
             styles.actionsContainer,
-            styles.rightActions,
+            { right: 0, paddingRight: theme.spacing.md, gap: theme.spacing.sm },
             rightActionsStyle,
           ]}
         >
@@ -188,7 +211,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
             <Animated.View
               key={index}
               style={[
-                styles.actionButton,
+                actionButtonStyle,
                 { backgroundColor: action.backgroundColor },
               ]}
             >
@@ -199,7 +222,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
                 onPress={() => handleActionPress(action)}
               />
               {action.label && (
-                <Text style={[styles.actionLabel, { color: action.color }]}>
+                <Text style={[actionLabelStyle, { color: action.color }]}>
                   {action.label}
                 </Text>
               )}
@@ -230,28 +253,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: auroraTheme.spacing.sm,
-  },
-  leftActions: {
-    left: 0,
-    paddingLeft: auroraTheme.spacing.md,
-  },
-  rightActions: {
-    right: 0,
-    paddingRight: auroraTheme.spacing.md,
-  },
-  actionButton: {
-    width: 60,
-    height: 60,
-    borderRadius: auroraTheme.borderRadius.xl,
-    justifyContent: "center",
-    alignItems: "center",
-    ...auroraTheme.shadows.md,
-  },
-  actionLabel: {
-    fontSize: auroraTheme.typography.fontSize.xs,
-    fontFamily: auroraTheme.typography.fontFamily.label,
-    marginTop: auroraTheme.spacing.xs,
   },
 });
 

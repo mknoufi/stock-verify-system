@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useDebounce } from "use-debounce";
-import { useThemeContext } from "../../theme/ThemeContext";
+import { useThemeContext } from "../../context/ThemeContext";
 import { useHapticFeedback } from "../../hooks/useHapticFeedback";
 
 interface SearchComponentProps {
@@ -30,7 +30,7 @@ export const SearchComponent: React.FC<SearchComponentProps> = ({
   autoFocus = false,
   showResultsCount,
 }) => {
-  const { theme } = useThemeContext();
+  const { themeLegacy: theme } = useThemeContext();
   const { colors } = theme;
   const { triggerHaptic } = useHapticFeedback();
   const [query, setQuery] = useState(initialValue);

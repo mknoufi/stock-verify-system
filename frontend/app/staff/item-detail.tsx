@@ -17,7 +17,7 @@ import * as Haptics from "expo-haptics";
 
 import { useScanSessionStore } from "@/store/scanSessionStore";
 import { theme } from "@/styles/modernDesignSystem";
-import { useThemeContext } from "@/theme/ThemeContext";
+import { useThemeContext } from "@/context/ThemeContext";
 import { ScreenContainer, GlassCard } from "@/components/ui";
 import { PremiumButton } from "@/components/premium/PremiumButton";
 import { PremiumInput } from "@/components/premium/PremiumInput";
@@ -55,7 +55,18 @@ export default function ItemDetailScreen() {
   const { barcode, sessionId } = params;
   const { sessionType } = useScanSessionStore();
   const { theme: appTheme } = useThemeContext();
-  const { colors } = appTheme;
+  const baseColors = appTheme.colors;
+  const colors = {
+    ...baseColors,
+    background: baseColors.background.default,
+    surface: baseColors.background.paper,
+    surfaceElevated: baseColors.background.elevated,
+    text: baseColors.text.primary,
+    textSecondary: baseColors.text.secondary,
+    muted: baseColors.text.muted,
+    border: baseColors.border.light,
+    warning: baseColors.warning.main,
+  };
 
   // Local State
   const [loading, setLoading] = useState(false);
@@ -623,71 +634,71 @@ export default function ItemDetailScreen() {
             {(item.manual_barcode ||
               item.unit2_barcode ||
               item.unit_m_barcode) && (
-              <View
-                style={[
-                  styles.identifiersContainer,
-                  { backgroundColor: colors.surface },
-                ]}
-              >
-                {item.manual_barcode && (
-                  <View
-                    style={[
-                      styles.identifierBadge,
-                      {
-                        backgroundColor: colors.surfaceElevated,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.identifierLabel, { color: colors.muted }]}
-                    >
-                      Manual:
-                    </Text>
-                    <Text
+                <View
+                  style={[
+                    styles.identifiersContainer,
+                    { backgroundColor: colors.surface },
+                  ]}
+                >
+                  {item.manual_barcode && (
+                    <View
                       style={[
-                        styles.identifierValue,
-                        { color: colors.textSecondary },
+                        styles.identifierBadge,
+                        {
+                          backgroundColor: colors.surfaceElevated,
+                          borderColor: colors.border,
+                        },
                       ]}
                     >
-                      {item.manual_barcode}
-                    </Text>
-                  </View>
-                )}
-                {item.unit2_barcode && (
-                  <View
-                    style={[
-                      styles.identifierBadge,
-                      {
-                        backgroundColor: colors.surfaceElevated,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.identifierLabel}>Unit 2:</Text>
-                    <Text style={styles.identifierValue}>
-                      {item.unit2_barcode}
-                    </Text>
-                  </View>
-                )}
-                {item.unit_m_barcode && (
-                  <View
-                    style={[
-                      styles.identifierBadge,
-                      {
-                        backgroundColor: colors.surfaceElevated,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.identifierLabel}>Unit M:</Text>
-                    <Text style={styles.identifierValue}>
-                      {item.unit_m_barcode}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
+                      <Text
+                        style={[styles.identifierLabel, { color: colors.muted }]}
+                      >
+                        Manual:
+                      </Text>
+                      <Text
+                        style={[
+                          styles.identifierValue,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        {item.manual_barcode}
+                      </Text>
+                    </View>
+                  )}
+                  {item.unit2_barcode && (
+                    <View
+                      style={[
+                        styles.identifierBadge,
+                        {
+                          backgroundColor: colors.surfaceElevated,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.identifierLabel}>Unit 2:</Text>
+                      <Text style={styles.identifierValue}>
+                        {item.unit2_barcode}
+                      </Text>
+                    </View>
+                  )}
+                  {item.unit_m_barcode && (
+                    <View
+                      style={[
+                        styles.identifierBadge,
+                        {
+                          backgroundColor: colors.surfaceElevated,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.identifierLabel}>Unit M:</Text>
+                      <Text style={styles.identifierValue}>
+                        {item.unit_m_barcode}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
 
             {/* Stock Qty Row with inline Refresh Button */}
             {sessionType !== BLIND_SESSION_TYPE ? (

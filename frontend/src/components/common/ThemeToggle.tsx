@@ -1,11 +1,11 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useThemeContext } from "../../theme/ThemeContext";
+import { useThemeContext } from "../../context/ThemeContext";
 import { useHapticFeedback } from "../../hooks/useHapticFeedback";
 
 export const ThemeToggle: React.FC = () => {
-  const { theme, themeMode, setThemeMode } = useThemeContext();
+  const { themeLegacy: theme, themeMode, setThemeMode } = useThemeContext();
   const { colors } = theme;
   const { triggerHaptic } = useHapticFeedback();
 

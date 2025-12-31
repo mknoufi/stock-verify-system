@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, ActivityIndicator, Animated } from "react-native";
-import { useThemeContext } from "../../theme/ThemeContext";
+import { useThemeContext } from "../../context/ThemeContext";
 
 interface LoadingStateProps {
   message?: string;
@@ -14,7 +14,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   size = "large",
   style,
 }) => {
-  const { theme } = useThemeContext();
+  const { themeLegacy: theme } = useThemeContext();
   const { colors } = theme;
 
   // Animation for the loading text - use useRef to persist across renders

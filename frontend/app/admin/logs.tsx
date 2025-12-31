@@ -92,7 +92,6 @@ export default function LogsScreen() {
         ),
       }}
       loading={loading && logs.length === 0}
-      loadingText="Loading logs..."
       refreshing={refreshing}
       onRefresh={loadLogs}
     >

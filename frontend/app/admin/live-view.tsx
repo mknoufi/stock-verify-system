@@ -11,9 +11,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 
-import { AuroraBackground } from "@/components/ui/AuroraBackground";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { ScreenContainer } from "@/components/ui";
 import { auroraTheme } from "@/theme/auroraTheme";
 import { ItemVerificationAPI } from "@/domains/inventory/services/itemVerificationApi";
 import api from "@/services/httpClient";
@@ -160,17 +159,16 @@ export default function AdminLiveView() {
   }, [liveVerifications, onlyVariance, searchQuery]);
 
   return (
-    <AuroraBackground>
-      <ScreenHeader
-        title="Live View"
-        subtitle={
-          lastUpdatedAt
-            ? `Updated ${formatTimeAgo(lastUpdatedAt.toISOString())}`
-            : "Loading…"
-        }
-        showBackButton
-      />
-
+    <ScreenContainer
+      gradient
+      header={{
+        title: "Live View",
+        subtitle: lastUpdatedAt
+          ? `Updated ${formatTimeAgo(lastUpdatedAt.toISOString())}`
+          : "Loading…",
+        showBackButton: true,
+      }}
+    >
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -384,7 +382,7 @@ export default function AdminLiveView() {
           </GlassCard>
         </View>
       </ScrollView>
-    </AuroraBackground>
+    </ScreenContainer>
   );
 }
 

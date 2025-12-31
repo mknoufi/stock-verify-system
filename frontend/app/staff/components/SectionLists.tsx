@@ -93,7 +93,9 @@ export function SectionLists({
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionHeader}>
             <Ionicons name="layers" size={22} color={theme.colors.accent} />
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+            <Text
+              style={[styles.sectionTitle, { color: theme.colors.text.primary }]}
+            >
               Select Section
             </Text>
           </View>

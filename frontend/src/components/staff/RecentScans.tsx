@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useThemeContext } from "../../theme/ThemeContext";
+import { useThemeContext } from "../../context/ThemeContext";
 import { useHapticFeedback } from "../../hooks/useHapticFeedback";
 import { RecentItemsService } from "../../services/enhancedFeatures";
 
@@ -22,7 +22,7 @@ export const RecentScans: React.FC<RecentScansProps> = ({
   sessionId,
   onRefresh,
 }) => {
-  const { theme } = useThemeContext();
+  const { themeLegacy: theme } = useThemeContext();
   const { colors } = theme;
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();

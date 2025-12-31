@@ -19,8 +19,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import {
   LoadingSpinner,
-  ScreenHeader,
-  AuroraBackground,
+  ScreenContainer,
 } from "../../src/components/ui";
 import { auroraTheme } from "../../src/theme/auroraTheme";
 import api from "../../src/services/api/api";
@@ -499,22 +498,31 @@ export default function RealtimeDashboard() {
   // Render loading state
   if (loading) {
     return (
-      <AuroraBackground>
+      <ScreenContainer
+        gradient
+        header={{
+          title: "Real-Time Dashboard",
+          subtitle: `${summary?.filtered_records || 0} items`,
+          showBackButton: true,
+        }}
+      >
         <View style={styles.centered}>
           <LoadingSpinner size={48} color={auroraTheme.colors.primary[500]} />
           <Text style={styles.loadingText}>Loading dashboard...</Text>
         </View>
-      </AuroraBackground>
+      </ScreenContainer>
     );
   }
 
   return (
-    <AuroraBackground>
-      <ScreenHeader
-        title="Real-Time Dashboard"
-        subtitle={`${summary?.filtered_records || 0} items`}
-        showBackButton
-      />
+    <ScreenContainer
+      gradient
+      header={{
+        title: "Real-Time Dashboard",
+        subtitle: `${summary?.filtered_records || 0} items`,
+        showBackButton: true,
+      }}
+    >
 
       <ScrollView
         style={styles.container}
@@ -847,7 +855,7 @@ export default function RealtimeDashboard() {
         item={selectedItem}
         onClose={() => setShowItemDetails(false)}
       />
-    </AuroraBackground>
+    </ScreenContainer>
   );
 }
 

@@ -2979,7 +2979,7 @@ export const getZones = async () => {
 export const getWarehouses = async (zone?: string) => {
   try {
     const url = zone
-      ? `/api/locations/warehouses?zone=${zone}`
+      ? `/api/locations/warehouses?zone=${encodeURIComponent(zone)}`
       : "/api/locations/warehouses";
     const response = await api.get(url);
     return response.data;

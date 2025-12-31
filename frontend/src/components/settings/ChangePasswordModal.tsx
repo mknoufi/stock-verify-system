@@ -18,7 +18,7 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { useThemeContext } from "../../theme/ThemeContext";
+import { useThemeContext } from "../../context/ThemeContext";
 import { typography } from "../../theme/designTokens";
 import { authApi } from "../../services/api/authApi";
 import * as Haptics from "expo-haptics";
@@ -54,7 +54,7 @@ export function ChangePasswordModal({
   onClose,
   onSuccess,
 }: ChangePasswordModalProps) {
-  const { theme } = useThemeContext();
+  const { themeLegacy: theme } = useThemeContext();
   const { colors } = theme;
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

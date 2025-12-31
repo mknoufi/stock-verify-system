@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useTheme } from "../../theme/ThemeContext";
+import { useTheme } from "../../hooks/useTheme";
 import apiClient from "../../services/httpClient";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -28,7 +28,7 @@ interface AnalyticsData {
 }
 
 export const AnalyticsDashboard: React.FC = () => {
-  const { theme } = useTheme();
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [days, setDays] = useState(7);
@@ -173,7 +173,7 @@ export const AnalyticsDashboard: React.FC = () => {
 };
 
 const StatCard = ({ title, value, icon, color }: any) => {
-  const { theme } = useTheme();
+  const theme = useTheme();
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
       <Ionicons name={icon} size={24} color={color} />

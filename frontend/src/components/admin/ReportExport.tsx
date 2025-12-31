@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useTheme } from "../../theme/ThemeContext";
+import { useTheme } from "../../hooks/useTheme";
 import apiClient from "../../services/httpClient";
 import { Ionicons } from "@expo/vector-icons";
 import { File, Paths } from "expo-file-system";
@@ -18,7 +18,7 @@ interface ReportExportProps {
 }
 
 export const ReportExport: React.FC<ReportExportProps> = ({ days }) => {
-  const { theme } = useTheme();
+  const theme = useTheme();
   const [exporting, setExporting] = useState(false);
 
   const handleExportPDF = async () => {

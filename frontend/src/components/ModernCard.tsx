@@ -35,7 +35,7 @@ import {
   modernTypography,
   modernAnimations,
 } from "../styles/modernDesignSystem";
-import { useThemeContextSafe } from "../theme/ThemeContext";
+import { useThemeContextSafe } from "../context/ThemeContext";
 
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
@@ -143,36 +143,36 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       none: {},
       sm: theme
         ? {
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 2,
-          }
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+          elevation: 2,
+        }
         : modernShadows.sm,
       md: theme
         ? {
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 8,
-            elevation: 4,
-          }
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 4,
+        }
         : modernShadows.md,
       lg: theme
         ? {
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.2,
-            shadowRadius: 20,
-            elevation: 8,
-          }
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.2,
+          shadowRadius: 20,
+          elevation: 8,
+        }
         : modernShadows.lg,
     };
 
     return StyleSheet.create({
       card: {
-        borderRadius: theme ? theme.radius.lg : modernBorderRadius.card,
+        borderRadius: theme?.borderRadius?.lg ?? modernBorderRadius.card,
         overflow: "hidden",
       },
       content: {
@@ -181,15 +181,17 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       },
       default: {
         backgroundColor: theme
-          ? theme.colors.surface
+          ? theme.colors.background.paper
           : modernColors.background.paper,
         borderWidth: 1,
-        borderColor: theme ? theme.colors.border : modernColors.border.light,
+        borderColor: theme
+          ? theme.colors.border.light
+          : modernColors.border.light,
         ...elevationShadows[elevation],
       },
       elevated: {
         backgroundColor: theme
-          ? theme.colors.surface
+          ? theme.colors.background.paper
           : modernColors.background.paper,
         ...elevationShadows[elevation],
       },
@@ -199,7 +201,7 @@ export const ModernCard: React.FC<ModernCardProps> = ({
           : "rgba(255, 255, 255, 0.1)",
         borderWidth: 1,
         borderColor: theme
-          ? theme.colors.borderLight
+          ? theme.colors.border.light
           : "rgba(255, 255, 255, 0.15)",
       },
       gradient: {
@@ -207,25 +209,31 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       },
       outlined: {
         backgroundColor: theme
-          ? theme.colors.surface
+          ? theme.colors.background.paper
           : modernColors.background.paper,
         borderWidth: 2,
-        borderColor: theme ? theme.colors.border : modernColors.border.medium,
+        borderColor: theme
+          ? theme.colors.border.medium
+          : modernColors.border.medium,
       },
       title: {
         ...modernTypography.h5,
-        color: theme ? theme.colors.text : modernColors.text.primary,
+        color: theme ? theme.colors.text.primary : modernColors.text.primary,
         marginBottom: theme ? theme.spacing.xs : modernSpacing.xs,
       },
       subtitle: {
         ...modernTypography.body.small,
-        color: theme ? theme.colors.textSecondary : modernColors.text.secondary,
+        color: theme
+          ? theme.colors.text.secondary
+          : modernColors.text.secondary,
       },
       footer: {
         marginTop: theme ? theme.spacing.md : modernSpacing.md,
         paddingTop: theme ? theme.spacing.md : modernSpacing.md,
         borderTopWidth: 1,
-        borderTopColor: theme ? theme.colors.border : modernColors.border.light,
+        borderTopColor: theme
+          ? theme.colors.border.light
+          : modernColors.border.light,
       },
       header: {
         flexDirection: "row",

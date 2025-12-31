@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { usePermission } from "../../src/hooks/usePermission";
+import { ScreenContainer } from "../../src/components/ui";
 import {
   getServicesStatus,
   getSystemIssues,
@@ -414,15 +415,18 @@ export default function ControlPanelScreen() {
 
   if (loading && !services && !refreshing) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading control panel...</Text>
-      </View>
+      <ScreenContainer gradient>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading control panel...</Text>
+        </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer gradient>
+      <View style={styles.container}>
       <View style={[styles.header, isWeb && styles.headerWeb]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -692,20 +696,21 @@ export default function ControlPanelScreen() {
           </Text>
         </View>
       </ScrollView>
-    </View>
+      </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: "transparent",
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#0a0a0a",
+    backgroundColor: "transparent",
   },
   loadingText: {
     marginTop: 10,

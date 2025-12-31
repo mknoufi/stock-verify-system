@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends  # type: ignore
 
 from backend.auth.dependencies import get_current_user
 from backend.sql_server_connector import sql_connector
@@ -119,7 +119,7 @@ async def get_warehouses(
             db = None
 
         if db is None:
-            logger.warning("MongoDB not initialised; returning default warehouses")
+            logger.warning("MongoDB not initialized; returning default warehouses")
             return _defaults_for_zone(zone)
 
         # 2) Try Mongo cache
@@ -132,12 +132,20 @@ async def get_warehouses(
             # 3) Seed defaults into Mongo if missing
             defaults = _defaults_for_zone(zone)
             if defaults:
+                # insert_many modifies 'defaults' in-place adding '_id'
                 await db["warehouses"].insert_many(defaults)
                 logger.info(
                     "Seeded default warehouses into MongoDB for zone %s",
                     zone or "*",
                 )
-                return defaults
+                # Sanitize defaults to remove/convert ObjectId before returning
+                cleaned_defaults = []
+                for d in defaults:
+                    item = {k: v for k, v in d.items() if k != "_id"}
+                    if "id" not in item and "_id" in d:
+                        item["id"] = str(d["_id"])
+                    cleaned_defaults.append(item)
+                return cleaned_defaults
             return []
 
         sanitized = []

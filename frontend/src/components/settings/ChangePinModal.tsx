@@ -17,7 +17,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useThemeContext } from "../../theme/ThemeContext";
+import { useThemeContext } from "../../context/ThemeContext";
 import { typography } from "../../theme/designTokens";
 import { authApi } from "../../services/api/authApi";
 import * as Haptics from "expo-haptics";
@@ -48,7 +48,7 @@ export function ChangePinModal({
   onClose,
   onSuccess,
 }: ChangePinModalProps) {
-  const { theme } = useThemeContext();
+  const { themeLegacy: theme } = useThemeContext();
   const { colors } = theme;
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");

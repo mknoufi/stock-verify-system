@@ -468,6 +468,31 @@ def _seed_default_users(fake_db, server_module) -> None:
         )
 
     _seed_user("staff1", "staff123", "Staff Member", "staff")
+
+    # Manually add PIN hash for staff1
+    from passlib.context import CryptContext
+
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    # Find via direct list access since we just appended it
+    # But safer to find by username in case order changes
+    for user in fake_db.users._documents:
+        if user["username"] == "staff1":
+            user["pin_hash"] = pwd_context.hash("1234")
+            break
+
+    # Manually add PIN hash for staff1 (pin="1234")
+    # Hash for "1234" using passlib's PBKDF2 (approximate, or just direct patch if using verify/hash)
+    # Actually, let's use the context from server_module if available, or just a known hash if we can.
+    # But since we have access to server_module.pwd_context, let's use it or patch it.
+
+    # Better yet, let's just update the document directly after seeding if possible,
+    # OR since we can't easily import pwd_context here without circular imports,
+    # let's assume we can mock the verification or just update the seed function to accept pin.
+
+    # Let's modify _seed_user to optional pin
+    pass
+
     _seed_user("supervisor", "super123", "Supervisor", "supervisor")
     _seed_user("admin", "admin123", "Administrator", "admin")
 

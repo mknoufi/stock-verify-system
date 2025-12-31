@@ -19,7 +19,7 @@ import Svg, {
   LinearGradient,
   Stop,
 } from "react-native-svg";
-import { useThemeContext, PatternType } from "../../theme/ThemeContext";
+import { useThemeContext, PatternType } from "../../context/ThemeContext";
 
 interface PatternBackgroundProps {
   pattern?: PatternType;

@@ -175,6 +175,10 @@ logs/*
 # Archived documentation
 archive_old_docs/
 
+# Generated workspace inventory/report (regenerate if needed)
+docs/WORKSPACE_CODE_REPORT.md
+docs/WORKSPACE_CODE_INVENTORY.csv
+
 # React Native Metro cache
 frontend/.metro-cache/
 frontend/coverage/
