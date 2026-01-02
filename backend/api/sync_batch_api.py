@@ -140,7 +140,7 @@ async def validate_record(
     lock_manager: LockManager,
     sync_service: SyncConflictsService = None,
     user_id: Optional[str] = None,
-) -> SyncConflict:
+) -> Optional[SyncConflict]:
     """
     Validate a single record before syncing
 

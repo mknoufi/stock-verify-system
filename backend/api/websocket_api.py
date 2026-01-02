@@ -69,6 +69,8 @@ async def websocket_endpoint(
     # Authenticate before accepting
     payload = None
     try:
+        if not settings.JWT_SECRET:
+            raise ValueError("JWT_SECRET not set")
         payload = decode(jwt_token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
     except Exception as e:
         logger.warning(f"WebSocket auth failed: {str(e)}")

@@ -225,7 +225,7 @@ async def create_count_line(
         # Additional fields
         "split_section": line_data.split_section,
         "serial_numbers": (
-            [s.model_dump() for s in line_data.serial_numbers] if line_data.serial_numbers else None
+            line_data.serial_numbers if line_data.serial_numbers else None
         ),
         # Legacy approval fields
         "status": "pending",
