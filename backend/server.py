@@ -11,8 +11,8 @@ import uvicorn
 from bson import ObjectId
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from motor.motor_asyncio import AsyncIOMotorClient
-from passlib.context import CryptContext
+# from motor.motor_asyncio import AsyncIOMotorClient
+# from passlib.context import CryptContext
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
@@ -34,7 +34,7 @@ from backend.api.metrics_api import metrics_router
 from backend.core.lifespan import (
     lifespan,
     db,
-    client,
+    # client,
     cache_service,
     refresh_token_service,
     activity_log_service,
@@ -99,7 +99,7 @@ if not logger.handlers:
 try:
     from backend.api.enrichment_api import enrichment_router
 except ImportError:
-    enrichment_router = None
+    enrichment_router = None  # type: ignore
 
 # Import enterprise services (optional - for enterprise features)
 try:
@@ -165,14 +165,18 @@ else:
     _allowed_origins = []
     if not getattr(settings, "CORS_ALLOW_ORIGINS", None):
         logger.warning(
-            "CORS_ALLOW_ORIGINS not configured for non-development environment; requests may be blocked"
+            "CORS_ALLOW_ORIGINS not configured for non-development environment; "
+            "requests may be blocked"
         )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     # Allow local network IPs for development (Expo Go, LAN access)
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?",
+    allow_origin_regex=(
+        r"https?://(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|"
+        r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?"
+    ),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[

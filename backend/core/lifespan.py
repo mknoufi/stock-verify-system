@@ -67,8 +67,8 @@ try:
     from backend.api.enrichment_api import init_enrichment_api
     from backend.services.enrichment_service import EnrichmentService
 except ImportError:
-    EnrichmentService = None
-    init_enrichment_api = None
+    EnrichmentService = None  # type: ignore
+    init_enrichment_api = None  # type: ignore
 
 try:
     from backend.services.data_governance import DataGovernanceService
@@ -767,7 +767,8 @@ async def lifespan(app: FastAPI):  # noqa: C901
 
     # Save backend port info (replaces deprecated on_event("startup"))
     try:
-        port = int(os.getenv("PORT") or getattr(settings, "PORT", 8001))
+        port_str = os.getenv("PORT", str(getattr(settings, "PORT", 8001)))
+        port = int(port_str)
     except Exception:
         port = 8001
 
