@@ -156,8 +156,9 @@ def get_sample_data(
             logger.warning("Invalid limit value, using default: 3")
             limit = 3
 
-        # Use QUOTENAME for safe identifier quoting
-        query = f"SELECT TOP {limit} * FROM {schema}.{table_name}"
+        # Use brackets for safe identifier quoting (T-SQL style)
+        # Note: Regex validation above already ensures no special characters are present
+        query = f"SELECT TOP {limit} * FROM [{schema}].[{table_name}]"  # nosec
         cursor.execute(query)
         results = cursor.fetchall()
         cursor.close()

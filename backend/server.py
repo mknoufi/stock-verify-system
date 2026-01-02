@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-
-import json
 import logging
 import os
 import sys
@@ -21,107 +18,102 @@ from passlib.context import CryptContext
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-# Add project root to path for direct execution (debugging)
-# This allows the file to be run directly for testing/debugging
-project_root = Path(__file__).parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
-from backend.api import auth, supervisor_pin  # noqa: E402
-from backend.api.admin_control_api import admin_control_router  # noqa: E402
-from backend.api.admin_dashboard_api import admin_dashboard_router  # noqa: E402
-from backend.api.auth import router as auth_router  # noqa: E402
-from backend.api.dynamic_fields_api import dynamic_fields_router  # noqa: E402
-from backend.api.dynamic_reports_api import dynamic_reports_router  # noqa: E402
-from backend.api.enhanced_item_api import enhanced_item_router as items_router  # noqa: E402
-from backend.api.enhanced_item_api import init_enhanced_api  # noqa: E402
-from backend.api.erp_api import init_erp_api  # noqa: E402
-from backend.api.erp_api import router as erp_router  # noqa: E402
-from backend.api.exports_api import exports_router  # noqa: E402
-from backend.api.health import health_router, info_router  # noqa: E402
-from backend.api.item_verification_api import (  # noqa: E402
+from backend.services.auto_sync_manager import AutoSyncManager
+from backend.api import auth, supervisor_pin
+from backend.api.admin_control_api import admin_control_router
+from backend.api.admin_dashboard_api import admin_dashboard_router
+from backend.api.auth import router as auth_router
+from backend.api.dynamic_fields_api import dynamic_fields_router
+from backend.api.dynamic_reports_api import dynamic_reports_router
+from backend.api.enhanced_item_api import enhanced_item_router as items_router
+from backend.api.enhanced_item_api import init_enhanced_api
+from backend.api.erp_api import init_erp_api
+from backend.api.erp_api import router as erp_router
+from backend.api.exports_api import exports_router
+from backend.api.health import health_router, info_router
+from backend.api.item_verification_api import (
     init_verification_api,
     verification_router,
 )
-from backend.api.locations_api import router as locations_router  # noqa: E402
-from backend.api.logs_api import router as logs_router  # noqa: E402
-from backend.api.mapping_api import router as mapping_router  # noqa: E402
-from backend.api.metrics_api import metrics_router, set_monitoring_service  # noqa: E402
+from backend.api.locations_api import router as locations_router
+from backend.api.logs_api import router as logs_router
+from backend.api.mapping_api import router as mapping_router
+from backend.api.metrics_api import metrics_router, set_monitoring_service
 
 # New feature API routers
-from backend.api.permissions_api import permissions_router  # noqa: E402
-from backend.api.preferences_api import router as preferences_router  # noqa: E402
-from backend.api.rack_api import router as rack_router  # noqa: E402
-from backend.api.report_generation_api import report_generation_router  # noqa: E402
-from backend.api.reporting_api import router as reporting_router  # noqa: E402
-from backend.api.schemas import (  # noqa: E402
+from backend.api.permissions_api import permissions_router
+from backend.api.preferences_api import router as preferences_router
+from backend.api.rack_api import router as rack_router
+from backend.api.report_generation_api import report_generation_router
+from backend.api.reporting_api import router as reporting_router
+from backend.api.user_management_api import user_management_router
+from backend.api.schemas import (
     ApiResponse,
     CountLineCreate,
     Session,
     SessionCreate,
     TokenResponse,
 )
-from backend.api.search_api import router as search_router  # noqa: E402
-from backend.api.security_api import security_router  # noqa: E402
-from backend.api.self_diagnosis_api import self_diagnosis_router  # noqa: E402
-from backend.api.session_management_api import router as session_mgmt_router  # noqa: E402
+from backend.api.search_api import router as search_router
+from backend.api.security_api import security_router
+from backend.api.self_diagnosis_api import self_diagnosis_router
 
 # Phase 1-3: New Upgrade APIs
-from backend.api.sync_batch_api import router as sync_batch_router  # noqa: E402
+from backend.api.sync_batch_api import router as sync_batch_router
 
 # New feature services
-from backend.api.sync_conflicts_api import sync_conflicts_router  # noqa: E402
-from backend.api.sync_management_api import (  # noqa: E402
+from backend.api.sync_conflicts_api import sync_conflicts_router
+from backend.api.sync_management_api import (
     set_change_detection_service,
     sync_management_router,
 )
-from backend.api.sync_status_api import set_auto_sync_manager, sync_router  # noqa: E402
-from backend.api.user_settings_api import router as user_settings_router  # noqa: E402
-from backend.api.variance_api import router as variance_router  # noqa: E402
-from backend.api.websocket_api import router as websocket_router  # noqa: E402
-from backend.auth.dependencies import init_auth_dependencies  # noqa: E402
-from backend.config import settings  # noqa: E402
-from backend.db.indexes import create_indexes  # noqa: E402
-from backend.db.migrations import MigrationManager  # noqa: E402
-from backend.db.runtime import set_client, set_db  # noqa: E402
-from backend.error_messages import get_error_message  # noqa: E402
-from backend.services.activity_log import ActivityLogService  # noqa: E402
-from backend.services.batch_operations import BatchOperationsService  # noqa: E402
-from backend.services.cache_service import CacheService  # noqa: E402
+from backend.api.sync_status_api import set_auto_sync_manager, sync_router
+from backend.api.user_settings_api import router as user_settings_router
+from backend.api.variance_api import router as variance_router
+from backend.api.websocket_api import router as websocket_router
+from backend.auth.dependencies import init_auth_dependencies
+from backend.config import settings
+from backend.db.indexes import create_indexes
+from backend.db.migrations import MigrationManager
+from backend.db.runtime import set_client, set_db
+from backend.error_messages import get_error_message
+from backend.services.activity_log import ActivityLogService
+from backend.services.batch_operations import BatchOperationsService
+from backend.services.cache_service import CacheService
 
 # Production services
 # from backend.services.connection_pool import SQLServerConnectionPool  # Legacy pool removed
-from backend.services.database_health import DatabaseHealthService  # noqa: E402
-from backend.services.database_optimizer import DatabaseOptimizer  # noqa: E402
-from backend.services.error_log import ErrorLogService  # noqa: E402
-from backend.services.errors import (  # noqa: E402
+from backend.services.database_health import DatabaseHealthService
+from backend.services.database_optimizer import DatabaseOptimizer
+from backend.services.error_log import ErrorLogService
+from backend.services.errors import (
     AuthenticationError,
     DatabaseError,
     NotFoundError,
     RateLimitExceededError,
     ValidationError,
 )
-from backend.services.lock_manager import get_lock_manager  # noqa: E402
-from backend.services.monitoring_service import MonitoringService  # noqa: E402
-from backend.services.pubsub_service import get_pubsub_service  # noqa: E402
-from backend.services.rate_limiter import ConcurrentRequestHandler, RateLimiter  # noqa: E402
+from backend.services.lock_manager import get_lock_manager
+from backend.services.monitoring_service import MonitoringService
+from backend.services.pubsub_service import get_pubsub_service
+from backend.services.rate_limiter import ConcurrentRequestHandler, RateLimiter
 
 # Phase 1-3: New Services
-from backend.services.redis_service import close_redis, init_redis  # noqa: E402
-from backend.services.refresh_token import RefreshTokenService  # noqa: E402
-from backend.services.runtime import set_cache_service, set_refresh_token_service  # noqa: E402
-from backend.services.scheduled_export_service import ScheduledExportService  # noqa: E402
-from backend.services.sync_conflicts_service import SyncConflictsService  # noqa: E402
-from backend.sql_server_connector import SQLServerConnector  # noqa: E402
+from backend.services.redis_service import close_redis, init_redis
+from backend.services.refresh_token import RefreshTokenService
+from backend.services.runtime import set_cache_service, set_refresh_token_service
+from backend.services.scheduled_export_service import ScheduledExportService
+from backend.services.sync_conflicts_service import SyncConflictsService
+from backend.sql_server_connector import SQLServerConnector
 
 # Utils
-from backend.utils.api_utils import result_to_response  # noqa: E402
-from backend.utils.api_utils import sanitize_for_logging  # noqa: E402
-from backend.utils.auth_utils import get_password_hash  # noqa: E402
-from backend.utils.logging_config import setup_logging  # noqa: E402
-from backend.utils.port_detector import PortDetector  # noqa: E402
-from backend.utils.result import Fail, Ok, Result  # noqa: E402
-from backend.utils.tracing import init_tracing, instrument_fastapi_app  # noqa: E402
+from backend.utils.api_utils import result_to_response
+from backend.utils.api_utils import sanitize_for_logging
+from backend.utils.auth_utils import get_password_hash
+from backend.utils.logging_config import setup_logging
+from backend.utils.port_detector import PortDetector, save_backend_info
+from backend.utils.result import Fail, Ok, Result
+from backend.utils.tracing import init_tracing, instrument_fastapi_app
 
 # Initialize a fallback logger early so optional import blocks can log safely
 logger = logging.getLogger("stock-verify")
@@ -366,7 +358,7 @@ change_detection_sync = None
 set_change_detection_service(change_detection_sync)
 
 # Auto-sync manager - automatically syncs when SQL Server becomes available
-from backend.services.auto_sync_manager import AutoSyncManager  # noqa: E402
+# from backend.services.auto_sync_manager import AutoSyncManager
 
 auto_sync_manager = None
 
@@ -945,6 +937,7 @@ app.include_router(health_router)  # Health check endpoints at /health/*
 app.include_router(health_router, prefix="/api")  # Alias for frontend compatibility
 app.include_router(info_router)  # Version check and info endpoints at /api/*
 app.include_router(permissions_router, prefix="/api")  # Permissions management
+app.include_router(user_management_router, prefix="/api")  # User management CRUD
 app.include_router(mapping_router)  # Database mapping endpoints via mapping_api
 app.include_router(exports_router, prefix="/api")  # Export functionality
 
@@ -969,7 +962,7 @@ app.include_router(locations_router)  # Locations (Zones/Warehouses)
 # Phase 1-3: New Upgrade Routers
 app.include_router(sync_batch_router)  # Batch sync API (has prefix /api/sync)
 app.include_router(rack_router)  # Rack management (has prefix /api/racks)
-app.include_router(session_mgmt_router)  # Session management (has prefix /api/sessions)
+# app.include_router(session_mgmt_router)  # Session management (has prefix /api/sessions)
 app.include_router(user_settings_router)  # User settings (has prefix /api/user)
 app.include_router(
     preferences_router, prefix="/api"
@@ -1507,11 +1500,14 @@ async def create_session(
     session = Session(
         warehouse=warehouse,
         staff_user=current_user["username"],
-        staff_name=current_user["full_name"],
+        staff_name=current_user.get("full_name") or current_user["username"],
         type=session_data.type or "STANDARD",
     )
 
-    await db.sessions.insert_one(session.model_dump())
+    # Add session_id to satisfy the unique index on session_id
+    session_dict = session.model_dump()
+    session_dict["session_id"] = session.id
+    await db.sessions.insert_one(session_dict)
 
     # Log activity
     await activity_log_service.log_activity(
@@ -1677,7 +1673,7 @@ async def bulk_export_sessions(
     try:
         sessions = []
         for session_id in session_ids:
-            session = await db.sessions.find_one({"id": session_id})
+            session = await db.sessions.find_one({"session_id": session_id})
             if session:
                 sessions.append(session)
 
@@ -1800,7 +1796,7 @@ async def get_session_by_id(
 ):
     """Get a specific session by ID"""
     try:
-        session = await db.sessions.find_one({"id": session_id})
+        session = await db.sessions.find_one({"session_id": session_id})
 
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -1898,7 +1894,7 @@ async def create_count_line(
     current_user: dict = Depends(get_current_user),
 ):
     # Validate session exists
-    session = await db.sessions.find_one({"id": line_data.session_id})
+    session = await db.sessions.find_one({"session_id": line_data.session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -2277,61 +2273,6 @@ app.include_router(
 
 
 # Run the server if executed directly
-
-
-def save_backend_info(port: int, local_ip: str) -> None:
-    """Save backend port info to JSON files."""
-    try:
-        port_data = {
-            "port": port,
-            "ip": local_ip,
-            "url": f"http://{local_ip}:{port}",
-            "pid": os.getpid(),
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-
-        # Save to backend_port.json in project root
-        root_dir = Path(__file__).parent.parent
-        with open(root_dir / "backend_port.json", "w") as f:
-            json.dump(port_data, f)
-
-        # Save to frontend/public/backend_port.json for Expo Web
-        frontend_public = root_dir / "frontend" / "public"
-        if frontend_public.exists():
-            with open(frontend_public / "backend_port.json", "w") as f:
-                json.dump(port_data, f)
-            logger.info(f"Saved backend port info to {frontend_public / 'backend_port.json'}")
-
-        logger.info(
-            f"Saved backend info (IP: {local_ip}, Port: {port}) to {root_dir / 'backend_port.json'}"
-        )
-    except Exception as e:
-        logger.warning(f"Failed to save backend port info: {e}")
-
-
-@app.on_event("startup")
-async def _write_backend_port_file_on_startup() -> None:
-    """Write backend_port.json on startup.
-
-    This keeps Expo's update-ip script in sync even when the backend is started via
-    `uvicorn backend.server:app ...` (where the __main__ block does not run).
-    """
-    try:
-        port = int(os.getenv("PORT") or getattr(settings, "PORT", 8001))
-    except Exception:
-        port = 8001
-
-    try:
-        local_ip = PortDetector.get_local_ip()
-        save_backend_info(port, local_ip)
-    except Exception as e:
-        logger.error(f"Error in startup handler: {e}")
-
-
-# Run the server if executed directly
-
-
-# Run the server if executed directly
 if __name__ == "__main__":
     # Get configured port as starting point
     start_port = int(getattr(settings, "PORT", os.getenv("PORT", 8001)))
@@ -2345,7 +2286,7 @@ if __name__ == "__main__":
     logger.info(f"Starting server on port {port}...")
     uvicorn.run(
         "backend.server:app",
-        host="0.0.0.0",
+        host=os.getenv("HOST", "127.0.0.1"),
         port=port,
         reload=False,
         log_level="info",
