@@ -54,8 +54,7 @@ export const ThemedScreen: React.FC<ThemedScreenProps> = ({
 
   const containerStyle: ViewStyle = {
     flex: 1,
-    backgroundColor:
-      variant === "solid" ? theme.colors.surface : theme.colors.background,
+    backgroundColor: variant === "solid" ? theme.colors.surface : theme.colors.background,
   };
 
   const contentStyle: ViewStyle = {
@@ -115,8 +114,7 @@ export const ThemedCard: React.FC<ThemedCardProps> = ({
 
   // Get padding based on layout and padding prop
   const getPadding = () => {
-    const baseMultiplier =
-      layout === "compact" ? 0.75 : layout === "spacious" ? 1.25 : 1;
+    const baseMultiplier = layout === "compact" ? 0.75 : layout === "spacious" ? 1.25 : 1;
     const sizes = { none: 0, small: 8, medium: 16, large: 24 };
     return sizes[padding] * baseMultiplier;
   };

@@ -7,12 +7,19 @@
  */
 
 // Internal imports for unified theme object
-import { colors as c, semanticColors as sc, gradients as g } from './colors';
-import { spacing as sp, layout as l, touchTargets as tt, hitSlop as hs } from './spacing';
-import { radius as r, componentRadius as cr } from './radius';
-import { fontSize as fs, fontWeight as fw, fontFamily as ff, textStyles as ts } from './typography';
-import { shadows as sh, coloredShadows as csh, blurIntensity as bi } from './shadows';
-import { duration as d, easing as e, animationPresets as ap, springConfigs as spc, opacity as o, zIndex as z } from './animations';
+import { colors as c, semanticColors as sc, gradients as g } from "./colors";
+import { spacing as sp, layout as l, touchTargets as tt, hitSlop as hs } from "./spacing";
+import { radius as r, componentRadius as cr } from "./radius";
+import { fontSize as fs, fontWeight as fw, fontFamily as ff, textStyles as ts } from "./typography";
+import { shadows as sh, coloredShadows as csh, blurIntensity as bi } from "./shadows";
+import {
+  duration as d,
+  easing as e,
+  animationPresets as ap,
+  springConfigs as spc,
+  opacity as o,
+  zIndex as z,
+} from "./animations";
 
 // Core design tokens - export everything from each module
 export {
@@ -23,23 +30,11 @@ export {
   type ColorPalette,
   type SemanticColors,
   type ColorShade,
-} from './colors';
+} from "./colors";
 
-export {
-  spacing,
-  layout,
-  touchTargets,
-  hitSlop,
-  type Spacing,
-  type SpacingKey,
-} from './spacing';
+export { spacing, layout, touchTargets, hitSlop, type Spacing, type SpacingKey } from "./spacing";
 
-export {
-  radius,
-  componentRadius,
-  type Radius,
-  type RadiusKey,
-} from './radius';
+export { radius, componentRadius, type Radius, type RadiusKey } from "./radius";
 
 export {
   fontFamily,
@@ -51,7 +46,7 @@ export {
   type FontSize,
   type FontWeight,
   type TextStyleKey,
-} from './typography';
+} from "./typography";
 
 export {
   shadows,
@@ -60,7 +55,7 @@ export {
   blurIntensity,
   type ShadowKey,
   type Shadows,
-} from './shadows';
+} from "./shadows";
 
 export {
   duration,
@@ -72,7 +67,7 @@ export {
   type Duration,
   type EasingKey,
   type SpringConfig,
-} from './animations';
+} from "./animations";
 
 /**
  * Complete unified theme object

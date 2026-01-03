@@ -28,9 +28,7 @@ describe("API Service", () => {
 
       await getWarehouses(mockZone);
 
-      expect(api.get).toHaveBeenCalledWith(
-        expect.stringContaining("zone=Showroom%20Space")
-      );
+      expect(api.get).toHaveBeenCalledWith(expect.stringContaining("zone=Showroom%20Space"));
     });
 
     it("should handle empty zone parameter", async () => {

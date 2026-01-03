@@ -25,6 +25,7 @@ from backend.api.dynamic_fields_api import dynamic_fields_router
 from backend.api.dynamic_reports_api import dynamic_reports_router
 from backend.api.enhanced_item_api import enhanced_item_router as items_router
 from backend.api.erp_api import router as erp_router
+from backend.api.error_reporting_api import router as error_reporting_router
 from backend.api.exports_api import exports_router
 from backend.api.health import health_router, info_router
 from backend.api.item_verification_api import verification_router
@@ -33,14 +34,6 @@ from backend.api.logs_api import router as logs_router
 from backend.api.mapping_api import router as mapping_router
 from backend.api.master_settings_api import master_settings_router
 from backend.api.metrics_api import metrics_router
-from backend.core.lifespan import (
-    lifespan,
-    db,
-    # client,
-    cache_service,
-    refresh_token_service,
-    activity_log_service,
-)
 
 # New feature API routers
 from backend.api.permissions_api import permissions_router
@@ -49,20 +42,12 @@ from backend.api.rack_api import router as rack_router
 from backend.api.realtime_dashboard_api import realtime_dashboard_router
 from backend.api.report_generation_api import report_generation_router
 from backend.api.reporting_api import router as reporting_router
-from backend.api.user_management_api import user_management_router
-from backend.api.schemas import (
-    ApiResponse,
-    CountLineCreate,
-    Session,
-    SessionCreate,
-    TokenResponse,
-)
+from backend.api.schemas import ApiResponse, CountLineCreate, Session, SessionCreate, TokenResponse
 from backend.api.search_api import router as search_router
 from backend.api.security_api import security_router
 from backend.api.self_diagnosis_api import self_diagnosis_router
 from backend.api.service_logs_api import service_logs_router
 from backend.api.session_management_api import router as session_mgmt_router
-from backend.api.error_reporting_api import router as error_reporting_router
 
 # Phase 1-3: New Upgrade APIs
 from backend.api.sync_batch_api import router as sync_batch_router
@@ -71,10 +56,18 @@ from backend.api.sync_batch_api import router as sync_batch_router
 from backend.api.sync_conflicts_api import sync_conflicts_router
 from backend.api.sync_management_api import sync_management_router
 from backend.api.sync_status_api import sync_router
+from backend.api.user_management_api import user_management_router
 from backend.api.user_settings_api import router as user_settings_router
 from backend.api.variance_api import router as variance_router
 from backend.api.websocket_api import router as websocket_router
 from backend.config import settings
+from backend.core.lifespan import (  # client,
+    activity_log_service,
+    cache_service,
+    db,
+    lifespan,
+    refresh_token_service,
+)
 from backend.error_messages import get_error_message
 from backend.services.errors import (
     AuthenticationError,
@@ -84,17 +77,16 @@ from backend.services.errors import (
     ValidationError,
 )
 
-# Phase 1-3: New Services
-# from backend.services.runtime import get_cache_service, get_refresh_token_service
-
 # Utils
-from backend.utils.api_utils import result_to_response
-from backend.utils.api_utils import sanitize_for_logging
+from backend.utils.api_utils import result_to_response, sanitize_for_logging
 from backend.utils.auth_utils import get_password_hash
-
 from backend.utils.port_detector import PortDetector, save_backend_info
 from backend.utils.result import Fail, Ok, Result
 from backend.utils.tracing import instrument_fastapi_app
+
+# Phase 1-3: New Services
+# from backend.services.runtime import get_cache_service, get_refresh_token_service
+
 
 # Initialize a fallback logger early so optional import blocks can log safely
 logger = logging.getLogger("stock-verify")

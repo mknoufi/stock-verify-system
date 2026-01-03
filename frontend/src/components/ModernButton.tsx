@@ -39,8 +39,7 @@ import {
 } from "../styles/modernDesignSystem";
 import { useThemeContextSafe } from "../context/ThemeContext";
 
-const AnimatedTouchableOpacity =
-  Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export type ButtonVariant =
   | "primary"
@@ -144,15 +143,11 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
     // Variant-specific styles
     const variantStyles: Record<ButtonVariant, ViewStyle> = {
       primary: {
-        backgroundColor: theme
-          ? theme.colors.accent
-          : modernColors.primary[500],
+        backgroundColor: theme ? theme.colors.accent : modernColors.primary[500],
         ...modernShadows.sm,
       },
       secondary: {
-        backgroundColor: theme
-          ? theme.colors.info
-          : modernColors.secondary[500],
+        backgroundColor: theme ? theme.colors.info : modernColors.secondary[500],
         ...modernShadows.sm,
       },
       outline: {
@@ -246,9 +241,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
   const renderIcon = () => {
     if (!icon || loading) return null;
 
-    return (
-      <Ionicons name={icon} size={sizeConfig.iconSize} color={getIconColor()} />
-    );
+    return <Ionicons name={icon} size={sizeConfig.iconSize} color={getIconColor()} />;
   };
 
   // Render button content
@@ -283,8 +276,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
 
     if (variant === "gradient") {
       const colors =
-        gradientColors ||
-        (theme ? theme.gradients.primary : modernColors.gradients.primary);
+        gradientColors || (theme ? theme.gradients.primary : modernColors.gradients.primary);
       return (
         <AnimatedTouchableOpacity
           onPress={onPress}

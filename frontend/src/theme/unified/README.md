@@ -41,27 +41,27 @@ unified/
 The base color palette uses a 50-900 scale:
 
 ```typescript
-colors.primary[50]   // Lightest
-colors.primary[100]
-colors.primary[200]
-colors.primary[300]
-colors.primary[400]
-colors.primary[500]  // Base/Default
-colors.primary[600]
-colors.primary[700]
-colors.primary[800]
-colors.primary[900]  // Darkest
+colors.primary[50]; // Lightest
+colors.primary[100];
+colors.primary[200];
+colors.primary[300];
+colors.primary[400];
+colors.primary[500]; // Base/Default
+colors.primary[600];
+colors.primary[700];
+colors.primary[800];
+colors.primary[900]; // Darkest
 ```
 
 ### Available Color Families
 
-| Family | Usage |
-|--------|-------|
-| `primary` | Brand color, primary actions |
+| Family    | Usage                         |
+| --------- | ----------------------------- |
+| `primary` | Brand color, primary actions  |
 | `success` | Success states, confirmations |
-| `warning` | Warnings, cautions |
-| `error` | Errors, destructive actions |
-| `neutral` | Grays, backgrounds, borders |
+| `warning` | Warnings, cautions            |
+| `error`   | Errors, destructive actions   |
+| `neutral` | Grays, backgrounds, borders   |
 
 ### Semantic Colors
 
@@ -69,33 +69,33 @@ Use semantic colors for context-aware styling that adapts to light/dark mode:
 
 ```typescript
 // Text colors
-semanticColors.text.primary      // Main text
-semanticColors.text.secondary    // Secondary text
-semanticColors.text.tertiary     // Muted/disabled text
-semanticColors.text.inverse      // Text on dark backgrounds
+semanticColors.text.primary; // Main text
+semanticColors.text.secondary; // Secondary text
+semanticColors.text.tertiary; // Muted/disabled text
+semanticColors.text.inverse; // Text on dark backgrounds
 
 // Background colors
-semanticColors.background.primary    // Main screen background
-semanticColors.background.secondary  // Card/elevated surfaces
-semanticColors.background.tertiary   // Input fields, hover states
+semanticColors.background.primary; // Main screen background
+semanticColors.background.secondary; // Card/elevated surfaces
+semanticColors.background.tertiary; // Input fields, hover states
 
 // Border colors
-semanticColors.border.default    // Standard borders
-semanticColors.border.focused    // Focus state borders
-semanticColors.border.error      // Error state borders
+semanticColors.border.default; // Standard borders
+semanticColors.border.focused; // Focus state borders
+semanticColors.border.error; // Error state borders
 
 // Status colors
-semanticColors.status.success    // Success indicators
-semanticColors.status.warning    // Warning indicators
-semanticColors.status.error      // Error indicators
-semanticColors.status.info       // Info indicators
+semanticColors.status.success; // Success indicators
+semanticColors.status.warning; // Warning indicators
+semanticColors.status.error; // Error indicators
+semanticColors.status.info; // Info indicators
 ```
 
 ### Special Colors
 
 ```typescript
-colors.white   // Pure white (#FFFFFF)
-colors.black   // Pure black (#000000)
+colors.white; // Pure white (#FFFFFF)
+colors.black; // Pure black (#000000)
 ```
 
 ---
@@ -105,38 +105,38 @@ colors.black   // Pure black (#000000)
 Based on a 4px unit grid:
 
 ```typescript
-spacing.xs     // 4px
-spacing.sm     // 8px
-spacing.md     // 16px
-spacing.lg     // 24px
-spacing.xl     // 32px
-spacing["2xl"] // 48px
-spacing["3xl"] // 64px
+spacing.xs; // 4px
+spacing.sm; // 8px
+spacing.md; // 16px
+spacing.lg; // 24px
+spacing.xl; // 32px
+spacing["2xl"]; // 48px
+spacing["3xl"]; // 64px
 ```
 
 ### Layout Constants
 
 ```typescript
-layout.screenPadding   // Horizontal padding for screens
-layout.maxContentWidth // Max width for content
-layout.headerHeight    // Standard header height
-layout.tabBarHeight    // Bottom tab bar height
+layout.screenPadding; // Horizontal padding for screens
+layout.maxContentWidth; // Max width for content
+layout.headerHeight; // Standard header height
+layout.tabBarHeight; // Bottom tab bar height
 ```
 
 ### Touch Targets
 
 ```typescript
-touchTargets.minimum   // 44px (iOS) / 48dp (Android)
-touchTargets.comfortable // 48px
-touchTargets.large     // 56px
+touchTargets.minimum; // 44px (iOS) / 48dp (Android)
+touchTargets.comfortable; // 48px
+touchTargets.large; // 56px
 ```
 
 ### Hit Slop Presets
 
 ```typescript
-hitSlop.small    // { top: 8, bottom: 8, left: 8, right: 8 }
-hitSlop.medium   // { top: 12, bottom: 12, left: 12, right: 12 }
-hitSlop.large    // { top: 16, bottom: 16, left: 16, right: 16 }
+hitSlop.small; // { top: 8, bottom: 8, left: 8, right: 8 }
+hitSlop.medium; // { top: 12, bottom: 12, left: 12, right: 12 }
+hitSlop.large; // { top: 16, bottom: 16, left: 16, right: 16 }
 ```
 
 ---
@@ -148,16 +148,16 @@ hitSlop.large    // { top: 16, bottom: 16, left: 16, right: 16 }
 Pre-configured text style objects for consistent typography:
 
 ```typescript
-textStyles.display    // 32px, bold - Hero text
-textStyles.h1         // 28px, bold - Page titles
-textStyles.h2         // 24px, semibold - Section headers
-textStyles.h3         // 20px, semibold - Subsection headers
-textStyles.h4         // 18px, medium - Card titles
-textStyles.body       // 16px, regular - Body text
-textStyles.bodySmall  // 14px, regular - Secondary body
-textStyles.label      // 14px, semibold - Form labels
-textStyles.caption    // 12px, regular - Captions, timestamps
-textStyles.overline   // 10px, uppercase - Overlines
+textStyles.display; // 32px, bold - Hero text
+textStyles.h1; // 28px, bold - Page titles
+textStyles.h2; // 24px, semibold - Section headers
+textStyles.h3; // 20px, semibold - Subsection headers
+textStyles.h4; // 18px, medium - Card titles
+textStyles.body; // 16px, regular - Body text
+textStyles.bodySmall; // 14px, regular - Secondary body
+textStyles.label; // 14px, semibold - Form labels
+textStyles.caption; // 12px, regular - Captions, timestamps
+textStyles.overline; // 10px, uppercase - Overlines
 ```
 
 ### Usage
@@ -174,14 +174,14 @@ const styles = StyleSheet.create({
 ### Font Weights
 
 ```typescript
-fontWeight.thin       // 100
-fontWeight.light      // 300
-fontWeight.regular    // 400
-fontWeight.medium     // 500
-fontWeight.semibold   // 600
-fontWeight.bold       // 700
-fontWeight.extrabold  // 800
-fontWeight.black      // 900
+fontWeight.thin; // 100
+fontWeight.light; // 300
+fontWeight.regular; // 400
+fontWeight.medium; // 500
+fontWeight.semibold; // 600
+fontWeight.bold; // 700
+fontWeight.extrabold; // 800
+fontWeight.black; // 900
 ```
 
 ---
@@ -189,14 +189,14 @@ fontWeight.black      // 900
 ## Border Radius
 
 ```typescript
-radius.none   // 0
-radius.xs     // 2px
-radius.sm     // 4px
-radius.md     // 8px
-radius.lg     // 12px
-radius.xl     // 16px
-radius["2xl"] // 24px
-radius.full   // 9999px (circular)
+radius.none; // 0
+radius.xs; // 2px
+radius.sm; // 4px
+radius.md; // 8px
+radius.lg; // 12px
+radius.xl; // 16px
+radius["2xl"]; // 24px
+radius.full; // 9999px (circular)
 ```
 
 ---
@@ -206,12 +206,12 @@ radius.full   // 9999px (circular)
 Platform-aware shadow definitions:
 
 ```typescript
-shadows.none       // No shadow
-shadows.xs         // Subtle shadow
-shadows.sm         // Small shadow
-shadows.md         // Medium shadow
-shadows.lg         // Large shadow
-shadows.xl         // Extra large shadow
+shadows.none; // No shadow
+shadows.xs; // Subtle shadow
+shadows.sm; // Small shadow
+shadows.md; // Medium shadow
+shadows.lg; // Large shadow
+shadows.xl; // Extra large shadow
 ```
 
 ### Usage
@@ -232,31 +232,31 @@ const styles = StyleSheet.create({
 ### Duration Presets
 
 ```typescript
-animations.duration.instant   // 0ms
-animations.duration.fast      // 150ms
-animations.duration.normal    // 300ms
-animations.duration.slow      // 500ms
-animations.duration.slowest   // 1000ms
+animations.duration.instant; // 0ms
+animations.duration.fast; // 150ms
+animations.duration.normal; // 300ms
+animations.duration.slow; // 500ms
+animations.duration.slowest; // 1000ms
 ```
 
 ### Easing Functions
 
 ```typescript
-animations.easing.linear
-animations.easing.ease
-animations.easing.easeIn
-animations.easing.easeOut
-animations.easing.easeInOut
-animations.easing.spring
+animations.easing.linear;
+animations.easing.ease;
+animations.easing.easeIn;
+animations.easing.easeOut;
+animations.easing.easeInOut;
+animations.easing.spring;
 ```
 
 ### Spring Configurations
 
 ```typescript
-animations.spring.gentle    // Gentle spring
-animations.spring.bouncy    // Bouncy spring
-animations.spring.stiff     // Stiff spring
-animations.spring.damped    // Critically damped
+animations.spring.gentle; // Gentle spring
+animations.spring.bouncy; // Bouncy spring
+animations.spring.stiff; // Stiff spring
+animations.spring.damped; // Critically damped
 ```
 
 ### Usage with Reanimated
@@ -290,7 +290,7 @@ import { useThemeMode, useSemanticColors } from "@/theme/unified";
 function MyComponent() {
   const mode = useThemeMode();
   const colors = useSemanticColors();
-  
+
   return (
     <View style={{ backgroundColor: colors.background.primary }}>
       {/* ... */}
@@ -341,12 +341,12 @@ borderRadius: 12
 
 If migrating from legacy theme:
 
-| Legacy | Unified |
-|--------|---------|
-| `theme.colors.primary` | `colors.primary[600]` |
-| `theme.colors.text` | `semanticColors.text.primary` |
+| Legacy                    | Unified                             |
+| ------------------------- | ----------------------------------- |
+| `theme.colors.primary`    | `colors.primary[600]`               |
+| `theme.colors.text`       | `semanticColors.text.primary`       |
 | `theme.colors.background` | `semanticColors.background.primary` |
-| `theme.spacing.md` | `spacing.md` |
+| `theme.spacing.md`        | `spacing.md`                        |
 
 See `MIGRATION_EXAMPLES.tsx` for complete examples.
 
@@ -363,4 +363,4 @@ When adding new tokens:
 
 ---
 
-*Last updated: January 2025*
+_Last updated: January 2025_

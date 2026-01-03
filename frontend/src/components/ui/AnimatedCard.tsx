@@ -5,17 +5,10 @@
  * Combines patterns from Aashu-Dubey repo with unified design system
  */
 
-import React, { useCallback } from 'react';
-import {
-  Animated,
-  StyleSheet,
-  StyleProp,
-  ViewStyle,
-  Pressable,
-  Platform,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback } from "react";
+import { Animated, StyleSheet, StyleProp, ViewStyle, Pressable, Platform } from "react-native";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   colors,
   spacing,
@@ -24,13 +17,13 @@ import {
   semanticColors,
   gradients,
   animationPresets,
-} from '../../theme/unified';
-import { useEntryAnimation, useScalePress } from '../../hooks/useAnimations';
+} from "../../theme/unified";
+import { useEntryAnimation, useScalePress } from "../../hooks/useAnimations";
 
 // ==========================================
 // TYPES
 // ==========================================
-export type CardVariant = 'elevated' | 'outlined' | 'filled' | 'glass' | 'gradient';
+export type CardVariant = "elevated" | "outlined" | "filled" | "glass" | "gradient";
 
 export interface AnimatedCardProps {
   /** Card content */
@@ -62,7 +55,7 @@ export interface AnimatedCardProps {
 // ==========================================
 export const AnimatedCard: React.FC<AnimatedCardProps> = ({
   children,
-  variant = 'elevated',
+  variant = "elevated",
   style,
   onPress,
   animated = true,
@@ -75,9 +68,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
 }) => {
   // Entry animation
   const isStaggered = staggerIndex !== undefined;
-  const delay = isStaggered
-    ? (staggerIndex * animationPresets.staggeredEntry.staggerDelay)
-    : 0;
+  const delay = isStaggered ? staggerIndex * animationPresets.staggeredEntry.staggerDelay : 0;
 
   const duration = isStaggered
     ? animationPresets.staggeredEntry.duration
@@ -107,7 +98,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
   // Render card content based on variant
   const renderCardContent = () => {
     switch (variant) {
-      case 'glass':
+      case "glass":
         return (
           <BlurView
             intensity={blurIntensity}
@@ -118,7 +109,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
           </BlurView>
         );
 
-      case 'gradient':
+      case "gradient":
         return (
           <LinearGradient
             colors={gradientColors}
@@ -132,9 +123,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
 
       default:
         return (
-          <Animated.View style={[styles.cardBase, variantStyles, style]}>
-            {children}
-          </Animated.View>
+          <Animated.View style={[styles.cardBase, variantStyles, style]}>{children}</Animated.View>
         );
     }
   };
@@ -166,8 +155,8 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
           accessibilityRole="button"
           accessibilityState={{ disabled }}
           android_ripple={
-            Platform.OS === 'android'
-              ? { color: 'rgba(0, 0, 0, 0.1)', borderless: false }
+            Platform.OS === "android"
+              ? { color: "rgba(0, 0, 0, 0.1)", borderless: false }
               : undefined
           }
         >
@@ -180,14 +169,11 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
   // Non-pressable card
   return (
     <Animated.View style={animatedStyles} testID={testID}>
-      {variant === 'glass' || variant === 'gradient'
-        ? renderCardContent()
-        : (
-          <Animated.View style={[styles.cardBase, variantStyles, style]}>
-            {children}
-          </Animated.View>
-        )
-      }
+      {variant === "glass" || variant === "gradient" ? (
+        renderCardContent()
+      ) : (
+        <Animated.View style={[styles.cardBase, variantStyles, style]}>{children}</Animated.View>
+      )}
     </Animated.View>
   );
 };
@@ -197,32 +183,32 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
 // ==========================================
 function getVariantStyles(variant: CardVariant): ViewStyle {
   switch (variant) {
-    case 'elevated':
+    case "elevated":
       return {
         backgroundColor: semanticColors.background.elevated,
         ...shadows.md,
       };
 
-    case 'outlined':
+    case "outlined":
       return {
         backgroundColor: semanticColors.background.primary,
         borderWidth: 1,
         borderColor: semanticColors.border.default,
       };
 
-    case 'filled':
+    case "filled":
       return {
         backgroundColor: semanticColors.background.secondary,
       };
 
-    case 'glass':
+    case "glass":
       return {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: "rgba(255, 255, 255, 0.2)",
       };
 
-    case 'gradient':
+    case "gradient":
       return {
         // Gradient handles its own background
       };
@@ -242,7 +228,7 @@ const styles = StyleSheet.create({
   cardBase: {
     borderRadius: radius.md,
     padding: spacing.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
 });
 
@@ -258,7 +244,7 @@ export interface StatsCardProps {
   value: string | number;
   subtitle?: string;
   icon?: React.ReactNode;
-  trend?: 'up' | 'down' | 'neutral';
+  trend?: "up" | "down" | "neutral";
   onPress?: () => void;
   staggerIndex?: number;
 }
@@ -283,9 +269,7 @@ export const StatsCardPreset: React.FC<StatsCardProps> = ({
         <Animated.Text style={statsStyles.title}>{title}</Animated.Text>
       </Animated.View>
       <Animated.Text style={statsStyles.value}>{value}</Animated.Text>
-      {subtitle && (
-        <Animated.Text style={statsStyles.subtitle}>{subtitle}</Animated.Text>
-      )}
+      {subtitle && <Animated.Text style={statsStyles.subtitle}>{subtitle}</Animated.Text>}
     </AnimatedCard>
   );
 };
@@ -295,8 +279,8 @@ const statsStyles = StyleSheet.create({
     minHeight: 120,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.sm,
   },
   icon: {
@@ -304,12 +288,12 @@ const statsStyles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     color: colors.neutral[600],
   },
   value: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.neutral[900],
     marginBottom: spacing.xs,
   },

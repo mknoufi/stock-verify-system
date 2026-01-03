@@ -63,11 +63,11 @@ const ParticleElement: React.FC<{
             withTiming(30, {
               duration: 3000 + Math.random() * 2000,
               easing: Easing.inOut(Easing.ease),
-            }),
+            })
           ),
           -1,
-          true,
-        ),
+          true
+        )
       );
 
       // Pulse opacity
@@ -82,11 +82,11 @@ const ParticleElement: React.FC<{
             withTiming(particle.opacity * 0.5, {
               duration: 2000,
               easing: Easing.inOut(Easing.ease),
-            }),
+            })
           ),
           -1,
-          true,
-        ),
+          true
+        )
       );
 
       // Slight scale pulse
@@ -101,11 +101,11 @@ const ParticleElement: React.FC<{
             withTiming(0.8, {
               duration: 2500,
               easing: Easing.inOut(Easing.ease),
-            }),
+            })
           ),
           -1,
-          true,
-        ),
+          true
+        )
       );
     }
   }, [animated, opacity, particle.delay, particle.opacity, scale, translateY]);

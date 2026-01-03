@@ -42,4 +42,3 @@ Expo public variables (available to the app at build/runtime):
 - `EXPO_PUBLIC_API_TIMEOUT`
 - `EXPO_PUBLIC_DEBUG_MODE`
 - `EXPO_PUBLIC_ENABLE_NETWORK_LOGGING`
-

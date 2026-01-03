@@ -33,16 +33,9 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  colors,
-  semanticColors,
-  spacing,
-  radius,
-  shadows,
-} from "../../theme/unified";
+import { colors, semanticColors, spacing, radius, shadows } from "../../theme/unified";
 
-export interface SearchInputProps
-  extends Omit<TextInputProps, "onChangeText" | "value"> {
+export interface SearchInputProps extends Omit<TextInputProps, "onChangeText" | "value"> {
   /** Search callback - receives debounced query */
   onSearch: (query: string) => void;
   /** Debounce delay in milliseconds */
@@ -151,20 +144,12 @@ export function SearchInput({
 
   return (
     <View style={styles.wrapper}>
-      <Animated.View
-        style={[
-          styles.container,
-          containerAnimatedStyle,
-          { height },
-        ]}
-      >
+      <Animated.View style={[styles.container, containerAnimatedStyle, { height }]}>
         <View style={styles.searchIconContainer}>
           <Ionicons
             name="search-outline"
             size={iconSize}
-            color={
-              isFocused ? colors.primary[500] : semanticColors.text.tertiary
-            }
+            color={isFocused ? colors.primary[500] : semanticColors.text.tertiary}
           />
         </View>
 
@@ -187,11 +172,7 @@ export function SearchInput({
         {/* Loading or Clear button */}
         <View style={styles.rightContainer}>
           {loading && (
-            <ActivityIndicator
-              size="small"
-              color={colors.primary[500]}
-              style={styles.loader}
-            />
+            <ActivityIndicator size="small" color={colors.primary[500]} style={styles.loader} />
           )}
 
           {!loading && currentValue.length > 0 && (
@@ -201,11 +182,7 @@ export function SearchInput({
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <View style={styles.clearIconContainer}>
-                <Ionicons
-                  name="close"
-                  size={14}
-                  color="#fff"
-                />
+                <Ionicons name="close" size={14} color="#fff" />
               </View>
             </TouchableOpacity>
           )}
@@ -222,17 +199,11 @@ export function SearchInput({
           <Ionicons
             name="options-outline"
             size={iconSize}
-            color={
-              activeFilterCount > 0
-                ? colors.primary[500]
-                : semanticColors.text.secondary
-            }
+            color={activeFilterCount > 0 ? colors.primary[500] : semanticColors.text.secondary}
           />
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
-              <Animated.Text style={styles.filterBadgeText}>
-                {activeFilterCount}
-              </Animated.Text>
+              <Animated.Text style={styles.filterBadgeText}>{activeFilterCount}</Animated.Text>
             </View>
           )}
         </TouchableOpacity>

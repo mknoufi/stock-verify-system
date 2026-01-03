@@ -23,11 +23,9 @@ export interface AuthState {
   login: (
     username: string,
     password: string,
-    rememberMe?: boolean,
+    rememberMe?: boolean
   ) => Promise<{ success: boolean; message?: string }>;
-  loginWithPin: (
-    pin: string,
-  ) => Promise<{ success: boolean; message?: string }>;
+  loginWithPin: (pin: string) => Promise<{ success: boolean; message?: string }>;
   setUser: (user: User) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
@@ -49,7 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (
     username: string,
     password: string,
-    _rememberMe?: boolean,
+    _rememberMe?: boolean
   ): Promise<{ success: boolean; message?: string }> => {
     set({ isLoading: true });
     try {
@@ -62,8 +60,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         const { access_token, refresh_token, user } = response.data.data;
 
         // Store token for subsequent requests
-        apiClient.defaults.headers.common["Authorization"] =
-          `Bearer ${access_token}`;
+        apiClient.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
 
         // Use SecureStore for sensitive data
         await secureStorage.setItem(TOKEN_STORAGE_KEY, access_token);
@@ -120,9 +117,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  loginWithPin: async (
-    pin: string,
-  ): Promise<{ success: boolean; message?: string }> => {
+  loginWithPin: async (pin: string): Promise<{ success: boolean; message?: string }> => {
     set({ isLoading: true });
     try {
       const response = await apiClient.post("/api/auth/login-pin", { pin });
@@ -131,8 +126,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         const { access_token, refresh_token, user } = response.data.data;
 
         // Store token for subsequent requests
-        apiClient.defaults.headers.common["Authorization"] =
-          `Bearer ${access_token}`;
+        apiClient.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
 
         // Use SecureStore
         await secureStorage.setItem(TOKEN_STORAGE_KEY, access_token);
@@ -218,8 +212,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (storedUser && storedToken) {
         const user = JSON.parse(storedUser) as User;
-        apiClient.defaults.headers.common["Authorization"] =
-          `Bearer ${storedToken}`;
+        apiClient.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
         set({
           user,
           isAuthenticated: true,

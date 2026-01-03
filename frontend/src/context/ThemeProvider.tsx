@@ -9,8 +9,8 @@
  * - Unified design tokens
  */
 
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import { useColorScheme, ColorSchemeName } from 'react-native';
+import React, { createContext, useContext, useState, useMemo, useCallback } from "react";
+import { useColorScheme, ColorSchemeName } from "react-native";
 import {
   colors,
   darkColors,
@@ -24,12 +24,12 @@ import {
   textStyles,
   duration,
   easing,
-} from '../theme/unified';
+} from "../theme/unified";
 
 // ==========================================
 // TYPES
 // ==========================================
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = "light" | "dark" | "system";
 
 export interface ThemeColors {
   primary: typeof colors.primary;
@@ -68,7 +68,7 @@ export interface ThemeColors {
 }
 
 export interface Theme {
-  mode: 'light' | 'dark';
+  mode: "light" | "dark";
   colors: ThemeColors;
   gradients: typeof gradients;
   spacing: typeof spacing;
@@ -102,7 +102,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 // LIGHT THEME
 // ==========================================
 const lightTheme: Theme = {
-  mode: 'light',
+  mode: "light",
   colors: {
     primary: colors.primary,
     secondary: colors.secondary,
@@ -135,7 +135,7 @@ const lightTheme: Theme = {
 // DARK THEME
 // ==========================================
 const darkTheme: Theme = {
-  mode: 'dark',
+  mode: "dark",
   colors: {
     primary: colors.primary,
     secondary: colors.secondary,
@@ -175,17 +175,17 @@ export interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
-  initialMode = 'system',
+  initialMode = "system",
 }) => {
   const systemColorScheme = useColorScheme() as ColorSchemeName;
   const [themeMode, setThemeMode] = useState<ThemeMode>(initialMode);
 
   // Determine if dark mode is active
   const isDark = useMemo(() => {
-    if (themeMode === 'system') {
-      return systemColorScheme === 'dark';
+    if (themeMode === "system") {
+      return systemColorScheme === "dark";
     }
-    return themeMode === 'dark';
+    return themeMode === "dark";
   }, [themeMode, systemColorScheme]);
 
   // Get the active theme
@@ -194,10 +194,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   // Toggle between light and dark
   const toggleTheme = useCallback(() => {
     setThemeMode((prev) => {
-      if (prev === 'system') {
-        return isDark ? 'light' : 'dark';
+      if (prev === "system") {
+        return isDark ? "light" : "dark";
       }
-      return prev === 'dark' ? 'light' : 'dark';
+      return prev === "dark" ? "light" : "dark";
     });
   }, [isDark]);
 
@@ -221,7 +221,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 export function useThemeContext(): ThemeContextValue {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error('useThemeContext must be used within a ThemeProvider');
+    throw new Error("useThemeContext must be used within a ThemeProvider");
   }
   return context;
 }
@@ -232,4 +232,3 @@ export function useThemeContext(): ThemeContextValue {
 export const UnistylesThemeProvider = ThemeProvider;
 
 export default ThemeProvider;
-

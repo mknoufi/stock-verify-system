@@ -23,10 +23,7 @@ export const auditLogger = {
     };
 
     // Log to console/local logging service
-    logger.info(
-      `[AUDIT] User ${logEntry.username} performed ${action}`,
-      logEntry,
-    );
+    logger.info(`[AUDIT] User ${logEntry.username} performed ${action}`, logEntry);
 
     // In a real app, this would also send to a backend endpoint
     // auditApi.postLog(logEntry);
@@ -35,12 +32,7 @@ export const auditLogger = {
   /**
    * Specifically log a stock adjustment
    */
-  logStockAdjustment: (
-    itemCode: string,
-    oldQty: number,
-    newQty: number,
-    reason: string,
-  ) => {
+  logStockAdjustment: (itemCode: string, oldQty: number, newQty: number, reason: string) => {
     auditLogger.logAction("stock_adjustment", {
       itemCode,
       oldQty,
@@ -52,11 +44,7 @@ export const auditLogger = {
   /**
    * Specifically log a sync operation
    */
-  logSync: (
-    type: "manual" | "auto",
-    status: "success" | "failure",
-    details?: string,
-  ) => {
+  logSync: (type: "manual" | "auto", status: "success" | "failure", details?: string) => {
     auditLogger.logAction("sync_operation", {
       type,
       status,

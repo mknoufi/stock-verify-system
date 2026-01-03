@@ -50,8 +50,10 @@ export interface SelectableItem {
   disabled?: boolean;
 }
 
-export interface MultiSelectListProps<T extends SelectableItem>
-  extends Omit<FlatListProps<T>, "renderItem" | "data"> {
+export interface MultiSelectListProps<T extends SelectableItem> extends Omit<
+  FlatListProps<T>,
+  "renderItem" | "data"
+> {
   /** List of items */
   items: T[];
   /** Render function for each item */
@@ -92,24 +94,17 @@ export function MultiSelectList<T extends SelectableItem>({
   onSelectionModeChange: _onSelectionModeChange,
   ...flatListProps
 }: MultiSelectListProps<T>) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    new Set(initialSelection)
-  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialSelection));
 
   // Animation values for header
   const headerScale = useSharedValue(1);
 
   // Selectable items (excluding disabled)
-  const selectableItems = useMemo(
-    () => items.filter((item) => !item.disabled),
-    [items]
-  );
+  const selectableItems = useMemo(() => items.filter((item) => !item.disabled), [items]);
 
   // Check if all items are selected
   const allSelected = useMemo(
-    () =>
-      selectableItems.length > 0 &&
-      selectableItems.every((item) => selectedIds.has(item.id)),
+    () => selectableItems.length > 0 && selectableItems.every((item) => selectedIds.has(item.id)),
     [selectableItems, selectedIds]
   );
 
@@ -154,9 +149,8 @@ export function MultiSelectList<T extends SelectableItem>({
         return new Set();
       } else {
         // Select all (respecting max limit)
-        const itemsToSelect = maxSelection > 0
-          ? selectableItems.slice(0, maxSelection)
-          : selectableItems;
+        const itemsToSelect =
+          maxSelection > 0 ? selectableItems.slice(0, maxSelection) : selectableItems;
         const newIds = itemsToSelect.map((item) => item.id);
         onSelectionChange(newIds);
         return new Set(newIds);
@@ -200,11 +194,7 @@ export function MultiSelectList<T extends SelectableItem>({
     if (EmptyComponent) return EmptyComponent;
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons
-          name="document-outline"
-          size={48}
-          color={semanticColors.text.tertiary}
-        />
+        <Ionicons name="document-outline" size={48} color={semanticColors.text.tertiary} />
         <Text style={styles.emptyText}>No items to display</Text>
       </View>
     );
@@ -215,11 +205,7 @@ export function MultiSelectList<T extends SelectableItem>({
       {/* Selection Header */}
       {showSelectAll && selectionMode && items.length > 0 && (
         <Animated.View style={[styles.header, headerAnimatedStyle]}>
-          <TouchableOpacity
-            style={styles.selectAllRow}
-            onPress={toggleAll}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.selectAllRow} onPress={toggleAll} activeOpacity={0.7}>
             <View
               style={[
                 styles.checkbox,
@@ -227,25 +213,16 @@ export function MultiSelectList<T extends SelectableItem>({
                 someSelected && styles.checkboxPartial,
               ]}
             >
-              {allSelected && (
-                <Ionicons name="checkmark" size={16} color="#fff" />
-              )}
-              {someSelected && (
-                <View style={styles.partialIndicator} />
-              )}
+              {allSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
+              {someSelected && <View style={styles.partialIndicator} />}
             </View>
             <Text style={styles.selectAllText}>{selectAllLabel}</Text>
           </TouchableOpacity>
 
           <View style={styles.selectionInfo}>
-            <Text style={styles.selectionCount}>
-              {selectedIds.size} selected
-            </Text>
+            <Text style={styles.selectionCount}>{selectedIds.size} selected</Text>
             {selectedIds.size > 0 && (
-              <TouchableOpacity
-                onPress={clearSelection}
-                style={styles.clearButton}
-              >
+              <TouchableOpacity onPress={clearSelection} style={styles.clearButton}>
                 <Text style={styles.clearText}>Clear</Text>
               </TouchableOpacity>
             )}
@@ -326,9 +303,7 @@ function SelectableItemWrapper({
           isDisabled && styles.itemCheckboxDisabled,
         ]}
       >
-        {isSelected && (
-          <Ionicons name="checkmark" size={14} color="#fff" />
-        )}
+        {isSelected && <Ionicons name="checkmark" size={14} color="#fff" />}
       </View>
       <View style={styles.itemContent}>{children}</View>
     </AnimatedTouchable>

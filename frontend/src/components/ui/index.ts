@@ -91,9 +91,7 @@ export { ThemedScreen, ThemedCard, ThemedText } from "./ThemedScreen";
 
 // Unified Screen Layout
 export { ScreenContainer } from "./ScreenContainer";
-export type {
-  ScreenContainerProps,
-} from "./ScreenContainer";
+export type { ScreenContainerProps } from "./ScreenContainer";
 
 // Responsive Typography
 export { ResponsiveText } from "./ResponsiveText";
@@ -113,7 +111,10 @@ export type { EnhancedInputProps, InputSize, LabelPosition } from "./EnhancedInp
 
 // Unified Design System Components (v3.0 - Token-based)
 export { UnifiedText } from "./UnifiedText";
-export type { UnifiedTextProps, TextVariant as UnifiedTextVariant, TextColor as UnifiedTextColor } from "./UnifiedText";
+export type {
+  UnifiedTextProps,
+  TextVariant as UnifiedTextVariant,
+  TextColor as UnifiedTextColor,
+} from "./UnifiedText";
 export { UnifiedView } from "./UnifiedView";
 export type { UnifiedViewProps, BackgroundColor as UnifiedBackgroundColor } from "./UnifiedView";
-

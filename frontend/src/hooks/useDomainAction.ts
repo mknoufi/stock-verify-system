@@ -61,9 +61,7 @@ export function useDomainAction<T, R>({
             onSuccess?.(response.data);
           } else {
             const errorMsg =
-              response.error?.message ||
-              response.message ||
-              "Unknown error occurred";
+              response.error?.message || response.message || "Unknown error occurred";
             throw new Error(errorMsg);
           }
         }
@@ -75,7 +73,7 @@ export function useDomainAction<T, R>({
         setIsLoading(false);
       }
     },
-    [action, onSuccess, onError, isRawAction],
+    [action, onSuccess, onError, isRawAction]
   );
 
   const reset = useCallback(() => {

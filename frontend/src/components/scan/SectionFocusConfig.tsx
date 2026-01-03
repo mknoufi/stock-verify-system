@@ -23,19 +23,22 @@ import {
 import { useScanSessionStore } from "../../store/scanSessionStore";
 
 export const SectionFocusConfig: React.FC = () => {
-  const { setFloor, setRack, startSection } =
-    useScanSessionStore();
-  const [locationType, setLocationType] = useState<'showroom' | 'godown'>('showroom');
+  const { setFloor, setRack, startSection } = useScanSessionStore();
+  const [locationType, setLocationType] = useState<"showroom" | "godown">("showroom");
   const [selectedFloor, setSelectedFloor] = useState("");
   const [rackInput, setRackInput] = useState("");
   const [showFloorModal, setShowFloorModal] = useState(false);
   const [loading, setLoading] = useState(false);
   // Initialize with showroom options to prevent empty list flash
-  const [floorOptions, setFloorOptions] = useState<string[]>(["Ground Floor", "First Floor", "Second Floor"]);
+  const [floorOptions, setFloorOptions] = useState<string[]>([
+    "Ground Floor",
+    "First Floor",
+    "Second Floor",
+  ]);
 
   useEffect(() => {
     console.log("Location type changed:", locationType);
-    if (locationType === 'showroom') {
+    if (locationType === "showroom") {
       setFloorOptions(["Ground Floor", "First Floor", "Second Floor"]);
     } else {
       setFloorOptions(["Top Godown", "Main Godown", "Damage Area"]);
@@ -50,10 +53,7 @@ export const SectionFocusConfig: React.FC = () => {
 
   const handleStartSection = () => {
     if (!selectedFloor || !rackInput.trim()) {
-      Alert.alert(
-        "Missing Information",
-        "Please select a floor and enter a rack number.",
-      );
+      Alert.alert("Missing Information", "Please select a floor and enter a rack number.");
       return;
     }
 
@@ -72,11 +72,7 @@ export const SectionFocusConfig: React.FC = () => {
       <BlurView intensity={20} tint="dark" style={styles.glassContainer}>
         <View style={styles.header}>
           <View style={styles.iconContainer}>
-            <Ionicons
-              name="scan-circle-outline"
-              size={48}
-              color={modernColors.primary[400]}
-            />
+            <Ionicons name="scan-circle-outline" size={48} color={modernColors.primary[400]} />
           </View>
           <Text style={styles.title}>New Section</Text>
         </View>
@@ -101,10 +97,7 @@ export const SectionFocusConfig: React.FC = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                locationType === "godown" && styles.toggleButtonActive,
-              ]}
+              style={[styles.toggleButton, locationType === "godown" && styles.toggleButtonActive]}
               onPress={() => setLocationType("godown")}
             >
               <Text
@@ -131,15 +124,12 @@ export const SectionFocusConfig: React.FC = () => {
                   name="layers-outline"
                   size={20}
                   color={modernColors.text.tertiary}
-                  style={{ marginRight: modernSpacing.xs, padding: modernSpacing.xs }}
+                  style={{
+                    marginRight: modernSpacing.xs,
+                    padding: modernSpacing.xs,
+                  }}
                 />
-                <Text
-                  style={
-                    selectedFloor
-                      ? styles.fakeInputText
-                      : styles.fakeInputPlaceholder
-                  }
-                >
+                <Text style={selectedFloor ? styles.fakeInputText : styles.fakeInputPlaceholder}>
                   {selectedFloor || "Select Floor"}
                 </Text>
               </View>
@@ -190,11 +180,7 @@ export const SectionFocusConfig: React.FC = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Floor</Text>
               <TouchableOpacity onPress={() => setShowFloorModal(false)}>
-                <Ionicons
-                  name="close"
-                  size={24}
-                  color={modernColors.text.secondary}
-                />
+                <Ionicons name="close" size={24} color={modernColors.text.secondary} />
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.modalList}>
@@ -220,16 +206,18 @@ export const SectionFocusConfig: React.FC = () => {
                       {floor}
                     </Text>
                     {selectedFloor === floor && (
-                      <Ionicons
-                        name="checkmark"
-                        size={20}
-                        color={modernColors.primary[500]}
-                      />
+                      <Ionicons name="checkmark" size={20} color={modernColors.primary[500]} />
                     )}
                   </TouchableOpacity>
                 ))
               ) : (
-                <Text style={{ padding: 20, textAlign: "center", color: modernColors.text.secondary }}>
+                <Text
+                  style={{
+                    padding: 20,
+                    textAlign: "center",
+                    color: modernColors.text.secondary,
+                  }}
+                >
                   No options available
                 </Text>
               )}
@@ -255,9 +243,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
     backgroundColor:
-      Platform.OS === "android"
-        ? modernColors.background.paper
-        : "rgba(30, 41, 59, 0.6)",
+      Platform.OS === "android" ? modernColors.background.paper : "rgba(30, 41, 59, 0.6)",
   },
   header: {
     alignItems: "center",

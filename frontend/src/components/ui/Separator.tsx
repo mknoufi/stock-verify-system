@@ -9,19 +9,12 @@
  * Inspired by react-native-separator-ui patterns
  */
 
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  StyleProp,
-} from 'react-native';
-import { useThemeContext } from '@/context/ThemeContext';
-import { Spacing, FontSizes, FontWeights } from '@/theme/uiConstants';
+import React from "react";
+import { View, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from "react-native";
+import { useThemeContext } from "@/context/ThemeContext";
+import { Spacing, FontSizes, FontWeights } from "@/theme/uiConstants";
 
-export type SeparatorOrientation = 'horizontal' | 'vertical';
+export type SeparatorOrientation = "horizontal" | "vertical";
 
 export interface SeparatorProps {
   /** Orientation of the separator */
@@ -67,7 +60,7 @@ export interface SeparatorProps {
  * />
  */
 export const Separator: React.FC<SeparatorProps> = ({
-  orientation = 'horizontal',
+  orientation = "horizontal",
   thickness = 1,
   color,
   spacing = Spacing.md,
@@ -77,25 +70,25 @@ export const Separator: React.FC<SeparatorProps> = ({
   style,
 }) => {
   const { themeLegacy } = useThemeContext();
-  const lineColor = color || themeLegacy.colors.border || 'rgba(0, 0, 0, 0.1)';
+  const lineColor = color || themeLegacy.colors.border || "rgba(0, 0, 0, 0.1)";
 
-  const isHorizontal = orientation === 'horizontal';
+  const isHorizontal = orientation === "horizontal";
 
   // Container style
   const containerStyle: ViewStyle = isHorizontal
     ? {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         marginVertical: spacing,
-        width: length || '100%',
-        alignSelf: length ? 'center' : undefined,
+        width: length || "100%",
+        alignSelf: length ? "center" : undefined,
       }
     : {
-        flexDirection: 'column',
-        alignItems: 'center',
+        flexDirection: "column",
+        alignItems: "center",
         marginHorizontal: spacing,
-        height: length || '100%',
-        alignSelf: length ? 'center' : undefined,
+        height: length || "100%",
+        alignSelf: length ? "center" : undefined,
       };
 
   // Line style
@@ -121,11 +114,7 @@ export const Separator: React.FC<SeparatorProps> = ({
     <View style={[containerStyle, style]}>
       <View style={lineStyle} />
       <Text
-        style={[
-          styles.label,
-          { color: themeLegacy.colors.textSecondary || '#666' },
-          labelStyle,
-        ]}
+        style={[styles.label, { color: themeLegacy.colors.textSecondary || "#666" }, labelStyle]}
       >
         {label}
       </Text>
@@ -157,7 +146,7 @@ export const SeparatorPresets = {
   inset: {
     thickness: 1,
     spacing: Spacing.sm,
-    length: '90%' as const,
+    length: "90%" as const,
   },
 };
 
@@ -166,7 +155,7 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     fontWeight: FontWeights.medium,
     marginHorizontal: Spacing.md,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 1,
   },
 });

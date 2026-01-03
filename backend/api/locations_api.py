@@ -4,8 +4,8 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends  # type: ignore
 
 from backend.auth.dependencies import get_current_user
-from backend.sql_server_connector import sql_connector
 from backend.db.runtime import get_db
+from backend.sql_server_connector import sql_connector
 
 logger = logging.getLogger(__name__)
 

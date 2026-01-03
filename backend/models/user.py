@@ -5,13 +5,7 @@ User Model
 from typing import Any, Optional
 
 from bson import ObjectId
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    EmailStr,
-    Field,
-    GetJsonSchemaHandler,
-)
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 

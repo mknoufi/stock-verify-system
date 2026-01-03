@@ -25,15 +25,15 @@ export const spacing = {
   /** 20px - Comfortable spacing */
   xl: 20,
   /** 24px - Spacious */
-  '2xl': 24,
+  "2xl": 24,
   /** 32px - Section spacing */
-  '3xl': 32,
+  "3xl": 32,
   /** 40px - Large gaps */
-  '4xl': 40,
+  "4xl": 40,
   /** 48px - Extra large gaps */
-  '5xl': 48,
+  "5xl": 48,
   /** 64px - Maximum spacing */
-  '6xl': 64,
+  "6xl": 64,
 } as const;
 
 // ==========================================
@@ -41,23 +41,23 @@ export const spacing = {
 // ==========================================
 export const layout = {
   /** Screen horizontal padding */
-  screenPadding: spacing.lg,       // 16px
+  screenPadding: spacing.lg, // 16px
   /** Card internal padding */
-  cardPadding: spacing.lg,         // 16px
+  cardPadding: spacing.lg, // 16px
   /** Section gap */
-  sectionGap: spacing['2xl'],      // 24px
+  sectionGap: spacing["2xl"], // 24px
   /** Item gap in lists */
-  itemGap: spacing.md,             // 12px
+  itemGap: spacing.md, // 12px
   /** Inline element gap */
-  inlineGap: spacing.sm,           // 8px
+  inlineGap: spacing.sm, // 8px
   /** Form field gap */
-  fieldGap: spacing.lg,            // 16px
+  fieldGap: spacing.lg, // 16px
   /** Header height */
   headerHeight: 56,
   /** Tab bar height */
   tabBarHeight: 64,
   /** Bottom safe area */
-  bottomSafeArea: spacing['3xl'],  // 32px
+  bottomSafeArea: spacing["3xl"], // 32px
 } as const;
 
 // ==========================================

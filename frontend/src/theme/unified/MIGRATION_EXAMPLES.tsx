@@ -10,8 +10,8 @@
  * - Better accessibility with proper touch targets
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet, FlatList } from "react-native";
 
 // ==========================================
 // IMPORTS - NEW WAY
@@ -47,17 +47,11 @@ import {
   springConfigs as _springConfigs,
   opacity as _opacity,
   zIndex as _zIndex,
-} from './index';
+} from "./index";
 
-import {
-  TouchableFeedback,
-  TouchableScale,
-  UnifiedAnimatedCard,
-} from '../../components/ui';
+import { TouchableFeedback, TouchableScale, UnifiedAnimatedCard } from "../../components/ui";
 
-import {
-  useStaggeredEntry,
-} from '../../hooks';
+import { useStaggeredEntry } from "../../hooks";
 
 // ==========================================
 // EXAMPLE 1: Color Migration
@@ -65,12 +59,12 @@ import {
 
 // ❌ OLD WAY - Hardcoded colors
 const _oldCardStyle = {
-  backgroundColor: '#F8FAFC',        // Magic color
-  borderColor: '#E2E8F0',            // What is this?
+  backgroundColor: "#F8FAFC", // Magic color
+  borderColor: "#E2E8F0", // What is this?
 };
 
 const _oldTextStyle = {
-  color: '#0EA5E9',                  // Primary? Info? Who knows!
+  color: "#0EA5E9", // Primary? Info? Who knows!
 };
 
 // ✅ NEW WAY - Semantic tokens
@@ -80,7 +74,7 @@ const _newCardStyle = {
 };
 
 const _newTextStyle = {
-  color: colors.primary[400],        // Clear: primary blue, shade 400
+  color: colors.primary[400], // Clear: primary blue, shade 400
 };
 
 // ==========================================
@@ -96,9 +90,9 @@ const _oldContainerStyle = {
 
 // ✅ NEW WAY - Semantic spacing
 const _newContainerStyle = {
-  padding: spacing.lg,              // 16px
-  marginBottom: spacing['2xl'],     // 24px
-  gap: spacing.sm,                  // 8px
+  padding: spacing.lg, // 16px
+  marginBottom: spacing["2xl"], // 24px
+  gap: spacing.sm, // 8px
 };
 
 // ==========================================
@@ -107,20 +101,20 @@ const _newContainerStyle = {
 
 // ❌ OLD WAY - Inconsistent values
 const _oldButtonStyle = {
-  borderRadius: 14,                  // Why 14?
+  borderRadius: 14, // Why 14?
 };
 
 const _oldModalStyle = {
-  borderRadius: 20,                  // Different from button?
+  borderRadius: 20, // Different from button?
 };
 
 // ✅ NEW WAY - Consistent scale
 const _newButtonStyle = {
-  borderRadius: componentRadius.button,  // 8px (consistent)
+  borderRadius: componentRadius.button, // 8px (consistent)
 };
 
 const _newModalStyle = {
-  borderRadius: componentRadius.modal,   // 16px (consistent)
+  borderRadius: componentRadius.modal, // 16px (consistent)
 };
 
 // ==========================================
@@ -129,7 +123,7 @@ const _newModalStyle = {
 
 // ❌ OLD WAY - Copy-paste shadows
 const _oldShadowStyle = {
-  shadowColor: '#000',
+  shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.1,
   shadowRadius: 8,
@@ -138,7 +132,7 @@ const _oldShadowStyle = {
 
 // ✅ NEW WAY - Preset shadows
 const _newShadowStyle = {
-  ...shadows.md,                     // Complete shadow config
+  ...shadows.md, // Complete shadow config
 };
 
 // ==========================================
@@ -147,7 +141,9 @@ const _newShadowStyle = {
 
 // ❌ OLD WAY - Too small touch targets
 const _OldIconButton: React.FC = () => (
-  <View style={{ width: 36, height: 36 }}>  {/* Too small! */}
+  <View style={{ width: 36, height: 36 }}>
+    {" "}
+    {/* Too small! */}
     <Text>×</Text>
   </View>
 );
@@ -156,12 +152,12 @@ const _OldIconButton: React.FC = () => (
 const NewIconButton: React.FC = () => (
   <TouchableFeedback
     style={{
-      width: touchTargets.minimum,    // 44px minimum
+      width: touchTargets.minimum, // 44px minimum
       height: touchTargets.minimum,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     }}
-    hitSlopSize="medium"              // Extends touch area
+    hitSlopSize="medium" // Extends touch area
   >
     <Text>×</Text>
   </TouchableFeedback>
@@ -192,11 +188,9 @@ const NewListItem: React.FC<ListItemProps> = ({ item, index }) => {
     <UnifiedAnimatedCard
       variant="elevated"
       staggerIndex={index}
-      onPress={() => console.log('Pressed', item.id)}
+      onPress={() => console.log("Pressed", item.id)}
     >
-      <Text style={{ ...textStyles.body, color: semanticColors.text.primary }}>
-        {item.title}
-      </Text>
+      <Text style={{ ...textStyles.body, color: semanticColors.text.primary }}>{item.title}</Text>
     </UnifiedAnimatedCard>
   );
 };
@@ -215,15 +209,10 @@ const _OldButton: React.FC = () => (
 // ✅ NEW WAY - Platform-specific feedback
 const NewButton: React.FC = () => (
   <TouchableScale
-    onPress={() => console.log('Pressed!')}
-    style={[
-      staticStyles.button,
-      { borderRadius: componentRadius.button }
-    ]}
+    onPress={() => console.log("Pressed!")}
+    style={[staticStyles.button, { borderRadius: componentRadius.button }]}
   >
-    <Text style={{ ...textStyles.button, color: semanticColors.text.inverse }}>
-      Press Me
-    </Text>
+    <Text style={{ ...textStyles.button, color: semanticColors.text.inverse }}>Press Me</Text>
   </TouchableScale>
 );
 
@@ -235,7 +224,7 @@ interface StatsData {
   id: string;
   title: string;
   value: number;
-  trend: 'up' | 'down';
+  trend: "up" | "down";
 }
 
 const CompleteDashboard: React.FC<{ stats: StatsData[] }> = ({ stats }) => {
@@ -252,17 +241,19 @@ const CompleteDashboard: React.FC<{ stats: StatsData[] }> = ({ stats }) => {
             variant="elevated"
             staggerIndex={index}
             style={staticStyles.statsCard}
-            onPress={() => console.log('View details:', item.id)}
+            onPress={() => console.log("View details:", item.id)}
           >
             <Text style={staticStyles.statsTitle}>{item.title}</Text>
             <Text style={staticStyles.statsValue}>{item.value}</Text>
             <Text
               style={[
                 staticStyles.statsTrend,
-                { color: item.trend === 'up' ? colors.success[500] : colors.error[500] }
+                {
+                  color: item.trend === "up" ? colors.success[500] : colors.error[500],
+                },
               ]}
             >
-              {item.trend === 'up' ? '↑' : '↓'}
+              {item.trend === "up" ? "↑" : "↓"}
             </Text>
           </UnifiedAnimatedCard>
         )}
@@ -325,8 +316,8 @@ const staticStyles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderRadius: componentRadius.button,
     minHeight: touchTargets.minimum,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   dashboard: {
     flex: 1,
@@ -351,9 +342,4 @@ const staticStyles = StyleSheet.create({
   },
 });
 
-export {
-  CompleteDashboard,
-  NewListItem,
-  NewButton,
-  NewIconButton,
-};
+export { CompleteDashboard, NewListItem, NewButton, NewIconButton };

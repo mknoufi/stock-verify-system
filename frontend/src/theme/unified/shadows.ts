@@ -5,8 +5,8 @@
  * Uses both React Native shadows and Android elevation
  */
 
-import { Platform, ViewStyle } from 'react-native';
-import { colors } from './colors';
+import { Platform, ViewStyle } from "react-native";
+import { colors } from "./colors";
 
 // ==========================================
 // SHADOW DEFINITIONS
@@ -14,7 +14,7 @@ import { colors } from './colors';
 export const shadows = {
   /** No shadow */
   none: {
-    shadowColor: 'transparent',
+    shadowColor: "transparent",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
     shadowRadius: 0,
@@ -67,7 +67,7 @@ export const shadows = {
   } as ViewStyle,
 
   /** Maximum shadow - full-screen overlays */
-  '2xl': {
+  "2xl": {
     shadowColor: colors.neutral[900],
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.2,
@@ -111,25 +111,25 @@ export const coloredShadows = {
 export const glass = {
   /** Light glass effect */
   light: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     ...Platform.select({
       ios: {
         // Use BlurView for actual blur on iOS
       },
       android: {
         // Android doesn't support blur well, use solid fallback
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: "rgba(255, 255, 255, 0.9)",
       },
     }),
   } as ViewStyle,
 
   /** Dark glass effect */
   dark: {
-    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    backgroundColor: "rgba(15, 23, 42, 0.7)",
     ...Platform.select({
       ios: {},
       android: {
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        backgroundColor: "rgba(15, 23, 42, 0.9)",
       },
     }),
   } as ViewStyle,

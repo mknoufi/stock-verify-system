@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient } from "@tanstack/react-query";
 
 /**
  * Global Query Client Configuration
@@ -20,10 +20,10 @@ export const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
 
       // Network mode: 'offlineFirst' allows queries to run even if we think we are offline
-      networkMode: 'offlineFirst',
+      networkMode: "offlineFirst",
     },
     mutations: {
-      networkMode: 'offlineFirst',
+      networkMode: "offlineFirst",
       retry: 3,
     },
   },

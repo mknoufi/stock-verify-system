@@ -57,8 +57,7 @@ export const registerBackgroundSync = async () => {
       // If status can't be determined, fall through and attempt registration.
     }
 
-    const isRegistered =
-      await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
     if (isRegistered) {
       console.log("Background sync task already registered");
       return;

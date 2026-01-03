@@ -53,20 +53,14 @@ export const GlassCard = ({
   const activePadding = padding ?? (theme?.spacing?.md || 16);
 
   const glassStyle = theme?.glass[variant] || theme?.glass.medium || {};
-  const shadowStyle =
-    elevation !== "none" ? (theme?.shadows[elevation] as ViewStyle) : {};
+  const shadowStyle = elevation !== "none" ? (theme?.shadows[elevation] as ViewStyle) : {};
   const useBlur = Platform.OS !== "web";
 
   // Resolve tint based on theme if default
   const activeTint =
-    tint === "default"
-      ? theme?.colors.background.default === "#000000"
-        ? "dark"
-        : "light"
-      : tint;
+    tint === "default" ? (theme?.colors.background.default === "#000000" ? "dark" : "light") : tint;
 
-  const fallbackBackground =
-    theme?.colors.background.paper || "rgba(255, 255, 255, 0.8)";
+  const fallbackBackground = theme?.colors.background.paper || "rgba(255, 255, 255, 0.8)";
 
   if (withGradientBorder) {
     return (
@@ -100,7 +94,15 @@ export const GlassCard = ({
                 },
               ]}
             >
-              <View style={[glassStyle, styles.content, { padding: activePadding, borderWidth: 0, borderRadius: 0 }]}>{children}</View>
+              <View
+                style={[
+                  glassStyle,
+                  styles.content,
+                  { padding: activePadding, borderWidth: 0, borderRadius: 0 },
+                ]}
+              >
+                {children}
+              </View>
             </BlurView>
           ) : (
             <View
@@ -134,7 +136,11 @@ export const GlassCard = ({
       accessibilityHint={accessibilityHint}
     >
       {useBlur ? (
-        <BlurView intensity={intensity} tint={activeTint} style={[styles.blur, { borderRadius: activeBorderRadius }]}>
+        <BlurView
+          intensity={intensity}
+          tint={activeTint}
+          style={[styles.blur, { borderRadius: activeBorderRadius }]}
+        >
           <View style={[styles.content, { padding: activePadding }]}>{children}</View>
         </BlurView>
       ) : (
@@ -164,7 +170,7 @@ const styles = StyleSheet.create({
   },
   blur: {
     // Let blur view size itself based on content
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   webFallbackSurface: {
     // Web safe fallback when native blur isn't available

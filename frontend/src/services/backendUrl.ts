@@ -23,8 +23,7 @@ const timeoutFetch = async (url: string, timeoutMs = 900): Promise<boolean> => {
   }
 };
 
-const stripTrailingSlash = (url: string) =>
-  url.endsWith("/") ? url.slice(0, -1) : url;
+const stripTrailingSlash = (url: string) => (url.endsWith("/") ? url.slice(0, -1) : url);
 
 const buildCandidates = (): string[] => {
   const candidates: string[] = [];
@@ -35,9 +34,7 @@ const buildCandidates = (): string[] => {
   }
 
   // 2) Runtime config from app.config.js extra
-  const configUrl = Constants.expoConfig?.extra?.backendUrl as
-    | string
-    | undefined;
+  const configUrl = Constants.expoConfig?.extra?.backendUrl as string | undefined;
   if (configUrl) {
     candidates.push(configUrl);
   }
@@ -72,12 +69,11 @@ const buildCandidates = (): string[] => {
   candidates.push(`http://localhost:${DEFAULT_PORT}`);
 
   // De-dupe while preserving order
-  return [...new Set(candidates.filter(Boolean).map(stripTrailingSlash))];
+  return Array.from(new Set(candidates.filter(Boolean).map(stripTrailingSlash)));
 };
 
 // Best-effort initial URL (sync) used until async probing finishes.
-export const BACKEND_URL =
-  buildCandidates()[0] ?? `http://localhost:${DEFAULT_PORT}`;
+export const BACKEND_URL = buildCandidates()[0] ?? `http://localhost:${DEFAULT_PORT}`;
 
 let resolvedBackendUrl: string | null = null;
 
@@ -86,7 +82,7 @@ export const resolveBackendUrl = async (): Promise<string> => {
 
   const candidates = buildCandidates();
   console.log("[BackendURL] Probing candidates:", candidates);
-  
+
   for (const candidate of candidates) {
     const ok = await timeoutFetch(`${candidate}${HEALTH_PATH}`);
     if (ok) {
@@ -98,10 +94,7 @@ export const resolveBackendUrl = async (): Promise<string> => {
 
   // If none reachable, stick to the best-effort initial URL
   resolvedBackendUrl = BACKEND_URL;
-  console.warn(
-    "[BackendURL] No backend reachable; falling back to",
-    resolvedBackendUrl,
-  );
+  console.warn("[BackendURL] No backend reachable; falling back to", resolvedBackendUrl);
   return resolvedBackendUrl;
 };
 

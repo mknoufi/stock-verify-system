@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from backend.api.schemas import CountLineCreate
 
 
@@ -39,8 +41,9 @@ def mock_current_user():
 @pytest.mark.asyncio
 async def test_create_count_line_saves_floor_no(mock_db, mock_current_user):
     """Test that creating a count line saves the floor_no correctly"""
-    from backend.server import create_count_line
     from fastapi import Request
+
+    from backend.server import create_count_line
 
     # Setup mocks
     mock_db.sessions.find_one.return_value = {"session_id": "test-session"}

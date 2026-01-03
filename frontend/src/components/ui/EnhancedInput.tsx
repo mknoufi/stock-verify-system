@@ -12,7 +12,7 @@
  * Inspired by react-native-design-kit Input patterns
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from "react";
 import {
   View,
   TextInput,
@@ -23,15 +23,15 @@ import {
   TextStyle,
   TextInputProps,
   StyleProp,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   interpolate,
-} from 'react-native-reanimated';
-import { useThemeContext } from '@/context/ThemeContext';
+} from "react-native-reanimated";
+import { useThemeContext } from "@/context/ThemeContext";
 import {
   ComponentSizes,
   BorderRadius,
@@ -39,12 +39,12 @@ import {
   FontWeights,
   Spacing,
   AnimationTimings,
-} from '@/theme/uiConstants';
+} from "@/theme/uiConstants";
 
-export type InputSize = 'sm' | 'md' | 'lg';
-export type LabelPosition = 'floating' | 'fixed' | 'none';
+export type InputSize = "sm" | "md" | "lg";
+export type LabelPosition = "floating" | "fixed" | "none";
 
-export interface EnhancedInputProps extends Omit<TextInputProps, 'style'> {
+export interface EnhancedInputProps extends Omit<TextInputProps, "style"> {
   /** Input label */
   label?: string;
   /** Label behavior */
@@ -111,7 +111,7 @@ const AnimatedText = Animated.createAnimatedComponent(Text);
  */
 export const EnhancedInput: React.FC<EnhancedInputProps> = ({
   label,
-  labelPosition = 'floating',
+  labelPosition = "floating",
   helperText,
   error,
   success,
@@ -119,7 +119,7 @@ export const EnhancedInput: React.FC<EnhancedInputProps> = ({
   leftIcon,
   rightIcon,
   onRightIconPress,
-  size = 'md',
+  size = "md",
   showCounter = false,
   maxLength,
   containerStyle,
@@ -167,17 +167,17 @@ export const EnhancedInput: React.FC<EnhancedInputProps> = ({
 
   // Colors based on state
   const getBorderColor = () => {
-    if (error) return themeLegacy.colors.error || '#DC2626';
-    if (success) return themeLegacy.colors.success || '#16A34A';
+    if (error) return themeLegacy.colors.error || "#DC2626";
+    if (success) return themeLegacy.colors.success || "#16A34A";
     if (isFocused) return themeLegacy.colors.primary;
-    return themeLegacy.colors.border || 'rgba(0, 0, 0, 0.1)';
+    return themeLegacy.colors.border || "rgba(0, 0, 0, 0.1)";
   };
 
   const getIconColor = () => {
-    if (error) return themeLegacy.colors.error || '#DC2626';
-    if (success) return themeLegacy.colors.success || '#16A34A';
+    if (error) return themeLegacy.colors.error || "#DC2626";
+    if (success) return themeLegacy.colors.success || "#16A34A";
     if (isFocused) return themeLegacy.colors.primary;
-    return themeLegacy.colors.textSecondary || '#888';
+    return themeLegacy.colors.textSecondary || "#888";
   };
 
   // Handlers
@@ -205,18 +205,14 @@ export const EnhancedInput: React.FC<EnhancedInputProps> = ({
 
   // Animated label style
   const labelAnimatedStyle = useAnimatedStyle(() => {
-    if (labelPosition !== 'floating') return {};
+    if (labelPosition !== "floating") return {};
 
     const translateY = interpolate(
       shouldFloat ? 1 : focusProgress.value,
       [0, 1],
       [0, -(config.height / 2 + 4)]
     );
-    const scale = interpolate(
-      shouldFloat ? 1 : focusProgress.value,
-      [0, 1],
-      [1, 0.85]
-    );
+    const scale = interpolate(shouldFloat ? 1 : focusProgress.value, [0, 1], [1, 0.85]);
 
     return {
       transform: [{ translateY }, { scale }],
@@ -230,18 +226,12 @@ export const EnhancedInput: React.FC<EnhancedInputProps> = ({
   // Determine if we should show password toggle
   const isPassword = secureTextEntry;
   const finalSecureEntry = isPassword && !isPasswordVisible;
-  const passwordIcon = isPasswordVisible ? 'eye-off' : 'eye';
+  const passwordIcon = isPasswordVisible ? "eye-off" : "eye";
 
   return (
-    <View
-      style={[
-        styles.container,
-        fullWidth && styles.fullWidth,
-        containerStyle,
-      ]}
-    >
+    <View style={[styles.container, fullWidth && styles.fullWidth, containerStyle]}>
       {/* Fixed label */}
-      {label && labelPosition === 'fixed' && (
+      {label && labelPosition === "fixed" && (
         <Text
           style={[
             styles.fixedLabel,
@@ -262,20 +252,18 @@ export const EnhancedInput: React.FC<EnhancedInputProps> = ({
             paddingHorizontal: config.paddingHorizontal,
             borderColor: getBorderColor(),
             backgroundColor: disabled
-              ? 'rgba(0, 0, 0, 0.05)'
+              ? "rgba(0, 0, 0, 0.05)"
               : themeLegacy.colors.surface || themeLegacy.colors.background,
           },
         ]}
       >
         {/* Floating label */}
-        {label && labelPosition === 'floating' && (
+        {label && labelPosition === "floating" && (
           <AnimatedText
             style={[
               styles.floatingLabel,
               {
-                color: isFocused
-                  ? themeLegacy.colors.primary
-                  : themeLegacy.colors.textSecondary,
+                color: isFocused ? themeLegacy.colors.primary : themeLegacy.colors.textSecondary,
                 backgroundColor: themeLegacy.colors.surface || themeLegacy.colors.background,
               },
               error && { color: themeLegacy.colors.error },
@@ -309,7 +297,7 @@ export const EnhancedInput: React.FC<EnhancedInputProps> = ({
             (rightIcon || isPassword) && styles.inputWithRightIcon,
             inputStyle,
           ]}
-          placeholderTextColor={themeLegacy.colors.textSecondary || '#888'}
+          placeholderTextColor={themeLegacy.colors.textSecondary || "#888"}
           editable={!disabled}
           value={value}
           onFocus={handleFocus}
@@ -342,20 +330,13 @@ export const EnhancedInput: React.FC<EnhancedInputProps> = ({
         {/* Helper/Error/Success text */}
         <View style={styles.helperContainer}>
           {error ? (
-            <Text style={[styles.helperText, { color: themeLegacy.colors.error }]}>
-              {error}
-            </Text>
+            <Text style={[styles.helperText, { color: themeLegacy.colors.error }]}>{error}</Text>
           ) : success && successMessage ? (
             <Text style={[styles.helperText, { color: themeLegacy.colors.success }]}>
               {successMessage}
             </Text>
           ) : helperText ? (
-            <Text
-              style={[
-                styles.helperText,
-                { color: themeLegacy.colors.textSecondary },
-              ]}
-            >
+            <Text style={[styles.helperText, { color: themeLegacy.colors.textSecondary }]}>
               {helperText}
             </Text>
           ) : null}
@@ -383,7 +364,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   fullWidth: {
-    width: '100%',
+    width: "100%",
   },
   fixedLabel: {
     fontSize: FontSizes.sm,
@@ -391,14 +372,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1.5,
     borderRadius: BorderRadius.md,
-    position: 'relative',
+    position: "relative",
   },
   floatingLabel: {
-    position: 'absolute',
+    position: "absolute",
     left: Spacing.md,
     fontSize: FontSizes.md,
     paddingHorizontal: Spacing.xs,
@@ -421,8 +402,8 @@ const styles = StyleSheet.create({
     paddingRight: 0,
   },
   bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: Spacing.xs,
     paddingHorizontal: Spacing.xs,
   },

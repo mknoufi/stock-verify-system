@@ -194,14 +194,11 @@ export const useFilterStore = create<FilterState & FilterActions>()(
           activePresetId: null,
         }),
 
-      resetSessionFilters: () =>
-        set({ sessionFilters: {}, activePresetId: null }),
+      resetSessionFilters: () => set({ sessionFilters: {}, activePresetId: null }),
 
-      resetItemFilters: () =>
-        set({ itemFilters: {}, activePresetId: null }),
+      resetItemFilters: () => set({ itemFilters: {}, activePresetId: null }),
 
-      resetUserFilters: () =>
-        set({ userFilters: {}, activePresetId: null }),
+      resetUserFilters: () => set({ userFilters: {}, activePresetId: null }),
 
       // Preset management
       savePreset: (name) => {
@@ -240,8 +237,7 @@ export const useFilterStore = create<FilterState & FilterActions>()(
       deletePreset: (presetId) =>
         set((state) => ({
           presets: state.presets.filter((p) => p.id !== presetId),
-          activePresetId:
-            state.activePresetId === presetId ? null : state.activePresetId,
+          activePresetId: state.activePresetId === presetId ? null : state.activePresetId,
         })),
 
       setDefaultPreset: (presetId) =>
@@ -307,7 +303,6 @@ export const useFilters = () =>
 /**
  * Hook to get active filter count
  */
-export const useActiveFilterCount = () =>
-  useFilterStore((state) => state.getActiveFilterCount());
+export const useActiveFilterCount = () => useFilterStore((state) => state.getActiveFilterCount());
 
 export default useFilterStore;

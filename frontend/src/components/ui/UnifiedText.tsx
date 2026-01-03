@@ -9,8 +9,8 @@
  * - Dark mode aware
  */
 
-import React from 'react';
-import { Text, TextStyle, StyleProp, StyleSheet, TextProps } from 'react-native';
+import React from "react";
+import { Text, TextStyle, StyleProp, StyleSheet, TextProps } from "react-native";
 import {
   textStyles,
   fontFamily,
@@ -19,39 +19,39 @@ import {
   lineHeight,
   colors,
   semanticColors,
-} from '../../theme/unified';
+} from "../../theme/unified";
 
 // ==========================================
 // TYPES
 // ==========================================
 export type TextVariant =
-  | 'h1'
-  | 'h2'
-  | 'h3'
-  | 'h4'
-  | 'h5'
-  | 'h6'
-  | 'subtitle1'
-  | 'subtitle2'
-  | 'body1'
-  | 'body2'
-  | 'caption'
-  | 'overline'
-  | 'button'
-  | 'mono';
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "h5"
+  | "h6"
+  | "subtitle1"
+  | "subtitle2"
+  | "body1"
+  | "body2"
+  | "caption"
+  | "overline"
+  | "button"
+  | "mono";
 
 export type TextColor =
-  | 'primary'
-  | 'secondary'
-  | 'tertiary'
-  | 'muted'
-  | 'disabled'
-  | 'inverse'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'info'
-  | 'link';
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "muted"
+  | "disabled"
+  | "inverse"
+  | "success"
+  | "warning"
+  | "error"
+  | "info"
+  | "link";
 
 export interface UnifiedTextProps extends TextProps {
   /** Typography variant */
@@ -59,7 +59,7 @@ export interface UnifiedTextProps extends TextProps {
   /** Text color from semantic colors */
   color?: TextColor;
   /** Override font weight */
-  weight?: 'regular' | 'medium' | 'semiBold' | 'bold';
+  weight?: "regular" | "medium" | "semiBold" | "bold";
   /** Center text */
   center?: boolean;
   /** Right align text */
@@ -115,14 +115,14 @@ const variantMap: Record<TextVariant, TextStyle> = {
 // COMPONENT
 // ==========================================
 export const UnifiedText: React.FC<UnifiedTextProps> = ({
-  variant = 'body1',
-  color = 'primary',
+  variant = "body1",
+  color = "primary",
   weight,
   center,
   right,
   style,
   children,
-  accessibilityRole = 'text',
+  accessibilityRole = "text",
   ...props
 }) => {
   const variantStyle = variantMap[variant];
@@ -132,18 +132,14 @@ export const UnifiedText: React.FC<UnifiedTextProps> = ({
     styles.base,
     variantStyle,
     { color: textColor },
-    weight && { fontWeight: fw[weight] as TextStyle['fontWeight'] },
+    weight && { fontWeight: fw[weight] as TextStyle["fontWeight"] },
     center && styles.center,
     right && styles.right,
     style,
   ];
 
   return (
-    <Text
-      style={combinedStyle}
-      accessibilityRole={accessibilityRole}
-      {...props}
-    >
+    <Text style={combinedStyle} accessibilityRole={accessibilityRole} {...props}>
       {children}
     </Text>
   );
@@ -157,10 +153,10 @@ const styles = StyleSheet.create({
     color: semanticColors.text.primary,
   },
   center: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   right: {
-    textAlign: 'right',
+    textAlign: "right",
   },
 });
 

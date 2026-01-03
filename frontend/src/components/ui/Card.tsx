@@ -1,11 +1,5 @@
 import React, { ReactNode } from "react";
-import {
-  View,
-  ViewStyle,
-  StyleProp,
-  TouchableOpacity,
-  GestureResponderEvent,
-} from "react-native";
+import { View, ViewStyle, StyleProp, TouchableOpacity, GestureResponderEvent } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
 
 interface CardProps {

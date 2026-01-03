@@ -45,12 +45,8 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = React.memo(
 
         <View style={styles.contentContainer}>
           <Text style={styles.itemName}>{item.name}</Text>
-          {item.item_code && (
-            <Text style={styles.itemCode}>Code: {item.item_code}</Text>
-          )}
-          {item.barcode && (
-            <Text style={styles.itemBarcode}>Barcode: {item.barcode}</Text>
-          )}
+          {item.item_code && <Text style={styles.itemCode}>Code: {item.item_code}</Text>}
+          {item.barcode && <Text style={styles.itemBarcode}>Barcode: {item.barcode}</Text>}
 
           {/* Additional Item Information */}
           <View style={styles.itemInfoGrid}>
@@ -72,9 +68,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = React.memo(
             {item.item_group && (
               <View style={styles.itemInfoItem}>
                 <Ionicons name="albums" size={14} color={unifiedColors.neutral[400]} />
-                <Text style={styles.itemInfoText}>
-                  Group: {item.item_group}
-                </Text>
+                <Text style={styles.itemInfoText}>Group: {item.item_group}</Text>
               </View>
             )}
           </View>
@@ -111,12 +105,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = React.memo(
           <View style={{ flexDirection: "row", gap: 12 }}>
             {/* Left Column: ERP Stock */}
             <View style={{ flex: 1 }}>
-              <View
-                style={[
-                  styles.qtyBox,
-                  { height: "100%", justifyContent: "center" },
-                ]}
-              >
+              <View style={[styles.qtyBox, { height: "100%", justifyContent: "center" }]}>
                 <View style={styles.qtyHeader}>
                   <Text style={styles.qtyLabel}>ERP Stock</Text>
                   {onRefreshStock && (
@@ -141,9 +130,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = React.memo(
                     {item.stock_qty ?? item.quantity ?? 0}
                   </Text>
                   {item.uom_name && (
-                    <Text style={[styles.uomText, { marginTop: 0 }]}>
-                      {item.uom_name}
-                    </Text>
+                    <Text style={[styles.uomText, { marginTop: 0 }]}>{item.uom_name}</Text>
                   )}
                 </View>
               </View>
@@ -178,7 +165,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = React.memo(
       prevProps.item.sales_price === nextProps.item.sales_price &&
       prevProps.refreshingStock === nextProps.refreshingStock
     );
-  },
+  }
 );
 
 ItemDisplay.displayName = "ItemDisplay";

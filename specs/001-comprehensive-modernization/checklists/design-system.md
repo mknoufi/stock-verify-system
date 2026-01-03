@@ -114,8 +114,8 @@
 
 ## Summary
 
-**Total Items:** 65  
-**Passed:** 52 (80%)  
+**Total Items:** 65
+**Passed:** 52 (80%)
 **Gaps:** 13 (20%)
 
 | Category | Total | ✓ Pass | ⚠️ Gap |

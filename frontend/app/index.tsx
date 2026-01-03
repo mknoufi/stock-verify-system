@@ -33,10 +33,7 @@ export default function Index() {
     <AuroraBackground variant="primary" intensity="high" animated>
       <StatusBar style="light" />
       <View style={styles.container}>
-        <Animated.View
-          entering={FadeInDown.delay(300).springify()}
-          style={styles.contentContainer}
-        >
+        <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.contentContainer}>
           <GlassCard variant="strong" elevation="lg" style={styles.card}>
             <View style={styles.logoContainer}>
               <View style={styles.iconPlaceholder}>
@@ -47,21 +44,13 @@ export default function Index() {
             </View>
 
             <View style={styles.loadingContainer}>
-              <ActivityIndicator
-                size="large"
-                color={theme.colors.accentLight}
-              />
-              <Text style={styles.loadingText}>
-                Initializing Secure Environment...
-              </Text>
+              <ActivityIndicator size="large" color={theme.colors.accentLight} />
+              <Text style={styles.loadingText}>Initializing Secure Environment...</Text>
             </View>
           </GlassCard>
         </Animated.View>
 
-        <Animated.Text
-          entering={FadeInDown.delay(600).duration(1000)}
-          style={styles.versionText}
-        >
+        <Animated.Text entering={FadeInDown.delay(600).duration(1000)} style={styles.versionText}>
           {"v2.0.0 • Aurora Engine"}
         </Animated.Text>
       </View>

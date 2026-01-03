@@ -220,7 +220,7 @@ import os
 
 class Settings:
     JWT_SECRET: str = os.getenv("JWT_SECRET")
-    
+
     def __init__(self):
         if not self.JWT_SECRET:
             raise ValueError("JWT_SECRET environment variable required")

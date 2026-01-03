@@ -23,10 +23,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../src/services/queryClient";
 import { ThemeProvider } from "../src/context/ThemeContext";
 import { initReactotron } from "../src/services/devtools/reactotron";
-import {
-  startOfflineQueue,
-  stopOfflineQueue,
-} from "../src/services/offlineQueue";
+import { startOfflineQueue, stopOfflineQueue } from "../src/services/offlineQueue";
 import apiClient from "../src/services/httpClient";
 import { initSentry } from "../src/services/sentry";
 import { mmkvStorage } from "../src/services/mmkvStorage";
@@ -114,9 +111,7 @@ export default function RootLayout() {
     initReactotron();
     // Safety: Maximum initialization timeout (10 seconds)
     const maxTimeout = setTimeout(() => {
-      console.warn(
-        "⚠️ Maximum initialization timeout reached - forcing app to render",
-      );
+      console.warn("⚠️ Maximum initialization timeout reached - forcing app to render");
       setIsInitialized(true);
     }, 10000);
 
@@ -134,10 +129,7 @@ export default function RootLayout() {
       const emergencyTimeout = setTimeout(() => {
         if (__DEV__) {
           console.error("🚨 [EMERGENCY] FORCING INITIALIZATION AFTER 3s!");
-          console.error(
-            "🚨 Current isLoading:",
-            useAuthStore.getState().isLoading,
-          );
+          console.error("🚨 Current isLoading:", useAuthStore.getState().isLoading);
           console.error("🚨 Current isInitialized:", isInitialized);
         }
         useAuthStore.getState().setLoading(false);
@@ -154,10 +146,7 @@ export default function RootLayout() {
         try {
           const mmkvPromise = mmkvStorage.initialize();
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("MMKV initialization timeout")),
-              2000,
-            ),
+            setTimeout(() => reject(new Error("MMKV initialization timeout")), 2000)
           );
           await Promise.race([mmkvPromise, timeoutPromise]);
         } catch (e) {
@@ -168,18 +157,12 @@ export default function RootLayout() {
         try {
           const backendUrlPromise = initializeBackendURL();
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Backend URL initialization timeout")),
-              5000,
-            ),
+            setTimeout(() => reject(new Error("Backend URL initialization timeout")), 5000)
           );
           await Promise.race([backendUrlPromise, timeoutPromise]);
         } catch (urlError) {
           if (__DEV__) {
-            console.warn(
-              "⚠️ Backend URL initialization failed or timed out:",
-              urlError,
-            );
+            console.warn("⚠️ Backend URL initialization failed or timed out:", urlError);
           }
           // Continue anyway - will use default URL
         }
@@ -188,7 +171,7 @@ export default function RootLayout() {
         try {
           const authPromise = loadStoredAuth();
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Auth loading timeout")), 3000),
+            setTimeout(() => reject(new Error("Auth loading timeout")), 3000)
           );
           await Promise.race([authPromise, timeoutPromise]);
         } catch (authError) {
@@ -202,18 +185,12 @@ export default function RootLayout() {
         try {
           const settingsPromise = loadSettings();
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Settings loading timeout")),
-              3000,
-            ),
+            setTimeout(() => reject(new Error("Settings loading timeout")), 3000)
           );
           await Promise.race([settingsPromise, timeoutPromise]);
         } catch (settingsError) {
           if (__DEV__) {
-            console.warn(
-              "⚠️ Settings loading failed or timed out:",
-              settingsError,
-            );
+            console.warn("⚠️ Settings loading failed or timed out:", settingsError);
           }
           // Continue anyway - will use defaults
         }
@@ -222,10 +199,7 @@ export default function RootLayout() {
         try {
           const syncPromise = registerBackgroundSync();
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Background sync timeout")),
-              1000,
-            ),
+            setTimeout(() => reject(new Error("Background sync timeout")), 1000)
           );
           await Promise.race([syncPromise, timeoutPromise]);
         } catch (syncError) {
@@ -238,10 +212,7 @@ export default function RootLayout() {
         try {
           const themePromise = ThemeService.initialize();
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Theme initialization timeout")),
-              1000,
-            ),
+            setTimeout(() => reject(new Error("Theme initialization timeout")), 1000)
           );
           await Promise.race([themePromise, timeoutPromise]);
         } catch (themeError) {
@@ -270,7 +241,7 @@ export default function RootLayout() {
             syncService.cleanup();
             try {
               stopOfflineQueue();
-            } catch { }
+            } catch {}
           });
         }
 
@@ -346,9 +317,7 @@ export default function RootLayout() {
 
     // Navigation/redirect logic now handled by AuthGuard to avoid duplication
     if (__DEV__) {
-      console.log(
-        "🚀 [NAV] Initialization complete; navigation handled in AuthGuard",
-      );
+      console.log("🚀 [NAV] Initialization complete; navigation handled in AuthGuard");
     }
   }, [isInitialized, isLoading, segments, user]);
 
@@ -470,7 +439,13 @@ export default function RootLayout() {
             borderRadius: 8,
           }}
         >
-          <Text style={{ color: modernColors.primary[500], fontSize: 14, fontWeight: "600" }}>
+          <Text
+            style={{
+              color: modernColors.primary[500],
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
             Attempting to continue...
           </Text>
         </View>

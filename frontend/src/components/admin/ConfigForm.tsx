@@ -17,7 +17,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, radius, textStyles, semanticColors } from "../../theme/unified";
 
 // Field type definitions
-export type FieldType = "text" | "number" | "email" | "password" | "toggle" | "select" | "slider" | "textarea";
+export type FieldType =
+  | "text"
+  | "number"
+  | "email"
+  | "password"
+  | "toggle"
+  | "select"
+  | "slider"
+  | "textarea";
 
 export interface FieldOption {
   label: string;
@@ -141,9 +149,7 @@ export function ConfigForm({
                 </TouchableOpacity>
               ))}
             </View>
-            {field.description && (
-              <Text style={styles.fieldDescription}>{field.description}</Text>
-            )}
+            {field.description && <Text style={styles.fieldDescription}>{field.description}</Text>}
             {error && <Text style={styles.errorText}>{error}</Text>}
           </View>
         );
@@ -173,9 +179,7 @@ export function ConfigForm({
               autoCapitalize="sentences"
               autoCorrect={false}
             />
-            {field.description && (
-              <Text style={styles.fieldDescription}>{field.description}</Text>
-            )}
+            {field.description && <Text style={styles.fieldDescription}>{field.description}</Text>}
             {error && <Text style={styles.errorText}>{error}</Text>}
           </View>
         );
@@ -244,9 +248,7 @@ export function ConfigForm({
                 />
               </TouchableOpacity>
             </View>
-            {field.description && (
-              <Text style={styles.fieldDescription}>{field.description}</Text>
-            )}
+            {field.description && <Text style={styles.fieldDescription}>{field.description}</Text>}
             {error && <Text style={styles.errorText}>{error}</Text>}
           </View>
         );
@@ -259,11 +261,7 @@ export function ConfigForm({
               {field.required && <Text style={styles.required}> *</Text>}
             </Text>
             <TextInput
-              style={[
-                styles.input,
-                error && styles.inputError,
-                isDisabled && styles.inputDisabled,
-              ]}
+              style={[styles.input, error && styles.inputError, isDisabled && styles.inputDisabled]}
               value={String(value ?? "")}
               onChangeText={(v) => onChange(field.key, v)}
               placeholder={field.placeholder}
@@ -274,9 +272,7 @@ export function ConfigForm({
               autoCapitalize={field.type === "email" ? "none" : "none"}
               autoCorrect={false}
             />
-            {field.description && (
-              <Text style={styles.fieldDescription}>{field.description}</Text>
-            )}
+            {field.description && <Text style={styles.fieldDescription}>{field.description}</Text>}
             {error && <Text style={styles.errorText}>{error}</Text>}
           </View>
         );
@@ -318,9 +314,7 @@ export function ConfigForm({
 
             {/* Section Content */}
             {isExpanded && (
-              <View style={styles.sectionContent}>
-                {section.fields.map(renderField)}
-              </View>
+              <View style={styles.sectionContent}>{section.fields.map(renderField)}</View>
             )}
           </View>
         );

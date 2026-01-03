@@ -51,6 +51,7 @@ from backend.services.database_optimizer import DatabaseOptimizer
 from backend.services.error_log import ErrorLogService
 from backend.services.errors import DatabaseError
 from backend.services.lock_manager import get_lock_manager
+from backend.services.mdns_service import start_mdns, stop_mdns
 from backend.services.monitoring_service import MonitoringService
 from backend.services.pubsub_service import get_pubsub_service
 from backend.services.rate_limiter import ConcurrentRequestHandler, RateLimiter
@@ -58,10 +59,9 @@ from backend.services.redis_service import close_redis, init_redis
 from backend.services.refresh_token import RefreshTokenService
 from backend.services.runtime import set_cache_service, set_refresh_token_service
 from backend.services.scheduled_export_service import ScheduledExportService
-from backend.utils.port_detector import PortDetector, save_backend_info
 from backend.services.sync_conflicts_service import SyncConflictsService
 from backend.sql_server_connector import SQLServerConnector
-from backend.services.mdns_service import start_mdns, stop_mdns
+from backend.utils.port_detector import PortDetector, save_backend_info
 
 # Enterprise Imports
 try:

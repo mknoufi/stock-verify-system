@@ -10,14 +10,7 @@
  */
 
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-  StyleProp,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, StyleProp } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import Animated, {
@@ -37,16 +30,10 @@ import {
 } from "../styles/modernDesignSystem";
 import { useThemeContextSafe } from "../context/ThemeContext";
 
-const AnimatedTouchableOpacity =
-  Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-export type CardVariant =
-  | "default"
-  | "elevated"
-  | "glass"
-  | "gradient"
-  | "outlined";
+export type CardVariant = "default" | "elevated" | "glass" | "gradient" | "outlined";
 export type CardElevation = "none" | "sm" | "md" | "lg";
 
 interface ModernCardProps {
@@ -94,11 +81,7 @@ export const ModernCard: React.FC<ModernCardProps> = ({
   const theme = themeContext?.theme;
 
   const actualPadding =
-    padding !== undefined
-      ? padding
-      : theme
-        ? theme.spacing.md
-        : modernSpacing.cardPadding;
+    padding !== undefined ? padding : theme ? theme.spacing.md : modernSpacing.cardPadding;
 
   // Animation values
   const scale = useSharedValue(1);
@@ -143,30 +126,30 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       none: {},
       sm: theme
         ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 2,
-        }
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 2,
+          }
         : modernShadows.sm,
       md: theme
         ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 4,
-        }
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 4,
+          }
         : modernShadows.md,
       lg: theme
         ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.2,
-          shadowRadius: 20,
-          elevation: 8,
-        }
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.2,
+            shadowRadius: 20,
+            elevation: 8,
+          }
         : modernShadows.lg,
     };
 
@@ -180,41 +163,27 @@ export const ModernCard: React.FC<ModernCardProps> = ({
         flex: 1,
       },
       default: {
-        backgroundColor: theme
-          ? theme.colors.background.paper
-          : modernColors.background.paper,
+        backgroundColor: theme ? theme.colors.background.paper : modernColors.background.paper,
         borderWidth: 1,
-        borderColor: theme
-          ? theme.colors.border.light
-          : modernColors.border.light,
+        borderColor: theme ? theme.colors.border.light : modernColors.border.light,
         ...elevationShadows[elevation],
       },
       elevated: {
-        backgroundColor: theme
-          ? theme.colors.background.paper
-          : modernColors.background.paper,
+        backgroundColor: theme ? theme.colors.background.paper : modernColors.background.paper,
         ...elevationShadows[elevation],
       },
       glass: {
-        backgroundColor: theme
-          ? theme.colors.glass
-          : "rgba(255, 255, 255, 0.1)",
+        backgroundColor: theme ? theme.colors.glass : "rgba(255, 255, 255, 0.1)",
         borderWidth: 1,
-        borderColor: theme
-          ? theme.colors.border.light
-          : "rgba(255, 255, 255, 0.15)",
+        borderColor: theme ? theme.colors.border.light : "rgba(255, 255, 255, 0.15)",
       },
       gradient: {
         backgroundColor: "transparent",
       },
       outlined: {
-        backgroundColor: theme
-          ? theme.colors.background.paper
-          : modernColors.background.paper,
+        backgroundColor: theme ? theme.colors.background.paper : modernColors.background.paper,
         borderWidth: 2,
-        borderColor: theme
-          ? theme.colors.border.medium
-          : modernColors.border.medium,
+        borderColor: theme ? theme.colors.border.medium : modernColors.border.medium,
       },
       title: {
         ...modernTypography.h5,
@@ -223,17 +192,13 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       },
       subtitle: {
         ...modernTypography.body.small,
-        color: theme
-          ? theme.colors.text.secondary
-          : modernColors.text.secondary,
+        color: theme ? theme.colors.text.secondary : modernColors.text.secondary,
       },
       footer: {
         marginTop: theme ? theme.spacing.md : modernSpacing.md,
         paddingTop: theme ? theme.spacing.md : modernSpacing.md,
         borderTopWidth: 1,
-        borderTopColor: theme
-          ? theme.colors.border.light
-          : modernColors.border.light,
+        borderTopColor: theme ? theme.colors.border.light : modernColors.border.light,
       },
       header: {
         flexDirection: "row",
@@ -257,17 +222,13 @@ export const ModernCard: React.FC<ModernCardProps> = ({
                 <Ionicons
                   name={icon}
                   size={24}
-                  color={
-                    theme ? theme.colors.accent : modernColors.primary[500]
-                  }
+                  color={theme ? theme.colors.accent : modernColors.primary[500]}
                 />
               </View>
             )}
             <View style={styles.headerText}>
               {title && <Text style={dynamicStyles.title}>{title}</Text>}
-              {subtitle && (
-                <Text style={dynamicStyles.subtitle}>{subtitle}</Text>
-              )}
+              {subtitle && <Text style={dynamicStyles.subtitle}>{subtitle}</Text>}
             </View>
           </View>
         )}
@@ -281,17 +242,12 @@ export const ModernCard: React.FC<ModernCardProps> = ({
 
   // Render card based on variant
   const renderCard = () => {
-    const cardStyle = [
-      dynamicStyles.card,
-      (dynamicStyles as any)[variant],
-      style,
-    ];
+    const cardStyle = [dynamicStyles.card, (dynamicStyles as any)[variant], style];
     const Component = onPress ? AnimatedTouchableOpacity : AnimatedView;
 
     if (variant === "gradient") {
       const colors =
-        gradientColors ||
-        (theme ? theme.gradients.surface : modernColors.gradients.surface);
+        gradientColors || (theme ? theme.gradients.surface : modernColors.gradients.surface);
       return (
         <Component
           onPress={onPress}

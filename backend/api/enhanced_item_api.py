@@ -120,8 +120,8 @@ async def get_item_by_barcode_enhanced(
                 try:
                     # Fire and forget sync for this item to minimize latency,
                     # OR await it if we want guaranteed freshness.
-                    # Given the requirement "on one item selecting the qty is updated with sql server",
-                    # we should await it to ensure the user sees the latest qty.
+                    # Given the requirement "on one item selecting the qty
+                    # is updated with sql server", await for guaranteed freshness.
                     synced_item = await sql_sync_service.sync_single_item_by_barcode(
                         normalized_barcode
                     )
@@ -131,7 +131,7 @@ async def get_item_by_barcode_enhanced(
                         synced_item["_id"] = str(synced_item["_id"])
                         item_data, source = synced_item, "sql_server_sync"
                     else:
-                        # Fallback to normal strategy if sync didn't find it (e.g. SQL down or item not in SQL)
+                        # Fallback if sync didn't find item (SQL down or not in SQL)
                         item_data, source = await _fetch_with_fallback_strategy(normalized_barcode)
                 except Exception as e:
                     logger.warning(f"Real-time SQL sync failed for {normalized_barcode}: {e}")

@@ -169,7 +169,10 @@ test.describe("Visual Regression - Admin", () => {
 
   test("admin settings page matches baseline", async ({ page }) => {
     // Navigate to settings
-    await page.getByText(/settings/i).first().click();
+    await page
+      .getByText(/settings/i)
+      .first()
+      .click();
     await page.waitForLoadState("networkidle");
 
     await expect(page).toHaveScreenshot("admin-settings.png", {

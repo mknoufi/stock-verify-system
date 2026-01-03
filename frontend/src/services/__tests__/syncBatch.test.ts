@@ -9,8 +9,7 @@ jest.mock(
   "@react-native-async-storage/async-storage",
   () =>
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("@react-native-async-storage/async-storage/jest/async-storage-mock")
-      .default,
+    require("@react-native-async-storage/async-storage/jest/async-storage-mock").default
 );
 
 describe("syncOfflineQueue", () => {
@@ -30,9 +29,7 @@ describe("syncOfflineQueue", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Default mock implementations
-    (offlineStorage.getOfflineQueue as jest.Mock).mockResolvedValue(
-      mockOperations,
-    );
+    (offlineStorage.getOfflineQueue as jest.Mock).mockResolvedValue(mockOperations);
     (offlineStorage.getCacheStats as jest.Mock).mockResolvedValue({
       queuedOperations: 1,
     });
@@ -40,12 +37,8 @@ describe("syncOfflineQueue", () => {
     (api.syncBatch as jest.Mock).mockResolvedValue({
       results: [{ id: "op_1", success: true }],
     });
-    (offlineStorage.removeManyFromOfflineQueue as jest.Mock).mockResolvedValue(
-      undefined,
-    );
-    (offlineStorage.updateQueueItemRetries as jest.Mock).mockResolvedValue(
-      undefined,
-    );
+    (offlineStorage.removeManyFromOfflineQueue as jest.Mock).mockResolvedValue(undefined);
+    (offlineStorage.updateQueueItemRetries as jest.Mock).mockResolvedValue(undefined);
   });
 
   it("should sync operations from offline queue", async () => {
@@ -67,9 +60,7 @@ describe("syncOfflineQueue", () => {
     // Verify success handling
     expect(result.success).toBe(1);
     expect(result.failed).toBe(0);
-    expect(offlineStorage.removeManyFromOfflineQueue).toHaveBeenCalledWith([
-      "op_1",
-    ]);
+    expect(offlineStorage.removeManyFromOfflineQueue).toHaveBeenCalledWith(["op_1"]);
   });
 
   it("should handle ignored operations (empty queue)", async () => {
@@ -94,7 +85,7 @@ describe("syncOfflineQueue", () => {
       expect.objectContaining({
         id: "op_1",
         error: "Duplicate record",
-      }),
+      })
     );
     // Should NOT remove failed items
     expect(offlineStorage.removeManyFromOfflineQueue).not.toHaveBeenCalled();

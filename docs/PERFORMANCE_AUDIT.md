@@ -85,7 +85,7 @@ Currently loaded icon fonts (only Ionicons is actively used):
 
 1. **Use `useMemo`/`useCallback`**
    - Already implemented in most components ✓
-   
+
 2. **FlatList Optimizations**
    - `removeClippedSubviews` enabled ✓
    - `windowSize` configured appropriately ✓

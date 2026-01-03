@@ -43,11 +43,7 @@ const PIN_ERROR_MESSAGES: Record<string, string> = {
   NO_PIN_SET: "No PIN is set for this account",
 };
 
-export function ChangePinModal({
-  visible,
-  onClose,
-  onSuccess,
-}: ChangePinModalProps) {
+export function ChangePinModal({ visible, onClose, onSuccess }: ChangePinModalProps) {
   const { themeLegacy: theme } = useThemeContext();
   const { colors } = theme;
   const [currentPin, setCurrentPin] = useState("");
@@ -109,9 +105,7 @@ export function ChangePinModal({
 
       // Success haptic feedback
       if (Platform.OS !== "web") {
-        await Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Success,
-        );
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
       Alert.alert("Success", "Your PIN has been changed successfully", [
@@ -140,15 +134,7 @@ export function ChangePinModal({
     } finally {
       setLoading(false);
     }
-  }, [
-    currentPin,
-    newPin,
-    confirmPin,
-    validateLocalPin,
-    resetForm,
-    onSuccess,
-    onClose,
-  ]);
+  }, [currentPin, newPin, confirmPin, validateLocalPin, resetForm, onSuccess, onClose]);
 
   const styles = StyleSheet.create({
     overlay: {
@@ -247,35 +233,24 @@ export function ChangePinModal({
     },
   });
 
-  const isValid =
-    currentPin.length >= 4 && newPin.length >= 4 && confirmPin.length >= 4;
+  const isValid = currentPin.length >= 4 && newPin.length >= 4 && confirmPin.length >= 4;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.container}>
           <Text style={styles.title}>Change PIN</Text>
-          <Text style={styles.subtitle}>
-            Enter your current PIN and choose a new one
-          </Text>
+          <Text style={styles.subtitle}>Enter your current PIN and choose a new one</Text>
 
           {error && <Text style={styles.error}>{error}</Text>}
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Current PIN</Text>
             <TextInput
-              style={[
-                styles.input,
-                error?.includes("Current") && styles.inputError,
-              ]}
+              style={[styles.input, error?.includes("Current") && styles.inputError]}
               value={currentPin}
               onChangeText={setCurrentPin}
               placeholder="••••"
@@ -291,10 +266,7 @@ export function ChangePinModal({
           <View style={styles.inputContainer}>
             <Text style={styles.label}>New PIN</Text>
             <TextInput
-              style={[
-                styles.input,
-                error?.includes("New") && styles.inputError,
-              ]}
+              style={[styles.input, error?.includes("New") && styles.inputError]}
               value={newPin}
               onChangeText={setNewPin}
               placeholder="••••"
@@ -310,10 +282,7 @@ export function ChangePinModal({
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Confirm New PIN</Text>
             <TextInput
-              style={[
-                styles.input,
-                error?.includes("match") && styles.inputError,
-              ]}
+              style={[styles.input, error?.includes("match") && styles.inputError]}
               value={confirmPin}
               onChangeText={setConfirmPin}
               placeholder="••••"
@@ -332,9 +301,7 @@ export function ChangePinModal({
               onPress={handleClose}
               disabled={loading}
             >
-              <Text style={[styles.buttonText, styles.cancelButtonText]}>
-                Cancel
-              </Text>
+              <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -349,9 +316,7 @@ export function ChangePinModal({
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={[styles.buttonText, styles.submitButtonText]}>
-                  Change PIN
-                </Text>
+                <Text style={[styles.buttonText, styles.submitButtonText]}>Change PIN</Text>
               )}
             </TouchableOpacity>
           </View>

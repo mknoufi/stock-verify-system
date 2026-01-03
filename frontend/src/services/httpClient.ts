@@ -13,16 +13,14 @@ const log = createLogger("httpClient");
 const getInitialBackendUrl = (): string => {
   const configUrl = Constants.expoConfig?.extra?.backendUrl;
   if (configUrl) return configUrl as string;
-  if (process.env.EXPO_PUBLIC_BACKEND_URL)
-    return process.env.EXPO_PUBLIC_BACKEND_URL;
+  if (process.env.EXPO_PUBLIC_BACKEND_URL) return process.env.EXPO_PUBLIC_BACKEND_URL;
   return "http://localhost:8001";
 };
 
 export const API_BASE_URL: string = getInitialBackendUrl();
 
 const IS_TEST_ENV =
-  process.env.NODE_ENV === "test" ||
-  typeof process.env.JEST_WORKER_ID !== "undefined";
+  process.env.NODE_ENV === "test" || typeof process.env.JEST_WORKER_ID !== "undefined";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -93,9 +91,7 @@ const summarizeResponseData = (data: unknown): Record<string, unknown> | undefin
 
 const shouldLogNetworkDebug =
   !IS_TEST_ENV &&
-  (typeof __DEV__ !== "undefined"
-    ? __DEV__
-    : process.env.NODE_ENV === "development");
+  (typeof __DEV__ !== "undefined" ? __DEV__ : process.env.NODE_ENV === "development");
 
 // Add request interceptor for debugging (never log raw payloads or auth headers)
 apiClient.interceptors.request.use(
@@ -124,7 +120,7 @@ apiClient.interceptors.request.use(
       error: (error as { message?: string } | null)?.message || String(error),
     });
     return Promise.reject(error);
-  },
+  }
 );
 
 // Add response interceptor for debugging and session handling
@@ -144,7 +140,9 @@ apiClient.interceptors.response.use(
 
     // Handle Network Restrictions (403 NETWORK_NOT_ALLOWED)
     if (status === 403 && errorCode === "NETWORK_NOT_ALLOWED") {
-      log.warn("Network restricted: App is outside allowed LAN", { url: fullUrl });
+      log.warn("Network restricted: App is outside allowed LAN", {
+        url: fullUrl,
+      });
       useNetworkStore.getState().setRestrictedMode(true);
       // We don't reject immediately if we want the UI to handle it, but usually we reject
       // and let the UI show the "Restricted Mode" banner based on the store state.
@@ -154,11 +152,11 @@ apiClient.interceptors.response.use(
     // Handle Session Revocation (401/403 SESSION_REVOKED)
     if ((status === 401 || status === 403) && errorCode === "SESSION_REVOKED") {
       log.warn("Session revoked (single device enforcement)", { url: fullUrl });
-      
+
       // Clear tokens
       secureStorage.removeItem("auth_token").catch(() => {});
       secureStorage.removeItem("refresh_token").catch(() => {});
-      
+
       handleUnauthorized();
       return Promise.reject(error);
     }
@@ -207,7 +205,7 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default apiClient;

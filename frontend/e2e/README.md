@@ -5,6 +5,7 @@ This project uses [Maestro](https://maestro.mobile.dev/) for End-to-End (E2E) te
 ## Prerequisites
 
 1.  **Install Maestro CLI:**
+
     ```bash
     curl -Ls "https://get.maestro.mobile.dev" | bash
     ```
@@ -37,11 +38,13 @@ appId: com.stockverify.app
 ## Running Tests
 
 To run a specific flow:
+
 ```bash
 maestro test e2e/login_flow.yaml
 ```
 
 To run all flows:
+
 ```bash
 maestro test e2e/
 ```

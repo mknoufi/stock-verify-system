@@ -9,9 +9,9 @@
  * - Slide animations
  */
 
-import { useRef, useEffect, useCallback } from 'react';
-import { Animated, Easing } from 'react-native';
-import { duration, easing, animationPresets } from '../theme/unified';
+import { useRef, useEffect, useCallback } from "react";
+import { Animated, Easing } from "react-native";
+import { duration, easing, animationPresets } from "../theme/unified";
 
 // ==========================================
 // TYPES
@@ -247,12 +247,9 @@ export function usePulse(minOpacity = 0.4, maxOpacity = 1) {
 /**
  * Horizontal or vertical slide animation
  */
-export function useSlide(
-  direction: 'left' | 'right' | 'up' | 'down' = 'up',
-  distance = 100
-) {
-  const isHorizontal = direction === 'left' || direction === 'right';
-  const initialValue = direction === 'left' || direction === 'up' ? distance : -distance;
+export function useSlide(direction: "left" | "right" | "up" | "down" = "up", distance = 100) {
+  const isHorizontal = direction === "left" || direction === "right";
+  const initialValue = direction === "left" || direction === "up" ? distance : -distance;
 
   const position = useRef(new Animated.Value(initialValue)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -303,9 +300,7 @@ export function useSlide(
 
   const animatedStyle = {
     opacity,
-    transform: isHorizontal
-      ? [{ translateX: position }]
-      : [{ translateY: position }],
+    transform: isHorizontal ? [{ translateX: position }] : [{ translateY: position }],
   };
 
   return { position, opacity, slideIn, slideOut, animatedStyle };

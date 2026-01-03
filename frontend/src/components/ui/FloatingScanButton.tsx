@@ -11,12 +11,7 @@
  */
 
 import React, { useEffect } from "react";
-import {
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-  Platform,
-} from "react-native";
+import { TouchableOpacity, StyleSheet, ViewStyle, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -49,8 +44,7 @@ export const FloatingScanButton: React.FC<FloatingScanButtonProps> = ({
   testID = "floating-scan-button",
 }) => {
   const { themeLegacy: theme } = useThemeContext();
-  const buttonSize =
-    size || theme.componentSizes?.button?.xl || 72;
+  const buttonSize = size || theme.componentSizes?.button?.xl || 72;
 
   const scale = useSharedValue(1);
   const pulseScale = useSharedValue(1);
@@ -61,20 +55,20 @@ export const FloatingScanButton: React.FC<FloatingScanButtonProps> = ({
     pulseScale.value = withRepeat(
       withSequence(
         withTiming(1.1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
       ),
       -1,
-      true,
+      true
     );
 
     // Glow animation
     glowOpacity.value = withRepeat(
       withSequence(
         withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.4, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.4, { duration: 1500, easing: Easing.inOut(Easing.ease) })
       ),
       -1,
-      true,
+      true
     );
   }, [pulseScale, glowOpacity]);
 
@@ -108,18 +102,12 @@ export const FloatingScanButton: React.FC<FloatingScanButtonProps> = ({
   };
 
   const fallbackColor = theme.colors.accent || "#6366F1";
-  const gradientColors =
-    theme.gradients?.primary || [fallbackColor, fallbackColor];
+  const gradientColors = theme.gradients?.primary || [fallbackColor, fallbackColor];
   const glowShadow = theme.shadows?.glow || {};
 
   return (
     <AnimatedTouchable
-      style={[
-        styles.container,
-        { width: buttonSize, height: buttonSize },
-        style,
-        buttonStyle,
-      ]}
+      style={[styles.container, { width: buttonSize, height: buttonSize }, style, buttonStyle]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}

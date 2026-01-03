@@ -97,11 +97,7 @@ export class AppError extends Error {
   get isRetryable(): boolean {
     return (
       this.severity === "NETWORK" ||
-      [
-        "NETWORK_TIMEOUT",
-        "BACKEND_UNAVAILABLE",
-        "NETWORK_UNREACHABLE",
-      ].includes(this.code)
+      ["NETWORK_TIMEOUT", "BACKEND_UNAVAILABLE", "NETWORK_UNREACHABLE"].includes(this.code)
     );
   }
 
@@ -131,10 +127,7 @@ export class AppError extends Error {
   /**
    * Create AppError from an unknown error
    */
-  static fromUnknown(
-    error: unknown,
-    fallbackCode: AppErrorCode = "UNKNOWN_ERROR",
-  ): AppError {
+  static fromUnknown(error: unknown, fallbackCode: AppErrorCode = "UNKNOWN_ERROR"): AppError {
     if (error instanceof AppError) {
       return error;
     }
@@ -159,16 +152,10 @@ export class AppError extends Error {
   /**
    * Create AppError from API error response
    */
-  static fromApiError(
-    error: any,
-    context: Record<string, unknown> = {},
-  ): AppError {
+  static fromApiError(error: any, context: Record<string, unknown> = {}): AppError {
     const status = error?.response?.status;
     const detail = error?.response?.data?.detail;
-    const message =
-      typeof detail === "string"
-        ? detail
-        : error?.message || "API request failed";
+    const message = typeof detail === "string" ? detail : error?.message || "API request failed";
 
     // Map HTTP status codes to error codes
     let code: AppErrorCode;
@@ -176,10 +163,7 @@ export class AppError extends Error {
 
     if (!error?.response) {
       // No response means network error
-      if (
-        error?.code === "ECONNABORTED" ||
-        error?.message?.includes("timeout")
-      ) {
+      if (error?.code === "ECONNABORTED" || error?.message?.includes("timeout")) {
         code = "NETWORK_TIMEOUT";
         severity = "NETWORK";
       } else if (error?.code === "ECONNREFUSED") {

@@ -50,7 +50,7 @@ export const Input = forwardRef<TextInput, InputProps>(
       editable = true,
       ...textInputProps
     },
-    ref,
+    ref
   ) => {
     const sizeStyles = sizeMap[size];
     const hasError = Boolean(error);
@@ -67,11 +67,7 @@ export const Input = forwardRef<TextInput, InputProps>(
           return {
             ...baseStyles,
             borderWidth: 1,
-            borderColor: hasError
-              ? "#FF3B30"
-              : editable
-                ? "#C7C7CC"
-                : "#E5E5E5",
+            borderColor: hasError ? "#FF3B30" : editable ? "#C7C7CC" : "#E5E5E5",
             borderRadius: 8,
             backgroundColor: editable ? "#FFFFFF" : "#F5F5F5",
           };
@@ -98,12 +94,7 @@ export const Input = forwardRef<TextInput, InputProps>(
     return (
       <View style={containerStyle}>
         {label && (
-          <Text
-            style={[
-              { fontSize: 14, marginBottom: 4, color: "#666" },
-              labelStyle,
-            ]}
-          >
+          <Text style={[{ fontSize: 14, marginBottom: 4, color: "#666" }, labelStyle]}>
             {label}
             {required && <Text style={{ color: "#FF3B30" }}> *</Text>}
           </Text>
@@ -132,29 +123,19 @@ export const Input = forwardRef<TextInput, InputProps>(
         </View>
 
         {error && (
-          <Text
-            style={[
-              { fontSize: 12, color: "#FF3B30", marginTop: 4 },
-              errorStyle,
-            ]}
-          >
+          <Text style={[{ fontSize: 12, color: "#FF3B30", marginTop: 4 }, errorStyle]}>
             {error}
           </Text>
         )}
 
         {helperText && !error && (
-          <Text
-            style={[
-              { fontSize: 12, color: "#666", marginTop: 4 },
-              helperTextStyle,
-            ]}
-          >
+          <Text style={[{ fontSize: 12, color: "#666", marginTop: 4 }, helperTextStyle]}>
             {helperText}
           </Text>
         )}
       </View>
     );
-  },
+  }
 );
 
 Input.displayName = "Input";

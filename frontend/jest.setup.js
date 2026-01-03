@@ -15,7 +15,8 @@ jest.mock("react-native-safe-area-context", () => {
   const inset = { top: 0, right: 0, bottom: 0, left: 0 };
   return {
     SafeAreaProvider: ({ children }) => React.createElement(View, {}, children),
-    SafeAreaView: ({ children, style }) => React.createElement(View, { style }, children),
+    SafeAreaView: ({ children, style }) =>
+      React.createElement(View, { style }, children),
     useSafeAreaInsets: () => inset,
     initialWindowMetrics: {
       frame: { x: 0, y: 0, width: 0, height: 0 },
@@ -98,5 +99,24 @@ jest.mock("react-native-svg", () => {
     LinearGradient: (props) => React.createElement(View, props),
     Stop: (props) => React.createElement(View, props),
     Svg: (props) => React.createElement(View, props),
+  };
+});
+
+// Mock Modal component to avoid "window is not defined" error in tests
+jest.mock("react-native/Libraries/Modal/Modal", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  const MockModal = ({ children, visible, ...props }) => {
+    if (!visible) return null;
+    return React.createElement(
+      View,
+      { testID: "modal-mock", ...props },
+      children,
+    );
+  };
+  MockModal.displayName = "Modal";
+  return {
+    __esModule: true,
+    default: MockModal,
   };
 });

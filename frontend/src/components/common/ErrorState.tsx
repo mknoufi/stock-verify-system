@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useHapticFeedback } from "../../hooks/useHapticFeedback";
@@ -73,12 +67,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   return (
     <View style={[styles.container, style]}>
       <Animated.View style={{ transform: [{ rotate: shakeInterpolate }] }}>
-        <Ionicons
-          name="alert-circle"
-          size={48}
-          color={colors.accent}
-          style={styles.icon}
-        />
+        <Ionicons name="alert-circle" size={48} color={colors.accent} style={styles.icon} />
       </Animated.View>
       <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
       {showRetry && onRetry && (
@@ -90,9 +79,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           accessibilityRole="button"
           accessibilityHint="Tap to retry the operation"
         >
-          <Text style={[styles.retryText, { color: colors.background }]}>
-            {retryText}
-          </Text>
+          <Text style={[styles.retryText, { color: colors.background }]}>{retryText}</Text>
         </TouchableOpacity>
       )}
     </View>

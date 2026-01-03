@@ -1,6 +1,7 @@
+import asyncio
 import logging
 import socket
-import asyncio
+
 from zeroconf import ServiceInfo, Zeroconf
 
 logger = logging.getLogger(__name__)

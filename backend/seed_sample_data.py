@@ -7,6 +7,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from motor.motor_asyncio import AsyncIOMotorClient  # noqa: E402
+
 from backend.config import settings  # noqa: E402
 
 

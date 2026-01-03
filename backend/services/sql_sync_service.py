@@ -300,6 +300,7 @@ class SQLSyncService:
             "items_checked": 0,
             "qty_updated": 0,
             "variances_found": 0,
+            "qty_changes_detected": 0,  # Backwards-compatible alias
             "items_created": 0,
             "errors": 0,
             "duration": 0,
@@ -310,10 +311,7 @@ class SQLSyncService:
             logger.info("Starting variance-only sync from SQL Server...")
 
             # Step 1: Get all item codes from MongoDB (fast local query)
-            mongo_items_cursor = self.mongo_db.erp_items.find(
-                {},
-                {"item_code": 1, "stock_qty": 1}
-            )
+            mongo_items_cursor = self.mongo_db.erp_items.find({}, {"item_code": 1, "stock_qty": 1})
             mongo_items = {}
             async for item in mongo_items_cursor:
                 item_code = item.get("item_code")
@@ -338,8 +336,7 @@ class SQLSyncService:
                 try:
                     # Fetch only quantities - minimal SQL load
                     sql_quantities = await asyncio.to_thread(
-                        self.sql_connector.get_item_quantities_only,
-                        batch_codes
+                        self.sql_connector.get_item_quantities_only, batch_codes
                     )
                     stats["sql_queries"] += 1
 
@@ -350,6 +347,7 @@ class SQLSyncService:
                         if sql_qty != mongo_qty:
                             # Variance found - update MongoDB
                             stats["variances_found"] += 1
+                            stats["qty_changes_detected"] += 1  # Backwards-compatible
                             now = datetime.utcnow()
 
                             await self.mongo_db.erp_items.update_one(

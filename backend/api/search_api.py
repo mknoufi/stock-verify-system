@@ -17,9 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from backend.api.response_models import ApiResponse
-from backend.auth.dependencies import (
-    get_current_user_async as get_current_user,
-)
+from backend.auth.dependencies import get_current_user_async as get_current_user
 from backend.db.runtime import get_db
 from backend.services.search_service import SearchResult, get_search_service
 

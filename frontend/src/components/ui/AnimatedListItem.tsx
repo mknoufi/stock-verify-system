@@ -10,8 +10,8 @@
  * Inspired by React-Native-UI-Templates staggered list patterns
  */
 
-import React, { useEffect } from 'react';
-import { ViewStyle, StyleProp } from 'react-native';
+import React, { useEffect } from "react";
+import { ViewStyle, StyleProp } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,12 +21,8 @@ import Animated, {
   interpolate,
   Easing,
   runOnJS,
-} from 'react-native-reanimated';
-import {
-  AnimationTimings,
-  AnimationEasings,
-  Spacing,
-} from '@/theme/uiConstants';
+} from "react-native-reanimated";
+import { AnimationTimings, AnimationEasings, Spacing } from "@/theme/uiConstants";
 
 export interface AnimatedListItemProps {
   /** Index of the item in the list (used for stagger delay) */
@@ -48,7 +44,7 @@ export interface AnimatedListItemProps {
   /** Whether to animate (can be used to delay animation) */
   animate?: boolean;
   /** Animation type */
-  animationType?: 'fade' | 'slide' | 'scale' | 'fadeSlide' | 'fadeScale';
+  animationType?: "fade" | "slide" | "scale" | "fadeSlide" | "fadeScale";
 }
 
 /**
@@ -86,7 +82,7 @@ export const AnimatedListItem: React.FC<AnimatedListItemProps> = ({
   useSpring: useSpringPhysics = true,
   onAnimationComplete,
   animate = true,
-  animationType = 'fadeSlide',
+  animationType = "fadeSlide",
 }) => {
   const progress = useSharedValue(0);
 
@@ -121,24 +117,16 @@ export const AnimatedListItem: React.FC<AnimatedListItemProps> = ({
         )
       );
     }
-  }, [
-    animate,
-    index,
-    delayPerItem,
-    useSpringPhysics,
-    duration,
-    progress,
-    onAnimationComplete,
-  ]);
+  }, [animate, index, delayPerItem, useSpringPhysics, duration, progress, onAnimationComplete]);
 
   const animatedStyle = useAnimatedStyle(() => {
     switch (animationType) {
-      case 'fade':
+      case "fade":
         return {
           opacity: progress.value,
         };
 
-      case 'slide':
+      case "slide":
         return {
           transform: [
             {
@@ -147,22 +135,18 @@ export const AnimatedListItem: React.FC<AnimatedListItemProps> = ({
           ],
         };
 
-      case 'scale':
+      case "scale":
         return {
-          transform: [
-            { scale: interpolate(progress.value, [0, 1], [0.8, 1]) },
-          ],
+          transform: [{ scale: interpolate(progress.value, [0, 1], [0.8, 1]) }],
         };
 
-      case 'fadeScale':
+      case "fadeScale":
         return {
           opacity: progress.value,
-          transform: [
-            { scale: interpolate(progress.value, [0, 1], [0.9, 1]) },
-          ],
+          transform: [{ scale: interpolate(progress.value, [0, 1], [0.9, 1]) }],
         };
 
-      case 'fadeSlide':
+      case "fadeSlide":
       default:
         return {
           opacity: progress.value,
@@ -175,9 +159,7 @@ export const AnimatedListItem: React.FC<AnimatedListItemProps> = ({
     }
   });
 
-  return (
-    <Animated.View style={[animatedStyle, style]}>{children}</Animated.View>
-  );
+  return <Animated.View style={[animatedStyle, style]}>{children}</Animated.View>;
 };
 
 /**
@@ -186,13 +168,13 @@ export const AnimatedListItem: React.FC<AnimatedListItemProps> = ({
 export const ListAnimationPresets = {
   /** Default fade + slide (most common) */
   default: {
-    animationType: 'fadeSlide' as const,
+    animationType: "fadeSlide" as const,
     delayPerItem: 80,
     translateY: 20,
   },
   /** Quick stagger for long lists */
   quick: {
-    animationType: 'fadeSlide' as const,
+    animationType: "fadeSlide" as const,
     delayPerItem: 40,
     translateY: 15,
     useSpring: false,
@@ -200,19 +182,19 @@ export const ListAnimationPresets = {
   },
   /** Dramatic entrance for hero items */
   dramatic: {
-    animationType: 'fadeScale' as const,
+    animationType: "fadeScale" as const,
     delayPerItem: 120,
   },
   /** Subtle fade only */
   subtle: {
-    animationType: 'fade' as const,
+    animationType: "fade" as const,
     delayPerItem: 60,
     useSpring: false,
     duration: 250,
   },
   /** Cards popping in */
   cards: {
-    animationType: 'fadeScale' as const,
+    animationType: "fadeScale" as const,
     delayPerItem: 100,
   },
 };

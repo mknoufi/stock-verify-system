@@ -4,10 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import NetInfo, {
-  useNetInfo,
-  NetInfoChangeHandler,
-} from "@react-native-community/netinfo";
+import NetInfo, { useNetInfo, NetInfoChangeHandler } from "@react-native-community/netinfo";
 import * as Notifications from "expo-notifications";
 import { errorReporter } from "@/services/errorRecovery";
 
@@ -52,7 +49,7 @@ export class WiFiConnectionService {
     } catch (error) {
       errorReporter.report(
         error instanceof Error ? error : new Error(String(error)),
-        "WiFiConnectionService.initialize",
+        "WiFiConnectionService.initialize"
       );
     }
   }
@@ -69,10 +66,7 @@ export class WiFiConnectionService {
       };
 
       // Check for connection change
-      if (
-        this.lastStatus &&
-        this.lastStatus.isConnected !== status.isConnected
-      ) {
+      if (this.lastStatus && this.lastStatus.isConnected !== status.isConnected) {
         if (!status.isConnected) {
           this.notifyDisconnection(this.lastStatus);
         } else {
@@ -87,7 +81,7 @@ export class WiFiConnectionService {
     } catch (error) {
       errorReporter.report(
         error instanceof Error ? error : new Error(String(error)),
-        "WiFiConnectionService.checkStatus",
+        "WiFiConnectionService.checkStatus"
       );
       return {
         isConnected: false,
@@ -103,7 +97,7 @@ export class WiFiConnectionService {
     } catch (error) {
       errorReporter.report(
         error instanceof Error ? error : new Error(String(error)),
-        "WiFiConnectionService.subscribe",
+        "WiFiConnectionService.subscribe"
       );
       return () => {};
     }
@@ -125,7 +119,7 @@ export class WiFiConnectionService {
       } catch (error) {
         errorReporter.report(
           error instanceof Error ? error : new Error(String(error)),
-          "WiFiConnectionService.notifyListeners",
+          "WiFiConnectionService.notifyListeners"
         );
       }
     });
@@ -154,7 +148,7 @@ export class WiFiConnectionService {
     } catch (error) {
       errorReporter.report(
         error instanceof Error ? error : new Error(String(error)),
-        "WiFiConnectionService.notifyDisconnection",
+        "WiFiConnectionService.notifyDisconnection"
       );
     }
   }
@@ -179,7 +173,7 @@ export class WiFiConnectionService {
     } catch (error) {
       errorReporter.report(
         error instanceof Error ? error : new Error(String(error)),
-        "WiFiConnectionService.notifyReconnection",
+        "WiFiConnectionService.notifyReconnection"
       );
     }
   }

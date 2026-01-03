@@ -152,9 +152,7 @@ export const analyticsApi = {
     }
 
     try {
-      const response = await api.get<SessionAnalyticsResponse>(
-        "/api/sessions/analytics"
-      );
+      const response = await api.get<SessionAnalyticsResponse>("/api/sessions/analytics");
 
       log.info("Session analytics fetched", {
         totalSessions: response.data.data.total_sessions,
@@ -194,9 +192,10 @@ export const analyticsApi = {
 
     try {
       const params = warehouseId ? `?warehouse_id=${warehouseId}` : "";
-      const response = await api.get<{ success: boolean; stats: EnrichmentStats }>(
-        `/api/enrichment/stats${params}`
-      );
+      const response = await api.get<{
+        success: boolean;
+        stats: EnrichmentStats;
+      }>(`/api/enrichment/stats${params}`);
 
       return response.data.stats;
     } catch (error) {
@@ -339,9 +338,8 @@ export const analyticsApi = {
               (a, b) => b[1] - a[1]
             )[0]?.[0] ?? null,
           items_leader:
-            Object.values(sessionAnalytics?.data.items_by_staff ?? {}).sort(
-              (a, b) => b - a
-            )[0] ?? 0,
+            Object.values(sessionAnalytics?.data.items_by_staff ?? {}).sort((a, b) => b - a)[0] ??
+            0,
         },
         alerts: {
           high_variance_count: Object.values(
@@ -445,21 +443,17 @@ export const analyticsApi = {
 
     try {
       const analytics = await this.getSessionAnalytics();
-      const { total_items, total_sessions, avg_variance } =
-        analytics.data.overall;
+      const { total_items, total_sessions, avg_variance } = analytics.data.overall;
 
       // Calculate metrics
-      const avgItemsPerSession =
-        total_sessions > 0 ? total_items / total_sessions : 0;
+      const avgItemsPerSession = total_sessions > 0 ? total_items / total_sessions : 0;
 
       const metrics: PerformanceMetrics = {
         avg_items_per_session: Math.round(avgItemsPerSession),
         avg_session_duration: 45, // Would need duration data from backend
         items_per_hour: Math.round(avgItemsPerSession / 0.75), // Estimate
         accuracy_rate:
-          total_items > 0
-            ? Math.round((1 - Math.abs(avg_variance) / total_items) * 100)
-            : 100,
+          total_items > 0 ? Math.round((1 - Math.abs(avg_variance) / total_items) * 100) : 100,
       };
 
       return metrics;

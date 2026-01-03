@@ -10,34 +10,28 @@
  * - Dark mode aware
  */
 
-import React from 'react';
-import { View, ViewStyle, StyleProp, StyleSheet, ViewProps } from 'react-native';
-import {
-  colors,
-  spacing,
-  radius,
-  shadows,
-  semanticColors,
-} from '../../theme/unified';
-import type { SpacingKey } from '../../theme/unified';
-import type { RadiusKey } from '../../theme/unified';
-import type { ShadowKey } from '../../theme/unified';
+import React from "react";
+import { View, ViewStyle, StyleProp, StyleSheet, ViewProps } from "react-native";
+import { colors, spacing, radius, shadows, semanticColors } from "../../theme/unified";
+import type { SpacingKey } from "../../theme/unified";
+import type { RadiusKey } from "../../theme/unified";
+import type { ShadowKey } from "../../theme/unified";
 
 // ==========================================
 // TYPES
 // ==========================================
 export type BackgroundColor =
-  | 'default'
-  | 'paper'
-  | 'elevated'
-  | 'card'
-  | 'primary'
-  | 'secondary'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'info'
-  | 'transparent';
+  | "default"
+  | "paper"
+  | "elevated"
+  | "card"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info"
+  | "transparent";
 
 export interface UnifiedViewProps extends ViewProps {
   /** Background color preset */
@@ -82,7 +76,7 @@ const backgroundMap: Record<BackgroundColor, string> = {
   warning: colors.warning[50],
   error: colors.error[50],
   info: colors.info[50],
-  transparent: 'transparent',
+  transparent: "transparent",
 };
 
 // ==========================================
@@ -109,8 +103,12 @@ export const UnifiedView: React.FC<UnifiedViewProps> = ({
     background && { backgroundColor: backgroundMap[background] },
     // Padding
     padding !== undefined && { padding: spacing[padding] },
-    paddingHorizontal !== undefined && { paddingHorizontal: spacing[paddingHorizontal] },
-    paddingVertical !== undefined && { paddingVertical: spacing[paddingVertical] },
+    paddingHorizontal !== undefined && {
+      paddingHorizontal: spacing[paddingHorizontal],
+    },
+    paddingVertical !== undefined && {
+      paddingVertical: spacing[paddingVertical],
+    },
     // Margin
     margin !== undefined && { margin: spacing[margin] },
     // Border radius
@@ -138,14 +136,14 @@ export const UnifiedView: React.FC<UnifiedViewProps> = ({
 // ==========================================
 const styles = StyleSheet.create({
   center: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   flex: {
     flex: 1,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
 });
 

@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TextInput, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { usePermission } from "../../src/hooks/usePermission";
-import {
-  LoadingSpinner,
-  AnimatedPressable,
-  ScreenContainer,
-} from "../../src/components/ui";
+import { LoadingSpinner, AnimatedPressable, ScreenContainer } from "../../src/components/ui";
 import {
   getAvailablePermissions,
   getUserPermissions,
@@ -34,11 +23,9 @@ export default function PermissionsScreen() {
   // Check if user has admin permissions
   useEffect(() => {
     if (!hasRole("admin")) {
-      Alert.alert(
-        "Access Denied",
-        "You do not have permission to access this screen.",
-        [{ text: "OK", onPress: () => router.back() }],
-      );
+      Alert.alert("Access Denied", "You do not have permission to access this screen.", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
     }
   }, [hasRole, router]);
 
@@ -110,27 +97,21 @@ export default function PermissionsScreen() {
       ? categoryKeys.filter(
           (cat) =>
             cat.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            categories[cat].some((p: string) =>
-              p.toLowerCase().includes(searchQuery.toLowerCase()),
-            ),
+            categories[cat].some((p: string) => p.toLowerCase().includes(searchQuery.toLowerCase()))
         )
       : categoryKeys;
 
     return filteredCategories.map((category) => {
       const permissions = categories[category];
       const filteredPermissions = searchQuery
-        ? permissions.filter((p: string) =>
-            p.toLowerCase().includes(searchQuery.toLowerCase()),
-          )
+        ? permissions.filter((p: string) => p.toLowerCase().includes(searchQuery.toLowerCase()))
         : permissions;
 
       if (filteredPermissions.length === 0) return null;
 
       return (
         <View key={category} style={styles.categoryContainer}>
-          <Text style={styles.categoryTitle}>
-            {category.toUpperCase().replace("_", " ")}
-          </Text>
+          <Text style={styles.categoryTitle}>{category.toUpperCase().replace("_", " ")}</Text>
           {filteredPermissions.map((permission: string) => {
             const hasPermission = userPermissions.includes(permission);
             return (
@@ -148,9 +129,7 @@ export default function PermissionsScreen() {
                         : handleAddUserPermission(permission)
                     }
                   >
-                    <Text style={styles.buttonText}>
-                      {hasPermission ? "Remove" : "Add"}
-                    </Text>
+                    <Text style={styles.buttonText}>{hasPermission ? "Remove" : "Add"}</Text>
                   </AnimatedPressable>
                 )}
               </View>
@@ -224,8 +203,7 @@ export default function PermissionsScreen() {
           </Text>
           {selectedUsername && (
             <Text style={styles.statsText}>
-              User &quot;{selectedUsername}&quot;: {userPermissions.length}{" "}
-              permissions
+              User &quot;{selectedUsername}&quot;: {userPermissions.length} permissions
             </Text>
           )}
         </View>

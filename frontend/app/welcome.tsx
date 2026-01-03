@@ -15,12 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
-import {
-  colors,
-  spacing,
-  radius,
-  gradients,
-} from "@/theme/unified";
+import { colors, spacing, radius, gradients } from "@/theme/unified";
 import { useAuthStore } from "@/store/authStore";
 import { getRouteForRole, type UserRole } from "@/utils/roleNavigation";
 
@@ -68,10 +63,7 @@ const FeatureCard = ({
   title: string;
   delay: number;
 }) => (
-  <Animated.View
-    entering={FadeInDown.delay(delay).springify()}
-    style={styles.featureWrapper}
-  >
+  <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.featureWrapper}>
     <GlassSurface intensity={20} tint="light" style={styles.featureCard}>
       <View style={styles.iconCircle}>
         <Ionicons name={icon} size={24} color={colors.primary[400]} />
@@ -130,10 +122,7 @@ export default function WelcomeScreen() {
         ]}
       >
         {/* Header Section */}
-        <Animated.View
-          entering={FadeInUp.duration(1000).springify()}
-          style={styles.header}
-        >
+        <Animated.View entering={FadeInUp.duration(1000).springify()} style={styles.header}>
           <View style={styles.logoContainer}>
             <LinearGradient
               colors={gradients.primary}
@@ -146,7 +135,7 @@ export default function WelcomeScreen() {
             <View style={styles.logoGlow} />
           </View>
 
-          <Text style={styles.title}>Lavanya E-Mart</Text>
+          <Text style={styles.title}>Lavanya Mart</Text>
           <Text style={styles.subtitle}>Stock Verification System</Text>
           <View style={styles.versionBadge}>
             <Text style={styles.versionText}>v2.5 Enterprise</Text>
@@ -155,24 +144,13 @@ export default function WelcomeScreen() {
 
         {/* Features Grid */}
         <View style={styles.featuresContainer}>
-          <FeatureCard
-            icon="barcode-outline"
-            title="Smart Scanning"
-            delay={400}
-          />
+          <FeatureCard icon="barcode-outline" title="Smart Scanning" delay={400} />
           <FeatureCard icon="sync-outline" title="Live Sync" delay={600} />
-          <FeatureCard
-            icon="shield-checkmark-outline"
-            title="Verified"
-            delay={800}
-          />
+          <FeatureCard icon="shield-checkmark-outline" title="Verified" delay={800} />
         </View>
 
         {/* Action Buttons */}
-        <Animated.View
-          entering={FadeInDown.delay(1000).springify()}
-          style={styles.actions}
-        >
+        <Animated.View entering={FadeInDown.delay(1000).springify()} style={styles.actions}>
           <TouchableOpacity
             onPress={() => handlePress("/login")}
             activeOpacity={0.9}
@@ -194,11 +172,7 @@ export default function WelcomeScreen() {
             activeOpacity={0.7}
             style={styles.registerButtonWrapper}
           >
-            <GlassSurface
-              intensity={10}
-              tint="light"
-              style={styles.registerButton}
-            >
+            <GlassSurface intensity={10} tint="light" style={styles.registerButton}>
               <Text style={styles.registerButtonText}>Create Account</Text>
             </GlassSurface>
           </TouchableOpacity>

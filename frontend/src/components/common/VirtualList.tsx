@@ -1,8 +1,8 @@
-import React from 'react';
-import { FlatListProps } from 'react-native';
-import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import React from "react";
+import { FlatListProps } from "react-native";
+import { FlashList, ListRenderItem } from "@shopify/flash-list";
 
-interface VirtualListProps<T> extends Omit<FlatListProps<T>, 'renderItem'> {
+interface VirtualListProps<T> extends Omit<FlatListProps<T>, "renderItem"> {
   data: T[];
   renderItem: ListRenderItem<T>;
   estimatedItemSize: number;
@@ -19,7 +19,6 @@ export function VirtualList<T>({
   estimatedItemSize,
   ...props
 }: VirtualListProps<T>) {
-
   // FlashList requires estimatedItemSize for performance
   return (
     <FlashList

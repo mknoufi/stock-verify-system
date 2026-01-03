@@ -976,5 +976,3 @@ export const modernGlass = glassmorphism;
 export const modernComponentSizes = modernLayout.componentSizes;
 
 export default theme;
-
-

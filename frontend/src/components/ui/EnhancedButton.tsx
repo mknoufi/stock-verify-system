@@ -11,19 +11,12 @@
  * Inspired by react-native-design-kit Button patterns
  */
 
-import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-  StyleProp,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MyPressable, MyPressableProps } from './MyPressable';
-import { useThemeContext } from '@/context/ThemeContext';
+import React from "react";
+import { StyleSheet, Text, ActivityIndicator, ViewStyle, TextStyle, StyleProp } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { MyPressable, MyPressableProps } from "./MyPressable";
+import { useThemeContext } from "@/context/ThemeContext";
 import {
   ComponentSizes,
   BorderRadius,
@@ -32,14 +25,13 @@ import {
   Spacing,
   Shadows,
   Opacity,
-} from '@/theme/uiConstants';
+} from "@/theme/uiConstants";
 
-export type ButtonType = 'solid' | 'outline' | 'text' | 'gradient';
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
-export type IconPosition = 'left' | 'right' | 'top' | 'bottom';
+export type ButtonType = "solid" | "outline" | "text" | "gradient";
+export type ButtonSize = "sm" | "md" | "lg" | "xl";
+export type IconPosition = "left" | "right" | "top" | "bottom";
 
-export interface EnhancedButtonProps
-  extends Omit<MyPressableProps, 'children' | 'style'> {
+export interface EnhancedButtonProps extends Omit<MyPressableProps, "children" | "style"> {
   /** Button label text */
   title: string;
   /** Button type/variant */
@@ -96,10 +88,10 @@ export interface EnhancedButtonProps
  */
 export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
   title,
-  type = 'solid',
-  size = 'md',
+  type = "solid",
+  size = "md",
   icon,
-  iconPosition = 'left',
+  iconPosition = "left",
   iconSize,
   raised = false,
   loading = false,
@@ -117,10 +109,7 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
   // Determine colors based on type
   const primaryColor = color || themeLegacy.colors.primary;
   const resolvedTextColor =
-    textColor ||
-    (type === 'solid' || type === 'gradient'
-      ? '#FFFFFF'
-      : primaryColor);
+    textColor || (type === "solid" || type === "gradient" ? "#FFFFFF" : primaryColor);
 
   // Size configurations
   const sizeConfig = {
@@ -156,7 +145,7 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
 
   const config = sizeConfig[size];
   const finalIconSize = iconSize || config.iconSize;
-  const isVertical = iconPosition === 'top' || iconPosition === 'bottom';
+  const isVertical = iconPosition === "top" || iconPosition === "bottom";
 
   // Build container style
   const containerStyle: ViewStyle = {
@@ -164,34 +153,34 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
     paddingHorizontal: config.paddingHorizontal,
     paddingVertical: Spacing.sm,
     borderRadius: config.borderRadius,
-    flexDirection: isVertical ? 'column' : 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: isVertical ? "column" : "row",
+    alignItems: "center",
+    justifyContent: "center",
     opacity: disabled ? Opacity.disabled : 1,
-    ...(fullWidth && { width: '100%' }),
+    ...(fullWidth && { width: "100%" }),
     ...(raised && !disabled && Shadows.raised),
   };
 
   // Type-specific styles
   const typeStyles: ViewStyle =
-    type === 'solid'
+    type === "solid"
       ? { backgroundColor: primaryColor }
-      : type === 'outline'
+      : type === "outline"
         ? {
-            backgroundColor: 'transparent',
+            backgroundColor: "transparent",
             borderWidth: 1.5,
             borderColor: primaryColor,
           }
-        : { backgroundColor: 'transparent' };
+        : { backgroundColor: "transparent" };
 
   // Icon spacing
   const iconSpacing = icon && title ? Spacing.sm : 0;
   const iconMargin: ViewStyle =
-    iconPosition === 'left'
+    iconPosition === "left"
       ? { marginRight: iconSpacing }
-      : iconPosition === 'right'
+      : iconPosition === "right"
         ? { marginLeft: iconSpacing }
-        : iconPosition === 'top'
+        : iconPosition === "top"
           ? { marginBottom: iconSpacing }
           : { marginTop: iconSpacing };
 
@@ -200,7 +189,7 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
     if (loading) {
       return (
         <ActivityIndicator
-          size={size === 'sm' ? 'small' : 'small'}
+          size={size === "sm" ? "small" : "small"}
           color={resolvedTextColor}
           style={iconMargin}
         />
@@ -208,12 +197,7 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
     }
     if (!icon) return null;
     return (
-      <Ionicons
-        name={icon}
-        size={finalIconSize}
-        color={resolvedTextColor}
-        style={iconMargin}
-      />
+      <Ionicons name={icon} size={finalIconSize} color={resolvedTextColor} style={iconMargin} />
     );
   };
 
@@ -221,11 +205,7 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
   const renderContent = () => {
     const textElement = (
       <Text
-        style={[
-          styles.text,
-          { fontSize: config.fontSize, color: resolvedTextColor },
-          textStyle,
-        ]}
+        style={[styles.text, { fontSize: config.fontSize, color: resolvedTextColor }, textStyle]}
         numberOfLines={1}
       >
         {title}
@@ -234,7 +214,7 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
 
     const iconElement = renderIcon();
 
-    if (iconPosition === 'right' || iconPosition === 'bottom') {
+    if (iconPosition === "right" || iconPosition === "bottom") {
       return (
         <>
           {textElement}
@@ -251,7 +231,7 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
   };
 
   // Gradient variant
-  if (type === 'gradient') {
+  if (type === "gradient") {
     const defaultGradient: readonly [string, string] = [
       themeLegacy.colors.primary,
       themeLegacy.colors.accent || themeLegacy.colors.primary,
@@ -294,10 +274,10 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
 const styles = StyleSheet.create({
   text: {
     fontWeight: FontWeights.semibold,
-    textAlign: 'center',
+    textAlign: "center",
   },
   fullWidth: {
-    width: '100%',
+    width: "100%",
   },
 });
 

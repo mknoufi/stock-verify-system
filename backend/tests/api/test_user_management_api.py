@@ -2,8 +2,8 @@ import pytest
 from fastapi import status
 from httpx import AsyncClient
 
-from backend.server import app
 from backend.auth.dependencies import get_current_user
+from backend.server import app
 
 
 # Mock admin user

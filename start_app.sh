@@ -56,7 +56,7 @@ while [ $COUNT -lt $MAX_RETRIES ]; do
                 echo "✅ Backend is healthy on port $PORT (HTTP)"
                 break
             fi
-            
+
             # Check localhost fallback
             if curl -s -k "https://localhost:$DETECTED_PORT/api/health" > /dev/null; then
                 BACKEND_READY=true

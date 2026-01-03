@@ -8,7 +8,7 @@
  * - Smooth transitions
  */
 
-import { Easing } from 'react-native';
+import { Easing } from "react-native";
 
 // ==========================================
 // ANIMATION DURATIONS (ms)

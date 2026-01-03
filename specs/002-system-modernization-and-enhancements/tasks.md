@@ -1,7 +1,7 @@
 # Tasks: Comprehensive App Improvements
 
-**Feature**: 002-system-modernization-and-enhancements  
-**Input**: Design documents from `/specs/002-system-modernization-and-enhancements/`  
+**Feature**: 002-system-modernization-and-enhancements
+**Input**: Design documents from `/specs/002-system-modernization-and-enhancements/`
 **Status**: In Progress (Generated: 2025-12-30)
 
 ---
@@ -19,7 +19,7 @@
 Tasks organized for **independent implementation and testing** per user story:
 
 - **Phase 1**: Setup (Infrastructure) - ✅ COMPLETE
-- **Phase 2**: Foundational (Prerequisites) - ✅ COMPLETE  
+- **Phase 2**: Foundational (Prerequisites) - ✅ COMPLETE
 - **Phase 3**: User Story 1 (Developer - Testing) - 🔄 IN PROGRESS (MVP)
 - **Phase 4**: User Story 2 (Staff - Performance) - ⏳ PENDING
 - **Phase 5**: User Story 3 (Supervisor - Real-time) - 🔄 PARTIAL
@@ -130,7 +130,7 @@ Tasks organized for **independent implementation and testing** per user story:
 
 **Goal**: <2s startup, <200ms search, reliable scanning, customizable themes
 
-**Independent Test**: 
+**Independent Test**:
 1. App loads in <2s
 2. Search returns in <200ms
 3. Barcode scanning with haptics

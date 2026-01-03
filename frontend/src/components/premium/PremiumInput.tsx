@@ -16,11 +16,7 @@ import {
   KeyboardTypeOptions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import {
   modernColors,
   modernTypography,
@@ -99,27 +95,17 @@ export const PremiumInput: React.FC<PremiumInputProps> = ({
       errorLight: theme ? theme.colors.error.light : modernColors.error.light,
       primary: theme ? theme.colors.accent : modernColors.primary[500],
       textPrimary: theme ? theme.colors.text.primary : modernColors.text.primary,
-      textSecondary: theme
-        ? theme.colors.text.secondary
-        : modernColors.text.secondary,
+      textSecondary: theme ? theme.colors.text.secondary : modernColors.text.secondary,
       textTertiary: theme ? theme.colors.text.tertiary : modernColors.text.tertiary,
       textDisabled: theme ? theme.colors.text.disabled : modernColors.text.disabled,
       borderLight: theme ? theme.colors.border.light : modernColors.border.light,
-      backgroundDefault: theme
-        ? theme.colors.background.default
-        : modernColors.background.default,
-      backgroundPaper: theme
-        ? theme.colors.background.paper
-        : modernColors.background.paper,
-      backgroundDisabled: theme
-        ? theme.colors.background.paper
-        : modernColors.neutral[700],
-      backgroundInput: theme
-        ? theme.colors.background.default
-        : modernColors.background.default,
+      backgroundDefault: theme ? theme.colors.background.default : modernColors.background.default,
+      backgroundPaper: theme ? theme.colors.background.paper : modernColors.background.paper,
+      backgroundDisabled: theme ? theme.colors.background.paper : modernColors.neutral[700],
+      backgroundInput: theme ? theme.colors.background.default : modernColors.background.default,
       borderFocused: theme ? theme.colors.accent : modernColors.primary[500],
     }),
-    [theme],
+    [theme]
   );
 
   const [isFocused, setIsFocused] = useState(false);
@@ -280,13 +266,7 @@ export const PremiumInput: React.FC<PremiumInputProps> = ({
             <Ionicons
               name={leftIcon}
               size={20}
-              color={
-                error
-                  ? colors.error
-                  : isFocused
-                    ? colors.primary
-                    : colors.textTertiary
-              }
+              color={error ? colors.error : isFocused ? colors.primary : colors.textTertiary}
             />
           </View>
         )}
@@ -322,29 +302,15 @@ export const PremiumInput: React.FC<PremiumInputProps> = ({
         {(rightIcon || isPasswordField) && (
           <TouchableOpacity
             style={dynamicStyles.iconContainer}
-            onPress={
-              isPasswordField
-                ? () => setShowPassword(!showPassword)
-                : onRightIconPress
-            }
+            onPress={isPasswordField ? () => setShowPassword(!showPassword) : onRightIconPress}
             disabled={!isPasswordField && !onRightIconPress}
           >
             <Ionicons
               name={
-                isPasswordField
-                  ? showPassword
-                    ? "eye-off-outline"
-                    : "eye-outline"
-                  : rightIcon!
+                isPasswordField ? (showPassword ? "eye-off-outline" : "eye-outline") : rightIcon!
               }
               size={20}
-              color={
-                error
-                  ? colors.error
-                  : isFocused
-                    ? colors.primary
-                    : colors.textTertiary
-              }
+              color={error ? colors.error : isFocused ? colors.primary : colors.textTertiary}
             />
           </TouchableOpacity>
         )}
@@ -352,9 +318,7 @@ export const PremiumInput: React.FC<PremiumInputProps> = ({
 
       {/* Helper Text / Error */}
       {(helperText || error) && (
-        <Text
-          style={[dynamicStyles.helperText, error && dynamicStyles.errorText]}
-        >
+        <Text style={[dynamicStyles.helperText, error && dynamicStyles.errorText]}>
           {error || helperText}
         </Text>
       )}

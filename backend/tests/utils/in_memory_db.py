@@ -363,6 +363,7 @@ def _setup_core_services(monkeypatch, fake_db, server_module) -> None:
 def _setup_mock_services(monkeypatch, server_module) -> None:
     """Setup mocked SQL connector, health service, auto sync, and export service."""
     from unittest.mock import AsyncMock, MagicMock
+
     import backend.core.lifespan as lifespan_module
 
     # Mock SQL Connector

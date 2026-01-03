@@ -70,7 +70,9 @@ class WebSocketService {
     };
 
     this.ws.onclose = (event) => {
-      console.log(`[WebSocket] Disconnected (code: ${event.code}, reason: ${event.reason || "none"})`);
+      console.log(
+        `[WebSocket] Disconnected (code: ${event.code}, reason: ${event.reason || "none"})`
+      );
       this.ws = null;
 
       // Only attempt reconnection if not intentionally disconnected
@@ -110,7 +112,7 @@ class WebSocketService {
     if (handlers) {
       this.handlers.set(
         type,
-        handlers.filter((h) => h !== handler),
+        handlers.filter((h) => h !== handler)
       );
       console.log(`[WebSocket] Unsubscribed from "${type}"`);
     }

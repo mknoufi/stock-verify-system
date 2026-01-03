@@ -65,12 +65,8 @@ const HealthScore = ({ score }: { score: number }) => {
     <View style={styles.healthScoreContainer}>
       <Text style={styles.healthScoreLabel}>System Health</Text>
       <View style={styles.scoreCircle}>
-        <Text style={[styles.scoreValue, { color: getColor(score) }]}>
-          {score}%
-        </Text>
-        <Text style={[styles.scoreStatus, { color: getColor(score) }]}>
-          {getStatus(score)}
-        </Text>
+        <Text style={[styles.scoreValue, { color: getColor(score) }]}>{score}%</Text>
+        <Text style={[styles.scoreStatus, { color: getColor(score) }]}>{getStatus(score)}</Text>
       </View>
     </View>
   );
@@ -98,16 +94,12 @@ const ServiceItem = ({
           style={[
             styles.statusIndicator,
             {
-              backgroundColor: isRunning
-                ? modernColors.success.main
-                : modernColors.error.main,
+              backgroundColor: isRunning ? modernColors.success.main : modernColors.error.main,
             },
           ]}
         />
         <View>
-          <Text style={styles.serviceName}>
-            {name.charAt(0).toUpperCase() + name.slice(1)}
-          </Text>
+          <Text style={styles.serviceName}>{name.charAt(0).toUpperCase() + name.slice(1)}</Text>
           <Text style={styles.serviceDetail}>
             {isRunning ? `Running on port ${status.port}` : "Stopped"}
           </Text>
@@ -137,9 +129,7 @@ const ServiceItem = ({
               style={[
                 styles.actionButtonText,
                 {
-                  color: isRunning
-                    ? modernColors.error.main
-                    : modernColors.success.main,
+                  color: isRunning ? modernColors.error.main : modernColors.success.main,
                 },
               ]}
             >
@@ -176,8 +166,7 @@ export default function AdminControlPanelV2() {
       if (issuesRes.success) {
         setIssues(issuesRes.data.issues || []);
         let score = 100;
-        if (issuesRes.data.issues?.length > 0)
-          score -= issuesRes.data.issues.length * 10;
+        if (issuesRes.data.issues?.length > 0) score -= issuesRes.data.issues.length * 10;
         if (!servicesRes.data.backend?.running) score -= 20;
         if (!servicesRes.data.mongodb?.running) score -= 20;
         setHealthScore(Math.max(0, score));
@@ -209,10 +198,7 @@ export default function AdminControlPanelV2() {
     loadData();
   };
 
-  const handleServiceAction = async (
-    service: string,
-    action: "start" | "stop",
-  ) => {
+  const handleServiceAction = async (service: string, action: "start" | "stop") => {
     setActionLoading(service);
     try {
       if (action === "start") {
@@ -278,10 +264,7 @@ export default function AdminControlPanelV2() {
       </View>
 
       {/* Health & Services */}
-      <Animated.View
-        entering={FadeInDown.delay(400).springify()}
-        style={styles.section}
-      >
+      <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
         <GlassCard variant="medium" style={styles.servicesCard}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>System Services</Text>
@@ -295,10 +278,7 @@ export default function AdminControlPanelV2() {
               status={services.backend}
               loading={actionLoading === "backend"}
               onToggle={() =>
-                handleServiceAction(
-                  "backend",
-                  services.backend?.running ? "stop" : "start",
-                )
+                handleServiceAction("backend", services.backend?.running ? "stop" : "start")
               }
             />
             <ServiceItem
@@ -306,23 +286,20 @@ export default function AdminControlPanelV2() {
               status={services.frontend}
               loading={actionLoading === "frontend"}
               onToggle={() =>
-                handleServiceAction(
-                  "frontend",
-                  services.frontend?.running ? "stop" : "start",
-                )
+                handleServiceAction("frontend", services.frontend?.running ? "stop" : "start")
               }
             />
             <ServiceItem
               name="database"
               status={services.mongodb}
               loading={false}
-              onToggle={() => { }}
+              onToggle={() => {}}
             />
             <ServiceItem
               name="sql_server"
               status={services.sql_server}
               loading={false}
-              onToggle={() => { }}
+              onToggle={() => {}}
             />
           </View>
         </GlassCard>
@@ -330,22 +307,11 @@ export default function AdminControlPanelV2() {
 
       {/* Critical Issues List */}
       {issues.length > 0 && (
-        <Animated.View
-          entering={FadeInDown.delay(500).springify()}
-          style={styles.section}
-        >
+        <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.section}>
           <Text style={styles.sectionTitle}>Critical Issues</Text>
           {issues.map((issue, index) => (
-            <GlassCard
-              key={index}
-              variant="medium"
-              style={styles.issueCard}
-            >
-              <Ionicons
-                name="warning"
-                size={24}
-                color={modernColors.error.main}
-              />
+            <GlassCard key={index} variant="medium" style={styles.issueCard}>
+              <Ionicons name="warning" size={24} color={modernColors.error.main} />
               <View style={styles.issueContent}>
                 <Text style={styles.issueMessage}>{issue.message}</Text>
                 <Text style={styles.issueService}>
@@ -362,21 +328,14 @@ export default function AdminControlPanelV2() {
         <Text style={styles.sectionTitle}>Management Tools</Text>
         <View style={styles.toolsGrid}>
           {menuItems.map((item, index) => (
-            <Animated.View
-              key={index}
-              entering={FadeInDown.delay(600 + index * 100)}
-            >
+            <Animated.View key={index} entering={FadeInDown.delay(600 + index * 100)}>
               <AnimatedPressable
                 style={styles.toolCard}
                 onPress={() => router.push(item.route as any)}
               >
                 <GlassCard variant="medium" style={styles.toolCardContent}>
                   <View style={styles.toolIcon}>
-                    <Ionicons
-                      name={item.icon as any}
-                      size={28}
-                      color={modernColors.primary[400]}
-                    />
+                    <Ionicons name={item.icon as any} size={28} color={modernColors.primary[400]} />
                   </View>
                   <Text style={styles.toolTitle}>{item.title}</Text>
                 </GlassCard>

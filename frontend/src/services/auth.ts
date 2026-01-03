@@ -49,8 +49,7 @@ export const authService = {
         }
 
         // Update axios defaults
-        apiClient.defaults.headers.common["Authorization"] =
-          `Bearer ${access_token}`;
+        apiClient.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
 
         return access_token;
       }

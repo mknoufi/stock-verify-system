@@ -138,10 +138,7 @@ export const sessionApi = {
     }
 
     try {
-      const response = await api.post<BulkOperationResult>(
-        "/api/sessions/bulk/close",
-        sessionIds
-      );
+      const response = await api.post<BulkOperationResult>("/api/sessions/bulk/close", sessionIds);
 
       log.info("Bulk close completed", {
         updated: response.data.updated_count,
@@ -305,9 +302,7 @@ export const sessionApi = {
     });
 
     if (filters?.status) {
-      const statuses = Array.isArray(filters.status)
-        ? filters.status.join(",")
-        : filters.status;
+      const statuses = Array.isArray(filters.status) ? filters.status.join(",") : filters.status;
       params.append("status", statuses);
     }
     if (filters?.warehouse) params.append("warehouse", filters.warehouse);
@@ -317,9 +312,7 @@ export const sessionApi = {
     if (filters?.search) params.append("search", filters.search);
 
     try {
-      const response = await api.get<SessionListResponse>(
-        `/api/sessions?${params.toString()}`
-      );
+      const response = await api.get<SessionListResponse>(`/api/sessions?${params.toString()}`);
       return response.data;
     } catch (error) {
       log.error("Get sessions failed", { error });
@@ -384,9 +377,7 @@ export const sessionApi = {
     }
 
     try {
-      const response = await api.post<Session>(
-        `/api/sessions/${sessionId}/close`
-      );
+      const response = await api.post<Session>(`/api/sessions/${sessionId}/close`);
       return response.data;
     } catch (error) {
       log.error("Close session failed", { sessionId, error });
@@ -423,9 +414,7 @@ export const sessionApi = {
     }
 
     try {
-      const response = await api.post<Session>(
-        `/api/sessions/${sessionId}/reconcile`
-      );
+      const response = await api.post<Session>(`/api/sessions/${sessionId}/reconcile`);
       return response.data;
     } catch (error) {
       log.error("Reconcile session failed", { sessionId, error });

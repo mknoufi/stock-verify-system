@@ -22,8 +22,7 @@ import { useTheme } from "../hooks/useTheme";
 import { flags } from "../constants/flags";
 import { colors as unifiedColors } from "../theme/unified";
 
-const AnimatedTouchableOpacity =
-  Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface ButtonProps {
   title: string;
@@ -255,9 +254,7 @@ export const Button: React.FC<ButtonProps> = ({
         <ActivityIndicator
           size="small"
           color={
-            variant === "outline" || variant === "text"
-              ? theme.colors.primary
-              : unifiedColors.white
+            variant === "outline" || variant === "text" ? theme.colors.primary : unifiedColors.white
           }
         />
       ) : (

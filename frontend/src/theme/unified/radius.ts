@@ -23,9 +23,9 @@ export const radius = {
   /** 20px - Extra large rounding */
   xl: 20,
   /** 24px - Very large rounding */
-  '2xl': 24,
+  "2xl": 24,
   /** 32px - Pill-like for smaller elements */
-  '3xl': 32,
+  "3xl": 32,
   /** 9999px - Full circle/pill */
   full: 9999,
 } as const;
@@ -35,21 +35,21 @@ export const radius = {
 // ==========================================
 export const componentRadius = {
   /** Cards, modals, sheets */
-  card: radius.md,          // 12px
+  card: radius.md, // 12px
   /** Buttons */
-  button: radius.sm,        // 8px
+  button: radius.sm, // 8px
   /** Input fields */
-  input: radius.sm,         // 8px
+  input: radius.sm, // 8px
   /** Chips, tags, badges */
-  chip: radius.full,        // Pill shape
+  chip: radius.full, // Pill shape
   /** Avatar, icons */
-  avatar: radius.full,      // Circle
+  avatar: radius.full, // Circle
   /** Bottom sheets */
-  bottomSheet: radius.xl,   // 20px top corners
+  bottomSheet: radius.xl, // 20px top corners
   /** Tooltips */
-  tooltip: radius.sm,       // 8px
+  tooltip: radius.sm, // 8px
   /** Modals */
-  modal: radius.lg,         // 16px
+  modal: radius.lg, // 16px
 } as const;
 
 // Type exports

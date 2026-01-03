@@ -1,5 +1,6 @@
-import requests  # type: ignore
 import time
+
+import requests  # type: ignore
 
 BASE_URL = "http://localhost:8001"
 

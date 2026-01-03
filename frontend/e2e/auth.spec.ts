@@ -13,7 +13,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Authentication", () => {
   test.describe("Login Flow", () => {
-    test("should show login page for unauthenticated users", async ({ page }) => {
+    test("should show login page for unauthenticated users", async ({
+      page,
+    }) => {
       await page.goto("/");
 
       // Should see welcome or login screen
@@ -21,10 +23,14 @@ test.describe("Authentication", () => {
       const welcomeScreen = page.getByText(/get started/i);
 
       // Either welcome screen or login should be visible
-      await expect(loginButton.or(welcomeScreen)).toBeVisible({ timeout: 15000 });
+      await expect(loginButton.or(welcomeScreen)).toBeVisible({
+        timeout: 15000,
+      });
     });
 
-    test("should login successfully with valid credentials", async ({ page }) => {
+    test("should login successfully with valid credentials", async ({
+      page,
+    }) => {
       await page.goto("/");
 
       // Navigate to login if on welcome screen
@@ -40,7 +46,7 @@ test.describe("Authentication", () => {
 
       // Should redirect to home/dashboard
       await expect(
-        page.getByText(/new count area/i).or(page.getByText(/dashboard/i))
+        page.getByText(/new count area/i).or(page.getByText(/dashboard/i)),
       ).toBeVisible({ timeout: 15000 });
     });
 
@@ -59,9 +65,9 @@ test.describe("Authentication", () => {
       await page.getByRole("button", { name: /sign in/i }).click();
 
       // Should show error message
-      await expect(
-        page.getByText(/invalid|incorrect|failed/i)
-      ).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(/invalid|incorrect|failed/i)).toBeVisible({
+        timeout: 10000,
+      });
     });
 
     test("should clear form fields on error", async ({ page }) => {
@@ -106,7 +112,7 @@ test.describe("Authentication", () => {
       await page.getByRole("button", { name: /sign in/i }).click();
 
       await expect(
-        page.getByText(/new count area/i).or(page.getByText(/dashboard/i))
+        page.getByText(/new count area/i).or(page.getByText(/dashboard/i)),
       ).toBeVisible({ timeout: 15000 });
     });
 
@@ -123,16 +129,18 @@ test.describe("Authentication", () => {
       }
 
       // Look for logout option
-      const logoutButton = page.getByRole("button", { name: /log\s*out|sign\s*out/i });
+      const logoutButton = page.getByRole("button", {
+        name: /log\s*out|sign\s*out/i,
+      });
       const logoutLink = page.getByText(/log\s*out|sign\s*out/i);
 
       await expect(logoutButton.or(logoutLink)).toBeVisible({ timeout: 10000 });
-      await (logoutButton.or(logoutLink)).click();
+      await logoutButton.or(logoutLink).click();
 
       // Should redirect to login
-      await expect(
-        page.getByRole("button", { name: /sign in/i })
-      ).toBeVisible({ timeout: 15000 });
+      await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 
@@ -151,7 +159,7 @@ test.describe("Authentication", () => {
       await page.getByRole("button", { name: /sign in/i }).click();
 
       await expect(
-        page.getByText(/new count area/i).or(page.getByText(/dashboard/i))
+        page.getByText(/new count area/i).or(page.getByText(/dashboard/i)),
       ).toBeVisible({ timeout: 15000 });
 
       // Refresh page
@@ -159,21 +167,23 @@ test.describe("Authentication", () => {
 
       // Should still be logged in
       await expect(
-        page.getByText(/new count area/i).or(page.getByText(/dashboard/i))
+        page.getByText(/new count area/i).or(page.getByText(/dashboard/i)),
       ).toBeVisible({ timeout: 15000 });
 
       // Should NOT see login screen
-      await expect(
-        page.getByRole("button", { name: /sign in/i })
-      ).not.toBeVisible({ timeout: 3000 }).catch(() => {
-        // This is expected - login button should not be visible
-      });
+      await expect(page.getByRole("button", { name: /sign in/i }))
+        .not.toBeVisible({ timeout: 3000 })
+        .catch(() => {
+          // This is expected - login button should not be visible
+        });
     });
   });
 });
 
 test.describe("PIN Authentication", () => {
-  test("should allow PIN-based quick login when configured", async ({ page }) => {
+  test("should allow PIN-based quick login when configured", async ({
+    page,
+  }) => {
     // This test assumes PIN is configured for the user
     // Skip if PIN feature is not enabled
     test.skip(true, "PIN feature test - requires configured PIN");
@@ -191,7 +201,7 @@ test.describe("PIN Authentication", () => {
 
       // Should login successfully
       await expect(
-        page.getByText(/new count area/i).or(page.getByText(/dashboard/i))
+        page.getByText(/new count area/i).or(page.getByText(/dashboard/i)),
       ).toBeVisible({ timeout: 15000 });
     }
   });

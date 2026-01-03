@@ -18,18 +18,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { usePermission } from "../../src/hooks/usePermission";
-import {
-  LoadingSpinner,
-  AnimatedPressable,
-  ScreenContainer,
-} from "../../src/components/ui";
-import {
-  colors,
-  spacing,
-  radius,
-  textStyles,
-  semanticColors,
-} from "../../src/theme/unified";
+import { LoadingSpinner, AnimatedPressable, ScreenContainer } from "../../src/components/ui";
+import { colors, spacing, radius, textStyles, semanticColors } from "../../src/theme/unified";
 import apiClient from "../../src/services/httpClient";
 
 const { width } = Dimensions.get("window");
@@ -100,63 +90,64 @@ export default function UsersScreen() {
   const [, setShowCreateModal] = useState(false);
   const [, setEditingUser] = useState<User | null>(null);
 
-  const loadUsers = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
+  const loadUsers = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+
+        const params = new URLSearchParams({
+          page: page.toString(),
+          page_size: pageSize.toString(),
+          sort_by: sortBy,
+          sort_order: sortOrder,
+        });
+
+        if (search) params.append("search", search);
+        if (roleFilter) params.append("role", roleFilter);
+        if (activeFilter !== null) params.append("is_active", activeFilter.toString());
+
+        const response = await apiClient.get<UserListResponse>(`/users?${params.toString()}`);
+
+        if (response.data) {
+          // Normalize snake_case to camelCase
+          const data = response.data as any;
+          const normalizedUsers = (data.users || []).map((u: any) => ({
+            id: u.id,
+            username: u.username,
+            email: u.email,
+            fullName: u.full_name,
+            role: u.role,
+            isActive: u.is_active,
+            createdAt: u.created_at,
+            lastLogin: u.last_login,
+            permissionsCount: u.permissions_count,
+          }));
+          setUsers(normalizedUsers);
+          setTotal(data.total || 0);
+          setTotalPages(data.total_pages || 1);
+        }
+      } catch (error: any) {
+        if (!isRefresh) {
+          Alert.alert("Error", error.message || "Failed to load users");
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      const params = new URLSearchParams({
-        page: page.toString(),
-        page_size: pageSize.toString(),
-        sort_by: sortBy,
-        sort_order: sortOrder,
-      });
-
-      if (search) params.append("search", search);
-      if (roleFilter) params.append("role", roleFilter);
-      if (activeFilter !== null) params.append("is_active", activeFilter.toString());
-
-      const response = await apiClient.get<UserListResponse>(`/users?${params.toString()}`);
-
-      if (response.data) {
-        // Normalize snake_case to camelCase
-        const data = response.data as any;
-        const normalizedUsers = (data.users || []).map((u: any) => ({
-          id: u.id,
-          username: u.username,
-          email: u.email,
-          fullName: u.full_name,
-          role: u.role,
-          isActive: u.is_active,
-          createdAt: u.created_at,
-          lastLogin: u.last_login,
-          permissionsCount: u.permissions_count,
-        }));
-        setUsers(normalizedUsers);
-        setTotal(data.total || 0);
-        setTotalPages(data.total_pages || 1);
-      }
-    } catch (error: any) {
-      if (!isRefresh) {
-        Alert.alert("Error", error.message || "Failed to load users");
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [page, pageSize, sortBy, sortOrder, search, roleFilter, activeFilter]);
+    },
+    [page, pageSize, sortBy, sortOrder, search, roleFilter, activeFilter]
+  );
 
   // Check permissions
   useEffect(() => {
     if (!hasRole("admin")) {
-      Alert.alert(
-        "Access Denied",
-        "You do not have permission to manage users.",
-        [{ text: "OK", onPress: () => router.back() }]
-      );
+      Alert.alert("Access Denied", "You do not have permission to manage users.", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
       return;
     }
     loadUsers();
@@ -293,9 +284,7 @@ export default function UsersScreen() {
             style={[styles.filterButton, !roleFilter && styles.filterButtonActive]}
             onPress={() => setRoleFilter(null)}
           >
-            <Text
-              style={[styles.filterButtonText, !roleFilter && styles.filterButtonTextActive]}
-            >
+            <Text style={[styles.filterButtonText, !roleFilter && styles.filterButtonTextActive]}>
               All
             </Text>
           </AnimatedPressable>
@@ -406,9 +395,7 @@ export default function UsersScreen() {
       <AnimatedPressable style={styles.checkboxCell} onPress={handleSelectAll}>
         <Ionicons
           name={
-            selectedUsers.size === users.length && users.length > 0
-              ? "checkbox"
-              : "square-outline"
+            selectedUsers.size === users.length && users.length > 0 ? "checkbox" : "square-outline"
           }
           size={20}
           color={colors.primary[600]}
@@ -483,10 +470,7 @@ export default function UsersScreen() {
 
     return (
       <View key={user.id} style={[styles.tableRow, isSelected && styles.tableRowSelected]}>
-        <AnimatedPressable
-          style={styles.checkboxCell}
-          onPress={() => handleSelectUser(user.id)}
-        >
+        <AnimatedPressable style={styles.checkboxCell} onPress={() => handleSelectUser(user.id)}>
           <Ionicons
             name={isSelected ? "checkbox" : "square-outline"}
             size={20}
@@ -496,9 +480,7 @@ export default function UsersScreen() {
         <View style={[styles.cell, styles.usernameCell]}>
           <View style={styles.userInfo}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user.username.charAt(0).toUpperCase()}
-              </Text>
+              <Text style={styles.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>
             </View>
             <View>
               <Text style={styles.username}>{user.username}</Text>
@@ -528,26 +510,17 @@ export default function UsersScreen() {
         </View>
         <View style={[styles.cell, styles.actionsCell]}>
           <View style={styles.actionButtons}>
-            <AnimatedPressable
-              style={styles.actionButton}
-              onPress={() => setEditingUser(user)}
-            >
+            <AnimatedPressable style={styles.actionButton} onPress={() => setEditingUser(user)}>
               <Ionicons name="pencil" size={18} color={colors.primary[600]} />
             </AnimatedPressable>
-            <AnimatedPressable
-              style={styles.actionButton}
-              onPress={() => handleToggleStatus(user)}
-            >
+            <AnimatedPressable style={styles.actionButton} onPress={() => handleToggleStatus(user)}>
               <Ionicons
                 name={user.isActive ? "pause-circle-outline" : "play-circle-outline"}
                 size={18}
                 color={user.isActive ? colors.warning[600] : colors.success[600]}
               />
             </AnimatedPressable>
-            <AnimatedPressable
-              style={styles.actionButton}
-              onPress={() => handleDeleteUser(user)}
-            >
+            <AnimatedPressable style={styles.actionButton} onPress={() => handleDeleteUser(user)}>
               <Ionicons name="trash-outline" size={18} color={colors.error[600]} />
             </AnimatedPressable>
           </View>
@@ -612,10 +585,7 @@ export default function UsersScreen() {
             <Ionicons name="people" size={28} color={colors.primary[600]} />
             <Text style={styles.title}>User Management</Text>
           </View>
-          <AnimatedPressable
-            style={styles.createButton}
-            onPress={() => setShowCreateModal(true)}
-          >
+          <AnimatedPressable style={styles.createButton} onPress={() => setShowCreateModal(true)}>
             <Ionicons name="add" size={20} color="#fff" />
             <Text style={styles.createButtonText}>Add User</Text>
           </AnimatedPressable>
@@ -628,15 +598,11 @@ export default function UsersScreen() {
             <Text style={styles.statLabel}>Total Users</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>
-              {users.filter((u) => u.isActive).length}
-            </Text>
+            <Text style={styles.statValue}>{users.filter((u) => u.isActive).length}</Text>
             <Text style={styles.statLabel}>Active</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>
-              {users.filter((u) => u.role === "admin").length}
-            </Text>
+            <Text style={styles.statValue}>{users.filter((u) => u.role === "admin").length}</Text>
             <Text style={styles.statLabel}>Admins</Text>
           </View>
         </View>
@@ -661,81 +627,77 @@ export default function UsersScreen() {
                 users.map(renderUserRow)
               )}
             </>
+          ) : // Mobile card layout
+          users.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="people-outline" size={48} color={colors.neutral[300]} />
+              <Text style={styles.emptyText}>No users found</Text>
+            </View>
           ) : (
-            // Mobile card layout
-            users.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="people-outline" size={48} color={colors.neutral[300]} />
-                <Text style={styles.emptyText}>No users found</Text>
-              </View>
-            ) : (
-              users.map((user) => {
-                const roleBadge = getRoleBadgeStyle(user.role);
-                const statusBadge = getStatusStyle(user.isActive);
-                return (
-                  <View key={user.id} style={styles.mobileCard}>
-                    <View style={styles.mobileCardHeader}>
-                      <View style={styles.userInfo}>
-                        <View style={styles.avatar}>
-                          <Text style={styles.avatarText}>
-                            {user.username.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                        <View>
-                          <Text style={styles.username}>{user.username}</Text>
-                          {user.email && (
-                            <Text style={styles.mobileEmail}>{user.email}</Text>
-                          )}
-                        </View>
+            users.map((user) => {
+              const roleBadge = getRoleBadgeStyle(user.role);
+              const statusBadge = getStatusStyle(user.isActive);
+              return (
+                <View key={user.id} style={styles.mobileCard}>
+                  <View style={styles.mobileCardHeader}>
+                    <View style={styles.userInfo}>
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>
+                          {user.username.charAt(0).toUpperCase()}
+                        </Text>
                       </View>
-                      <View style={styles.mobileBadges}>
-                        <View style={[styles.badge, { backgroundColor: roleBadge.bg }]}>
-                          <Text style={[styles.badgeText, { color: roleBadge.text }]}>
-                            {user.role}
-                          </Text>
-                        </View>
-                        <View style={[styles.badge, { backgroundColor: statusBadge.bg }]}>
-                          <Text style={[styles.badgeText, { color: statusBadge.text }]}>
-                            {user.isActive ? "Active" : "Inactive"}
-                          </Text>
-                        </View>
+                      <View>
+                        <Text style={styles.username}>{user.username}</Text>
+                        {user.email && <Text style={styles.mobileEmail}>{user.email}</Text>}
                       </View>
                     </View>
-                    <View style={styles.mobileCardActions}>
-                      <AnimatedPressable
-                        style={styles.mobileAction}
-                        onPress={() => setEditingUser(user)}
-                      >
-                        <Ionicons name="pencil" size={18} color={colors.primary[600]} />
-                        <Text style={styles.mobileActionText}>Edit</Text>
-                      </AnimatedPressable>
-                      <AnimatedPressable
-                        style={styles.mobileAction}
-                        onPress={() => handleToggleStatus(user)}
-                      >
-                        <Ionicons
-                          name={user.isActive ? "pause-circle" : "play-circle"}
-                          size={18}
-                          color={user.isActive ? colors.warning[600] : colors.success[600]}
-                        />
-                        <Text style={styles.mobileActionText}>
-                          {user.isActive ? "Deactivate" : "Activate"}
+                    <View style={styles.mobileBadges}>
+                      <View style={[styles.badge, { backgroundColor: roleBadge.bg }]}>
+                        <Text style={[styles.badgeText, { color: roleBadge.text }]}>
+                          {user.role}
                         </Text>
-                      </AnimatedPressable>
-                      <AnimatedPressable
-                        style={styles.mobileAction}
-                        onPress={() => handleDeleteUser(user)}
-                      >
-                        <Ionicons name="trash" size={18} color={colors.error[600]} />
-                        <Text style={[styles.mobileActionText, { color: colors.error[600] }]}>
-                          Delete
+                      </View>
+                      <View style={[styles.badge, { backgroundColor: statusBadge.bg }]}>
+                        <Text style={[styles.badgeText, { color: statusBadge.text }]}>
+                          {user.isActive ? "Active" : "Inactive"}
                         </Text>
-                      </AnimatedPressable>
+                      </View>
                     </View>
                   </View>
-                );
-              })
-            )
+                  <View style={styles.mobileCardActions}>
+                    <AnimatedPressable
+                      style={styles.mobileAction}
+                      onPress={() => setEditingUser(user)}
+                    >
+                      <Ionicons name="pencil" size={18} color={colors.primary[600]} />
+                      <Text style={styles.mobileActionText}>Edit</Text>
+                    </AnimatedPressable>
+                    <AnimatedPressable
+                      style={styles.mobileAction}
+                      onPress={() => handleToggleStatus(user)}
+                    >
+                      <Ionicons
+                        name={user.isActive ? "pause-circle" : "play-circle"}
+                        size={18}
+                        color={user.isActive ? colors.warning[600] : colors.success[600]}
+                      />
+                      <Text style={styles.mobileActionText}>
+                        {user.isActive ? "Deactivate" : "Activate"}
+                      </Text>
+                    </AnimatedPressable>
+                    <AnimatedPressable
+                      style={styles.mobileAction}
+                      onPress={() => handleDeleteUser(user)}
+                    >
+                      <Ionicons name="trash" size={18} color={colors.error[600]} />
+                      <Text style={[styles.mobileActionText, { color: colors.error[600] }]}>
+                        Delete
+                      </Text>
+                    </AnimatedPressable>
+                  </View>
+                </View>
+              );
+            })
           )}
         </View>
 

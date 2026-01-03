@@ -63,9 +63,6 @@ export type LegacyTheme = {
   updateMode: (value: string) => void;
 };
 
-
-
-
 const buildLegacyTheme = (isDark: boolean): LegacyTheme => {
   const theme = {
     theme: isDark ? "dark" : "light",
@@ -90,9 +87,7 @@ const buildLegacyTheme = (isDark: boolean): LegacyTheme => {
       card: isDark ? "#1e1e1e" : "#ffffff",
       placeholder: isDark ? "#666666" : "#999999",
       disabled: isDark ? "#555555" : "#cccccc",
-      overlayPrimary: isDark
-        ? "rgba(13, 110, 253, 0.1)"
-        : "rgba(0, 123, 255, 0.1)",
+      overlayPrimary: isDark ? "rgba(13, 110, 253, 0.1)" : "rgba(0, 123, 255, 0.1)",
     },
     spacing: {
       xs: 4,
@@ -205,27 +200,11 @@ const buildLegacyTheme = (isDark: boolean): LegacyTheme => {
       success: [theme.colors.success, theme.colors.success],
       danger: [theme.colors.error, theme.colors.error],
       aurora: [theme.colors.primary, theme.colors.secondary, theme.colors.primary],
-      auroraPrimary: [
-        theme.colors.primary,
-        theme.colors.secondary,
-        theme.colors.primary,
-      ],
-      auroraSecondary: [
-        theme.colors.secondary,
-        theme.colors.primary,
-        theme.colors.secondary,
-      ],
-      auroraSuccess: [
-        theme.colors.success,
-        theme.colors.success,
-        theme.colors.success,
-      ],
+      auroraPrimary: [theme.colors.primary, theme.colors.secondary, theme.colors.primary],
+      auroraSecondary: [theme.colors.secondary, theme.colors.primary, theme.colors.secondary],
+      auroraSuccess: [theme.colors.success, theme.colors.success, theme.colors.success],
       auroraWarm: [theme.colors.warning, theme.colors.error, theme.colors.primary],
-      auroraDark: [
-        theme.colors.surfaceDark,
-        theme.colors.surface,
-        theme.colors.background,
-      ],
+      auroraDark: [theme.colors.surfaceDark, theme.colors.surface, theme.colors.background],
     },
     spacing: theme.spacing,
     typography: theme.typography,

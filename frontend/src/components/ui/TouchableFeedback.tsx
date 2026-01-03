@@ -13,20 +13,14 @@
  * </TouchableFeedback>
  */
 
-import React, { useCallback } from 'react';
-import {
-  Pressable,
-  PressableProps,
-  StyleProp,
-  ViewStyle,
-  Platform,
-} from 'react-native';
-import { hitSlop as hitSlopPresets, touchTargets } from '../../theme/unified';
+import React, { useCallback } from "react";
+import { Pressable, PressableProps, StyleProp, ViewStyle, Platform } from "react-native";
+import { hitSlop as hitSlopPresets, touchTargets } from "../../theme/unified";
 
 // ==========================================
 // TYPES
 // ==========================================
-export interface TouchableFeedbackProps extends Omit<PressableProps, 'style'> {
+export interface TouchableFeedbackProps extends Omit<PressableProps, "style"> {
   /** Content to render inside the touchable */
   children: React.ReactNode;
   /** Style for the container */
@@ -38,7 +32,7 @@ export interface TouchableFeedbackProps extends Omit<PressableProps, 'style'> {
   /** Whether ripple is borderless (Android only) */
   rippleBorderless?: boolean;
   /** Hit slop preset: 'small' | 'medium' | 'large' */
-  hitSlopSize?: 'small' | 'medium' | 'large';
+  hitSlopSize?: "small" | "medium" | "large";
   /** Whether the touchable is disabled */
   disabled?: boolean;
   /** Minimum touch target size (for accessibility) */
@@ -48,9 +42,9 @@ export interface TouchableFeedbackProps extends Omit<PressableProps, 'style'> {
 // ==========================================
 // CONSTANTS
 // ==========================================
-const isAndroid = Platform.OS === 'android';
+const isAndroid = Platform.OS === "android";
 const DEFAULT_TOUCH_OPACITY = 0.7;
-const DEFAULT_RIPPLE_COLOR = 'rgba(0, 0, 0, 0.1)';
+const DEFAULT_RIPPLE_COLOR = "rgba(0, 0, 0, 0.1)";
 
 // ==========================================
 // COMPONENT
@@ -82,9 +76,7 @@ export const TouchableFeedback: React.FC<TouchableFeedbackProps> = ({
       };
 
       // On iOS, apply opacity feedback
-      const pressedStyle: ViewStyle = !isAndroid && pressed
-        ? { opacity: touchOpacity }
-        : {};
+      const pressedStyle: ViewStyle = !isAndroid && pressed ? { opacity: touchOpacity } : {};
 
       // Combine styles
       return [baseStyle, style, pressedStyle];
@@ -173,16 +165,13 @@ export interface TouchableHighlightProps extends TouchableFeedbackProps {
 export const TouchableHighlight: React.FC<TouchableHighlightProps> = ({
   children,
   style,
-  underlayColor = 'rgba(0, 0, 0, 0.1)',
+  underlayColor = "rgba(0, 0, 0, 0.1)",
   disabled = false,
   ...props
 }) => {
   const getStyle = useCallback(
     ({ pressed }: { pressed: boolean }): StyleProp<ViewStyle> => {
-      return [
-        style,
-        pressed && !disabled && { backgroundColor: underlayColor },
-      ];
+      return [style, pressed && !disabled && { backgroundColor: underlayColor }];
     },
     [style, underlayColor, disabled]
   );

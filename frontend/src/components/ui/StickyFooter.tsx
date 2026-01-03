@@ -11,13 +11,7 @@ interface Props {
   testID?: string;
 }
 
-export function StickyFooter({
-  title,
-  disabled,
-  loading,
-  onPress,
-  testID,
-}: Props) {
+export function StickyFooter({ title, disabled, loading, onPress, testID }: Props) {
   const { theme } = useThemeContext();
 
   return (
@@ -26,17 +20,12 @@ export function StickyFooter({
         styles.container,
         {
           padding: theme.spacing.lg,
-          backgroundColor: theme.colors.overlay || "rgba(0,0,0,0.25)"
-        }
+          backgroundColor: theme.colors.overlay || "rgba(0,0,0,0.25)",
+        },
       ]}
       pointerEvents="box-none"
     >
-      <View
-        style={[
-          styles.inner,
-          { borderRadius: theme.borderRadius.lg }
-        ]}
-      >
+      <View style={[styles.inner, { borderRadius: theme.borderRadius.lg }]}>
         <PremiumButton
           title={title}
           onPress={onPress}

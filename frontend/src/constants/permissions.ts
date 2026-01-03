@@ -42,9 +42,5 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.REPORTS_EXPORT,
     Permission.AUDIT_VIEW,
   ],
-  [Role.STAFF]: [
-    Permission.INVENTORY_VIEW,
-    Permission.INVENTORY_SYNC,
-    Permission.REPORTS_VIEW,
-  ],
+  [Role.STAFF]: [Permission.INVENTORY_VIEW, Permission.INVENTORY_SYNC, Permission.REPORTS_VIEW],
 };

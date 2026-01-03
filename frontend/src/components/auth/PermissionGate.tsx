@@ -46,8 +46,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
   children,
   fallback = null,
 }) => {
-  const { hasPermission, hasRole, hasAnyPermission, hasAnyRole } =
-    usePermission();
+  const { hasPermission, hasRole, hasAnyPermission, hasAnyRole } = usePermission();
 
   let hasAccess = true;
 

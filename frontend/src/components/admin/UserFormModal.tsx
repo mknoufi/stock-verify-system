@@ -42,9 +42,21 @@ interface UserFormModalProps {
 
 // Password strength requirements
 const PASSWORD_REQUIREMENTS = [
-  { key: "length", label: "At least 8 characters", test: (p: string) => p.length >= 8 },
-  { key: "uppercase", label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
-  { key: "lowercase", label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+  {
+    key: "length",
+    label: "At least 8 characters",
+    test: (p: string) => p.length >= 8,
+  },
+  {
+    key: "uppercase",
+    label: "One uppercase letter",
+    test: (p: string) => /[A-Z]/.test(p),
+  },
+  {
+    key: "lowercase",
+    label: "One lowercase letter",
+    test: (p: string) => /[a-z]/.test(p),
+  },
   { key: "number", label: "One number", test: (p: string) => /\d/.test(p) },
 ];
 
@@ -499,12 +511,7 @@ export function UserFormModal({
   });
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -512,15 +519,9 @@ export function UserFormModal({
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>
-              {isEditMode ? "Edit User" : "Create New User"}
-            </Text>
+            <Text style={styles.title}>{isEditMode ? "Edit User" : "Create New User"}</Text>
             <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <Ionicons
-                name="close"
-                size={24}
-                color={semanticColors.text.secondary}
-              />
+              <Ionicons name="close" size={24} color={semanticColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -604,9 +605,7 @@ export function UserFormModal({
                     style={[styles.input, styles.passwordInput]}
                     value={password}
                     onChangeText={setPassword}
-                    placeholder={
-                      isEditMode ? "Leave blank to keep current" : "Enter password"
-                    }
+                    placeholder={isEditMode ? "Leave blank to keep current" : "Enter password"}
                     placeholderTextColor={semanticColors.text.tertiary}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
@@ -715,10 +714,7 @@ export function UserFormModal({
                       onPress={() => setRole(r)}
                     >
                       <Text
-                        style={[
-                          styles.roleButtonText,
-                          role === r && styles.roleButtonTextActive,
-                        ]}
+                        style={[styles.roleButtonText, role === r && styles.roleButtonTextActive]}
                       >
                         {r.charAt(0).toUpperCase() + r.slice(1)}
                       </Text>
@@ -740,14 +736,8 @@ export function UserFormModal({
                       isActive ? styles.statusActive : styles.statusInactive,
                     ]}
                   />
-                  <Text style={styles.statusText}>
-                    {isActive ? "Active" : "Inactive"}
-                  </Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={semanticColors.text.tertiary}
-                  />
+                  <Text style={styles.statusText}>{isActive ? "Active" : "Inactive"}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={semanticColors.text.tertiary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -764,11 +754,7 @@ export function UserFormModal({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.button,
-                styles.submitButton,
-                loading && styles.submitButtonDisabled,
-              ]}
+              style={[styles.button, styles.submitButton, loading && styles.submitButtonDisabled]}
               onPress={handleSubmit}
               disabled={loading}
             >

@@ -77,10 +77,8 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   statusBarStyle = "light-content",
 }) => {
   const { themeLegacy: theme } = useThemeContext();
-  const resolvedBackground =
-    backgroundType || (gradient ? "aurora" : "solid");
-  const resolvedScrollable =
-    contentMode ? contentMode === "scroll" : scrollable;
+  const resolvedBackground = backgroundType || (gradient ? "aurora" : "solid");
+  const resolvedScrollable = contentMode ? contentMode === "scroll" : scrollable;
   const resolvedStatusBarStyle =
     statusBarStyle === "light"
       ? "light-content"
@@ -92,24 +90,24 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   const Container = resolvedScrollable ? ScrollView : View;
   const containerProps = resolvedScrollable
     ? {
-      contentContainerStyle: [
-        styles.scrollContent,
-        !noPadding && { paddingBottom: theme.layout?.safeArea?.bottom || 34 },
-        contentContainerStyle,
-      ],
-      refreshControl: onRefresh ? (
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={theme.colors.accent}
-          colors={[theme.colors.accent]} // Android
-          progressBackgroundColor={theme.colors.surfaceElevated}
-        />
-      ) : undefined,
-    }
+        contentContainerStyle: [
+          styles.scrollContent,
+          !noPadding && { paddingBottom: theme.layout?.safeArea?.bottom || 34 },
+          contentContainerStyle,
+        ],
+        refreshControl: onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.accent}
+            colors={[theme.colors.accent]} // Android
+            progressBackgroundColor={theme.colors.surfaceElevated}
+          />
+        ) : undefined,
+      }
     : {
-      style: [styles.content, style],
-    };
+        style: [styles.content, style],
+      };
 
   const renderContent = () => (
     <>
@@ -139,9 +137,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
           ) : (
             <>
               <ActivityIndicator size="large" color={theme.colors.accent} />
-              {loadingText ? (
-                <Text style={styles.loadingText}>{loadingText}</Text>
-              ) : null}
+              {loadingText ? <Text style={styles.loadingText}>{loadingText}</Text> : null}
             </>
           )}
         </View>
@@ -168,9 +164,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
         style={[styles.container, containerStyle]}
       >
         {safeArea ? (
-          <SafeAreaView style={styles.safeArea}>
-            {renderContent()}
-          </SafeAreaView>
+          <SafeAreaView style={styles.safeArea}>{renderContent()}</SafeAreaView>
         ) : (
           renderContent()
         )}
@@ -179,9 +173,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   }
 
   const baseContent = safeArea ? (
-    <SafeAreaView style={styles.safeArea}>
-      {renderContent()}
-    </SafeAreaView>
+    <SafeAreaView style={styles.safeArea}>{renderContent()}</SafeAreaView>
   ) : (
     renderContent()
   );
@@ -189,11 +181,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   if (resolvedBackground === "pattern") {
     return (
       <View
-        style={[
-          styles.container,
-          { backgroundColor: theme.colors.background },
-          containerStyle,
-        ]}
+        style={[styles.container, { backgroundColor: theme.colors.background }, containerStyle]}
       >
         <PatternBackground />
         {baseContent}
@@ -202,13 +190,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: theme.colors.background },
-        containerStyle,
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: theme.colors.background }, containerStyle]}>
       {baseContent}
     </View>
   );

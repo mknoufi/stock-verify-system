@@ -1,17 +1,20 @@
 {
   "expo": {
-    "name": "Stock Verify",
-    "slug": "stock-verify",
+    "name": "Lavanya Mart Stock Verify",
+    "slug": "lavanya-mart-stock-verify",
     "version": "1.0.0",
-    "scheme": "stockverify",
+    "scheme": "lavanyamart",
     "userInterfaceStyle": "automatic",
+    "description": "Modern stock verification system for Lavanya Mart inventory management",
+    "primaryColor": "#3B82F6",
+    "backgroundColor": "#FFFFFF",
     "ios": {
-      "bundleIdentifier": "com.anonymous.frontend",
+      "bundleIdentifier": "com.lavanyamart.stockverify",
       "supportsTablet": true,
       "userInterfaceStyle": "automatic",
       "infoPlist": {
         "UIBackgroundModes": ["fetch", "remote-notification"],
-        "NSLocalNetworkUsageDescription": "Stock Verify needs access to devices and services on your local network to connect to the Stock Verify backend.",
+        "NSLocalNetworkUsageDescription": "Lavanya Mart Stock Verify needs access to devices and services on your local network to connect to the backend.",
         "NSBonjourServices": ["_http._tcp.", "_https._tcp."],
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoadsInLocalNetwork": true
@@ -19,7 +22,7 @@
       }
     },
     "android": {
-      "package": "com.anonymous.frontend",
+      "package": "com.lavanyamart.stockverify",
       "userInterfaceStyle": "automatic"
     },
     "transpilePackages": ["zustand"],

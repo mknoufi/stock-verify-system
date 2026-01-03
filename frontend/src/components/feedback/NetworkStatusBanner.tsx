@@ -8,9 +8,7 @@ interface NetworkStatusBannerProps {
   onSyncPress?: () => void;
 }
 
-export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
-  onSyncPress,
-}) => {
+export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({ onSyncPress }) => {
   const { isOnline, isInternetReachable, isRestrictedMode } = useNetworkStore();
   const [queueCount, setQueueCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
@@ -49,9 +47,7 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
       <View style={[styles.banner, styles.bannerRestricted]}>
         <View style={styles.statusContainer}>
           <View style={[styles.indicator, styles.indicatorOffline]} />
-          <Text style={styles.statusText}>
-            Restricted Mode: Connect to Wi-Fi
-          </Text>
+          <Text style={styles.statusText}>Restricted Mode: Connect to Wi-Fi</Text>
         </View>
       </View>
     );
@@ -62,18 +58,10 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
   }
 
   return (
-    <View
-      style={[
-        styles.banner,
-        isOnline ? styles.bannerOnlineWithQueue : styles.bannerOffline,
-      ]}
-    >
+    <View style={[styles.banner, isOnline ? styles.bannerOnlineWithQueue : styles.bannerOffline]}>
       <View style={styles.statusContainer}>
         <View
-          style={[
-            styles.indicator,
-            isOnline ? styles.indicatorOnline : styles.indicatorOffline,
-          ]}
+          style={[styles.indicator, isOnline ? styles.indicatorOnline : styles.indicatorOffline]}
         />
         <Text style={styles.statusText}>
           {isOnline
@@ -84,14 +72,8 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
         </Text>
       </View>
       {isOnline && queueCount > 0 && (
-        <TouchableOpacity
-          style={styles.syncButton}
-          onPress={handleSync}
-          disabled={syncing}
-        >
-          <Text style={styles.syncButtonText}>
-            {syncing ? "Syncing..." : "Sync Now"}
-          </Text>
+        <TouchableOpacity style={styles.syncButton} onPress={handleSync} disabled={syncing}>
+          <Text style={styles.syncButtonText}>{syncing ? "Syncing..." : "Sync Now"}</Text>
         </TouchableOpacity>
       )}
     </View>

@@ -6,7 +6,7 @@
  * but using system fonts until custom fonts are configured
  */
 
-import { Platform, TextStyle } from 'react-native';
+import { Platform, TextStyle } from "react-native";
 
 // ==========================================
 // FONT FAMILIES
@@ -14,30 +14,30 @@ import { Platform, TextStyle } from 'react-native';
 export const fontFamily = {
   // Primary font (use custom font when available)
   regular: Platform.select({
-    ios: 'System',
-    android: 'Roboto',
-    default: 'System',
+    ios: "System",
+    android: "Roboto",
+    default: "System",
   }),
   medium: Platform.select({
-    ios: 'System',
-    android: 'Roboto-Medium',
-    default: 'System',
+    ios: "System",
+    android: "Roboto-Medium",
+    default: "System",
   }),
   semiBold: Platform.select({
-    ios: 'System',
-    android: 'Roboto-Medium',
-    default: 'System',
+    ios: "System",
+    android: "Roboto-Medium",
+    default: "System",
   }),
   bold: Platform.select({
-    ios: 'System',
-    android: 'Roboto-Bold',
-    default: 'System',
+    ios: "System",
+    android: "Roboto-Bold",
+    default: "System",
   }),
   // Monospace for codes, numbers
   mono: Platform.select({
-    ios: 'Menlo',
-    android: 'monospace',
-    default: 'monospace',
+    ios: "Menlo",
+    android: "monospace",
+    default: "monospace",
   }),
 } as const;
 
@@ -56,27 +56,27 @@ export const fontSize = {
   /** 18px - Body large, subtitles */
   xl: 18,
   /** 20px - Heading 4 */
-  '2xl': 20,
+  "2xl": 20,
   /** 24px - Heading 3 */
-  '3xl': 24,
+  "3xl": 24,
   /** 28px - Heading 2 */
-  '4xl': 28,
+  "4xl": 28,
   /** 32px - Heading 1 */
-  '5xl': 32,
+  "5xl": 32,
   /** 40px - Display */
-  '6xl': 40,
+  "6xl": 40,
   /** 48px - Large display */
-  '7xl': 48,
+  "7xl": 48,
 } as const;
 
 // ==========================================
 // FONT WEIGHTS (as strings for RN compatibility)
 // ==========================================
 export const fontWeight = {
-  regular: '400' as const,
-  medium: '500' as const,
-  semiBold: '600' as const,
-  bold: '700' as const,
+  regular: "400" as const,
+  medium: "500" as const,
+  semiBold: "600" as const,
+  bold: "700" as const,
 } as const;
 
 // ==========================================
@@ -107,36 +107,36 @@ export const letterSpacing = {
 export const textStyles = {
   // Display styles
   display: {
-    fontSize: fontSize['6xl'],
+    fontSize: fontSize["6xl"],
     fontWeight: fontWeight.bold,
-    lineHeight: fontSize['6xl'] * lineHeight.tight,
+    lineHeight: fontSize["6xl"] * lineHeight.tight,
     letterSpacing: letterSpacing.tight,
   } as TextStyle,
 
   // Heading styles
   h1: {
-    fontSize: fontSize['5xl'],
+    fontSize: fontSize["5xl"],
     fontWeight: fontWeight.bold,
-    lineHeight: fontSize['5xl'] * lineHeight.tight,
+    lineHeight: fontSize["5xl"] * lineHeight.tight,
     letterSpacing: letterSpacing.tight,
   } as TextStyle,
 
   h2: {
-    fontSize: fontSize['4xl'],
+    fontSize: fontSize["4xl"],
     fontWeight: fontWeight.bold,
-    lineHeight: fontSize['4xl'] * lineHeight.tight,
+    lineHeight: fontSize["4xl"] * lineHeight.tight,
   } as TextStyle,
 
   h3: {
-    fontSize: fontSize['3xl'],
+    fontSize: fontSize["3xl"],
     fontWeight: fontWeight.semiBold,
-    lineHeight: fontSize['3xl'] * lineHeight.normal,
+    lineHeight: fontSize["3xl"] * lineHeight.normal,
   } as TextStyle,
 
   h4: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize["2xl"],
     fontWeight: fontWeight.semiBold,
-    lineHeight: fontSize['2xl'] * lineHeight.normal,
+    lineHeight: fontSize["2xl"] * lineHeight.normal,
   } as TextStyle,
 
   h5: {
@@ -230,7 +230,7 @@ export const textStyles = {
     fontWeight: fontWeight.semiBold,
     lineHeight: fontSize.xs * lineHeight.normal,
     letterSpacing: letterSpacing.widest,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   } as TextStyle,
 } as const;
 

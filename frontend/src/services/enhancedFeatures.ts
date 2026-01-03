@@ -39,9 +39,7 @@ export const RecentItemsService = {
       const existingItems = await RecentItemsService.getRecent();
 
       // Remove duplicate if exists
-      const filtered = existingItems.filter(
-        (i) => (i.item_code || i.barcode) !== itemCode,
-      );
+      const filtered = existingItems.filter((i) => (i.item_code || i.barcode) !== itemCode);
 
       // Add new item to beginning
       const newItem: RecentItem = {
@@ -68,7 +66,7 @@ export const RecentItemsService = {
     }
   },
 
-  getRecentItems: async (_itemCode: string): Promise<RecentItem[]> => {
+  getRecentItems: async (_itemCode?: string): Promise<RecentItem[]> => {
     // This seems to be an alias or specific query that mimics getRecent for now
     // Based on usage in scan-v2, it likely just needs the general list
     return RecentItemsService.getRecent();
