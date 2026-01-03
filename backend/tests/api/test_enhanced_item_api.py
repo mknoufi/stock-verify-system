@@ -24,7 +24,20 @@ def setup_mocks():
 
     mock_cache = AsyncMock()
     mock_monitoring = MagicMock()
-    init_enhanced_api(mock_db, mock_cache, mock_monitoring)
+    mock_sql_connector = MagicMock()
+
+    # Initialize API
+    init_enhanced_api(mock_db, mock_cache, mock_monitoring, mock_sql_connector)
+
+    # Configure sql_sync_service mock to return None by default (no sync result)
+    # We need to access the global sql_sync_service that was created inside init_enhanced_api
+    from backend.api import enhanced_item_api
+
+    if enhanced_item_api.sql_sync_service:
+        enhanced_item_api.sql_sync_service.sync_single_item_by_barcode = AsyncMock(
+            return_value=None
+        )
+
     return mock_db, mock_cache, mock_monitoring
 
 
@@ -93,6 +106,41 @@ async def test_get_item_by_barcode_enhanced_cache(setup_mocks):
     assert response["metadata"]["source"] == "cache"
 
     # Verify DB was NOT called
+    mock_db.erp_items.find_one.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_item_by_barcode_enhanced_sql_sync(setup_mocks):
+    mock_db, mock_cache, _ = setup_mocks
+
+    # Configure SQL sync to return an item
+    from backend.api import enhanced_item_api
+
+    mock_synced_item = {
+        "_id": "item_synced_123",
+        "item_code": "CODE_SYNCED",
+        "barcode": "510001",
+        "item_name": "Synced Item",
+        "stock_qty": 100.0,
+    }
+    enhanced_item_api.sql_sync_service.sync_single_item_by_barcode.return_value = mock_synced_item
+
+    request = MagicMock()
+    current_user = {"username": "testuser"}
+
+    response = await get_item_by_barcode_enhanced(
+        barcode="510001",
+        request=request,
+        current_user=current_user,
+        force_source=None,
+    )
+
+    assert response["item"]["item_code"] == "CODE_SYNCED"
+    assert response["metadata"]["source"] == "sql_server_sync"
+
+    # Verify DB find_one was NOT called (because sync returned item)
+    # Actually, sync service might call DB internally, but here we are mocking the service call
+    # and the API logic shouldn't call find_one if sync returns item.
     mock_db.erp_items.find_one.assert_not_called()
 
 

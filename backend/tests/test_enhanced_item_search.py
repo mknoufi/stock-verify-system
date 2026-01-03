@@ -20,7 +20,8 @@ def client(monkeypatch):
     # We can mock monitoring_service
 
     mock_monitoring = MagicMock()
-    init_enhanced_api(db, server_module.cache_service, mock_monitoring)
+    mock_sql_connector = MagicMock()
+    init_enhanced_api(db, server_module.cache_service, mock_monitoring, mock_sql_connector)
 
     return TestClient(app)
 

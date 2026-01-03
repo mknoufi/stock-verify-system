@@ -33,7 +33,7 @@ class LANEnforcementMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         client_ip = request.client.host if request.client else None
-        
+
         if not client_ip:
             logger.warning("Request rejected: No client IP found")
             return JSONResponse(
@@ -43,7 +43,7 @@ class LANEnforcementMiddleware(BaseHTTPMiddleware):
 
         try:
             ip_obj = ipaddress.ip_address(client_ip)
-            
+
             # Allow if IP is private (LAN) or loopback (Localhost)
             # This ensures Client and Server are on the same local network (or VPN/Tunnel)
             is_allowed = ip_obj.is_private or ip_obj.is_loopback

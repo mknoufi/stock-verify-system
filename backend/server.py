@@ -10,6 +10,7 @@ import jwt
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 # from motor.motor_asyncio import AsyncIOMotorClient
 # from passlib.context import CryptContext
 from starlette.middleware.cors import CORSMiddleware
@@ -109,6 +110,7 @@ except ImportError:
 # Import enterprise services (optional - for enterprise features)
 try:
     from backend.api.enterprise_api import enterprise_router
+
     ENTERPRISE_AVAILABLE = True
 except ImportError as e:
     ENTERPRISE_AVAILABLE = False
@@ -1293,8 +1295,7 @@ async def create_count_line(
         if update_fields:
             try:
                 await db.erp_items.update_one(
-                    {"item_code": line_data.item_code},
-                    {"$set": update_fields}
+                    {"item_code": line_data.item_code}, {"$set": update_fields}
                 )
             except Exception as e:
                 logger.error(f"Failed to update item location: {str(e)}")
@@ -1502,7 +1503,7 @@ if __name__ == "__main__":
         logger.info(f"🔒 SSL certificates found. Starting server with HTTPS on port {port}...")
         uvicorn.run(
             "backend.server:app",
-            host=os.getenv("HOST", "0.0.0.0"), # Listen on all interfaces for LAN access
+            host=os.getenv("HOST", "0.0.0.0"),  # Listen on all interfaces for LAN access
             port=port,
             reload=False,
             log_level="info",
@@ -1515,7 +1516,7 @@ if __name__ == "__main__":
         logger.info(f"Starting server on port {port}...")
         uvicorn.run(
             "backend.server:app",
-            host=os.getenv("HOST", "0.0.0.0"), # Listen on all interfaces for LAN access
+            host=os.getenv("HOST", "0.0.0.0"),  # Listen on all interfaces for LAN access
             port=port,
             reload=False,
             log_level="info",

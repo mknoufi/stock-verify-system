@@ -767,6 +767,117 @@ class SQLServerConnector:
             logger.error(f"Error fetching zones: {str(e)}")
             raise DatabaseQueryError(f"Failed to fetch zones: {str(e)}")
 
+    def get_items_by_codes(self, item_codes: list[str]) -> list[dict[str, Any]]:
+        """
+        Fetch multiple items by their item codes in a single query.
+        This is much more efficient than calling get_item_by_code() multiple times.
+
+        Args:
+            item_codes: List of item codes to fetch (max 500 per call for safety)
+
+        Returns:
+            List of item dictionaries
+        """
+        if not self.connection:
+            raise DatabaseConnectionError(DB_NOT_CONNECTED_MSG)
+
+        if not item_codes:
+            return []
+
+        # Limit batch size to avoid query size issues
+        item_codes = item_codes[:500]
+
+        try:
+            cursor = self.connection.cursor()
+            mapping = self.mapping
+            schema = mapping["query_options"].get("schema_name", "dbo")
+            table_name = mapping["tables"]["items"]
+            joins = "\n".join(mapping["query_options"].get("join_tables", []))
+            additional_where = mapping["query_options"].get("where_clause_additions", "")
+            code_column = mapping["items_columns"]["item_code"]
+            columns = self._build_column_list()
+
+            # Build IN clause with parameterized placeholders
+            placeholders = ", ".join("?" for _ in item_codes)
+
+            # Build query with IN clause
+            query = f"""
+                SELECT {columns}
+                    {self.optional_columns_clause}
+                FROM [{schema}].[{table_name}] I
+                {joins}
+                {self.optional_joins_clause}
+                WHERE {code_column} IN ({placeholders})
+                {additional_where}
+            """
+
+            cursor.execute(query, item_codes)
+            rows = cursor.fetchall()
+            results = [self._cursor_to_dict(cursor, row) for row in rows]
+            cursor.close()
+
+            logger.info(f"Retrieved {len(results)} items by codes (requested: {len(item_codes)})")
+            return results
+
+        except Exception as e:
+            logger.error(f"Error fetching items by codes: {str(e)}")
+            raise DatabaseQueryError(f"Failed to fetch items by codes: {str(e)}")
+
+    def get_item_quantities_only(self, item_codes: list[str]) -> dict[str, float]:
+        """
+        Fetch ONLY quantities for multiple items - minimal SQL load.
+        Returns a dict mapping item_code -> stock_qty.
+
+        Args:
+            item_codes: List of item codes to fetch quantities for
+
+        Returns:
+            Dict mapping item_code to stock_qty
+        """
+        if not self.connection:
+            raise DatabaseConnectionError(DB_NOT_CONNECTED_MSG)
+
+        if not item_codes:
+            return {}
+
+        # Limit batch size
+        item_codes = item_codes[:1000]
+
+        try:
+            cursor = self.connection.cursor()
+            mapping = self.mapping
+            schema = mapping["query_options"].get("schema_name", "dbo")
+            table_name = mapping["tables"]["items"]
+            code_column = mapping["items_columns"]["item_code"]
+            qty_column = mapping["items_columns"]["stock_qty"]
+
+            # Build minimal query - only fetch code and qty
+            placeholders = ", ".join("?" for _ in item_codes)
+
+            query = f"""
+                SELECT {code_column} as item_code, {qty_column} as stock_qty
+                FROM [{schema}].[{table_name}]
+                WHERE {code_column} IN ({placeholders})
+            """
+
+            cursor.execute(query, item_codes)
+            rows = cursor.fetchall()
+
+            # Build result dict
+            results = {}
+            for row in rows:
+                item_code = row[0]
+                stock_qty = float(row[1]) if row[1] is not None else 0.0
+                results[item_code] = stock_qty
+
+            cursor.close()
+            logger.debug(f"Retrieved quantities for {len(results)} items")
+            return results
+
+        except Exception as e:
+            logger.error(f"Error fetching item quantities: {str(e)}")
+            raise DatabaseQueryError(f"Failed to fetch item quantities: {str(e)}")
+
 
 # Global connector instance
 sql_connector = SQLServerConnector()

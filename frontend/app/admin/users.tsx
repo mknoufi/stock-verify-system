@@ -100,19 +100,6 @@ export default function UsersScreen() {
   const [, setShowCreateModal] = useState(false);
   const [, setEditingUser] = useState<User | null>(null);
 
-  // Check permissions
-  useEffect(() => {
-    if (!hasRole("admin")) {
-      Alert.alert(
-        "Access Denied",
-        "You do not have permission to manage users.",
-        [{ text: "OK", onPress: () => router.back() }]
-      );
-      return;
-    }
-    loadUsers();
-  }, [loadUsers, hasRole, router]);
-
   const loadUsers = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -161,6 +148,19 @@ export default function UsersScreen() {
       setRefreshing(false);
     }
   }, [page, pageSize, sortBy, sortOrder, search, roleFilter, activeFilter]);
+
+  // Check permissions
+  useEffect(() => {
+    if (!hasRole("admin")) {
+      Alert.alert(
+        "Access Denied",
+        "You do not have permission to manage users.",
+        [{ text: "OK", onPress: () => router.back() }]
+      );
+      return;
+    }
+    loadUsers();
+  }, [loadUsers, hasRole, router]);
 
   const onRefresh = useCallback(() => {
     loadUsers(true);

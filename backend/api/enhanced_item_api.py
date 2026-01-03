@@ -22,6 +22,7 @@ from backend.auth.dependencies import get_current_user_async as get_current_user
 # Import other dependencies directly
 # Import services and database
 from backend.services.monitoring_service import MonitoringService
+from backend.services.sql_sync_service import SQLSyncService
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +30,25 @@ logger = logging.getLogger(__name__)
 db: AsyncIOMotorDatabase = None
 cache_service = None
 monitoring_service: MonitoringService = None
+sql_sync_service: SQLSyncService = None
 
 
-def init_enhanced_api(database, cache_svc, monitoring_svc):
+def init_enhanced_api(database, cache_svc, monitoring_svc, sql_connector_instance=None):
     """Initialize enhanced API with dependencies"""
-    global db, cache_service, monitoring_service
+    global db, cache_service, monitoring_service, sql_sync_service
     db = database
     cache_service = cache_svc
     monitoring_service = monitoring_svc
+
+    # Initialize SQL Sync Service for real-time updates
+    if sql_connector_instance:
+        try:
+            sql_sync_service = SQLSyncService(sql_connector_instance, db)
+        except Exception as e:
+            logger.warning(f"Could not initialize SQL sync for enhanced API: {e}")
+    else:
+        # Fallback for tests or if not provided (though it should be)
+        logger.warning("SQL Connector not provided to enhanced API, real-time sync disabled")
 
 
 _ALPHANUMERIC_PATTERN = re.compile(r"^[A-Z0-9_\-]+$")
@@ -103,7 +115,29 @@ async def get_item_by_barcode_enhanced(
         if force_source:
             item_data, source = await _fetch_from_specific_source(normalized_barcode, force_source)
         else:
-            item_data, source = await _fetch_with_fallback_strategy(normalized_barcode)
+            # Try to sync from SQL Server first for this specific item to ensure fresh data
+            if sql_sync_service:
+                try:
+                    # Fire and forget sync for this item to minimize latency,
+                    # OR await it if we want guaranteed freshness.
+                    # Given the requirement "on one item selecting the qty is updated with sql server",
+                    # we should await it to ensure the user sees the latest qty.
+                    synced_item = await sql_sync_service.sync_single_item_by_barcode(
+                        normalized_barcode
+                    )
+                    if synced_item:
+                        # If sync found and updated the item, use it directly
+                        # Convert ObjectId to string
+                        synced_item["_id"] = str(synced_item["_id"])
+                        item_data, source = synced_item, "sql_server_sync"
+                    else:
+                        # Fallback to normal strategy if sync didn't find it (e.g. SQL down or item not in SQL)
+                        item_data, source = await _fetch_with_fallback_strategy(normalized_barcode)
+                except Exception as e:
+                    logger.warning(f"Real-time SQL sync failed for {normalized_barcode}: {e}")
+                    item_data, source = await _fetch_with_fallback_strategy(normalized_barcode)
+            else:
+                item_data, source = await _fetch_with_fallback_strategy(normalized_barcode)
 
         response_time = (time.time() - start_time) * 1000
 

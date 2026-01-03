@@ -624,7 +624,7 @@ async def lifespan(app: FastAPI):  # noqa: C901
 
     try:
         # Initialize Enhanced Item API
-        init_enhanced_api(db, cache_service, monitoring_service)
+        init_enhanced_api(db, cache_service, monitoring_service, sql_connector)
         logger.info("✓ Enhanced Item API initialized")
     except Exception as e:
         logger.error(f"Failed to initialize Enhanced Item API: {str(e)}")
@@ -785,18 +785,18 @@ async def lifespan(app: FastAPI):  # noqa: C901
 
     try:
         local_ip = PortDetector.get_local_ip()
-        
+
         # Check for SSL certificates to determine protocol
         # project_root is defined at top of file as backend/
         repo_root = project_root.parent
         default_key = repo_root / "nginx" / "ssl" / "privkey.pem"
         default_cert = repo_root / "nginx" / "ssl" / "fullchain.pem"
-        
+
         ssl_keyfile = os.getenv("SSL_KEYFILE", str(default_key))
         ssl_certfile = os.getenv("SSL_CERTFILE", str(default_cert))
         use_ssl = os.path.exists(ssl_keyfile) and os.path.exists(ssl_certfile)
         protocol = "https" if use_ssl else "http"
-        
+
         save_backend_info(port, local_ip, protocol)
     except Exception as e:
         logger.error(f"Error saving backend port info: {e}")

@@ -143,13 +143,17 @@ def trace_span(name: str, attributes: Optional[dict] = None, **kwargs):
 
 def trace_report_generation(report_type: str):
     """Decorator for tracing report generation (dummy implementation)."""
+
     def decorator(func):
         return func
+
     return decorator
 
 
 def trace_dashboard_query(query_type: str):
     """Decorator for tracing dashboard queries (dummy implementation)."""
+
     def decorator(func):
         return func
+
     return decorator
