@@ -1,0 +1,318 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# IDE and editors
+.idea/
+.vs/
+**/FileContentIndex/
+*.vsidx
+
+# VS Code - Track project settings but ignore user-specific
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+!.vscode/*.code-snippets
+!.vscode/README.md
+
+# AI Agent configs - Track these
+!.aider.conf.yml
+!.aiderignore
+!.clinerules
+!.swe-agent.yml
+!.metagpt.yml
+!.autogpt.yml
+!.devon.yml
+!.interpreter.yml
+!.aicontext.json
+!.continue/
+.continue/db/
+.continue/index/
+.continue/logs/
+
+# Dependencies
+node_modules/
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Testing
+/coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# Playwright reports
+playwright-report/
+frontend/playwright-report/
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Production builds
+/build
+dist/
+dist
+
+# Environment files (comprehensive coverage)
+
+*token.json*
+*credentials.json*
+
+# Logs and debug files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dump.rdb
+
+# System files
+.DS_Store
+*.pem
+
+# Python
+__pycache__/
+*pyc*
+venv/
+.venv/
+.venv311/
+.pycache/
+.tmp/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Development tools
+chainlit.md
+.chainlit
+.ipynb_checkpoints/
+.ac
+
+# Deployment
+.vercel
+
+# Data and databases
+agenthub/agents/youtube/db
+backend/data/db/
+data/db/
+*.wt
+*.lock
+mongod.lock
+WiredTiger*
+diagnostic.data/
+
+# Archive files and large assets
+**/*.zip
+**/*.tar.gz
+**/*.tar
+**/*.tgz
+*.pack
+*.deb
+*.dylib
+
+# Build caches
+.cache/
+.tmp/
+
+# Mobile development
+android-sdk/
+
+# Environment files (CRITICAL - Never commit production secrets!)
+# All .env files are ignored except .example templates
+*.env
+*.env.*
+!*.env.example
+!*.env.*.example
+.env.local
+.env.production
+.env.staging
+.env.development
+backend/.env
+frontend/.env
+
+# Secret files (CRITICAL - Never commit!)
+.secrets
+*.secrets
+secrets.txt
+*.secret
+
+# SSL Certificates and Keys (CRITICAL - Never commit!)
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+nginx/ssl/*
+!nginx/ssl/.gitkeep
+
+# Backup files (May contain sensitive data)
+backups/*
+!backups/.gitkeep
+*.sql
+*.dump
+*.tar.gz
+*.backup
+
+# Log files (May contain sensitive data)
+logs/*
+!logs/.gitkeek
+*.log
+*.log.*
+/var/log/*
+
+# Archived documentation
+archive_old_docs/
+
+# Generated workspace inventory/report (regenerate if needed)
+docs/WORKSPACE_CODE_REPORT.md
+docs/WORKSPACE_CODE_INVENTORY.csv
+
+# React Native Metro cache
+frontend/.metro-cache/
+frontend/coverage/
+
+# Large binary dependencies (JDK, SDKs)
+**/*.jdk/
+**/oracleJdk*/
+**/*.jmod
+**/*.jsa
+
+# PID files
+*.pid
+backend.pid
+frontend.pid
+frontend/frontend.pid
+
+# Run details (temporary)
+run_details*.json
+run_jobs*.json
+backend_port.json
+agentic-project-management
+expo-new
+
+# Cursor config with secrets (use .cursor/mcp.json.example as template)
+.cursor/mcp.json
+.git_backup_*
+backend/venv_test/
+
+# Lint reports
+**/lint-output.json
+bandit_report.json
+bandit-report.json
+
+
+
+.nx/cache
+.nx/workspace-data
+
+storybook-static
+
+# Expo
+node_modules/
+.expo/
+.yarn/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+cache/
+
+# React Native
+
+# OSX
+#
+.DS_Store
+
+# Xcode
+#
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+**/.xcode.env.local
+
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+
+# node.js
+#
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# fastlane
+#
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+# screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://docs.fastlane.tools/best-practices/source-control/
+
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+
+# Bundle artifact
+*.jsbundle
+
+# Ruby / CocoaPods
+**/Pods/
+**/vendor/bundle/
+
+# Temporary files created by Metro to check the health of the file watcher
+.metro-health-check*
+
+# testing
+/coverage
+
+
+## Nested node_modules
+
+node_modules/
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md
+backend/bandit_report.json
+
+# Debug/temp JSON files
+session_response.json
+session_response_2.json
+sessions_list.json

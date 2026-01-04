@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stock-verify-backend"
+version = "2.1.0"
+description = "Backend API for Stock Verify Application"
+authors = [{ name = "Stock Verify Team", email = "admin@stockverify.internal" }]
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastapi>=0.115.8",
+    "uvicorn[standard]>=0.34.1",
+    "gunicorn>=23.0.0",
+    "motor>=3.7.0",
+    "pydantic>=2.12.5",
+]

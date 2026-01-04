@@ -1,0 +1,61 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+gunicorn>=23.0.0
+python-dotenv>=1.0.1
+# Motor 3.7.0 supports pymongo 4.10+; updated compatibility
+pymongo>=4.10.0,<4.16
+pydantic==2.12.5
+pydantic-settings>=2.7.0
+email-validator>=2.2.0
+pyjwt>=2.10.1
+bcrypt>=4.2.1
+argon2-cffi>=23.1.0
+passlib>=1.7.4
+tzdata>=2024.2
+motor==3.7.1
+pytest>=8.3.4
+pytest-asyncio>=0.24.0
+httpx==0.27.2
+black>=24.10.0
+isort>=5.13.2
+flake8>=7.1.1
+mypy>=1.13.0
+requests>=2.32.3
+pandas>=2.2.3
+numpy>=2.0.2
+python-multipart>=0.0.18
+pyodbc>=5.2.0
+openpyxl>=3.1.5
+Pillow>=11.0.0
+rapidfuzz>=3.5.2
+sentence-transformers>=2.2.2
+redis>=5.2.1
+redis[hiredis]>=5.2.1  # Async support with hiredis for better performance
+psutil>=6.1.0
+authlib>=1.4.0
+cryptography>=43.0.3  # Required for secure token/credential handling
+xlsxwriter>=3.2.0
+copilotkit>=0.1.39
+tenacity>=9.1.2  # Retry logic
+bandit>=1.8.6    # Security scanning
+locust>=2.34.0   # Load testing
+
+# OpenTelemetry tracing
+opentelemetry-api>=1.25.0
+opentelemetry-sdk>=1.25.0
+opentelemetry-exporter-otlp-proto-http>=1.25.0
+opentelemetry-instrumentation-fastapi>=0.46b0
+opentelemetry-instrumentation-requests>=0.46b0
+opentelemetry-instrumentation-logging>=0.46b0
+opentelemetry-instrumentation-pymongo>=0.46b0
+
+# NOTE: JWT usage has been migrated to an Authlib-based compatibility layer
+# (backend/auth/jwt_provider.py) to avoid transitive ECDSA dependencies.
+# Removed `python-jose` from requirements intentionally. If you need
+# asymmetric JWT algorithms (ES/RSA), add a vetted library and load keys
+# from secure storage. See REMEDIATION_PLAN.md for details.
+
+# Security/upstream fixes (conservative bumps applied 2025-11-06)
+# Upgrade setuptools to address known advisories
+setuptools>=78.1.1
+pytest-cov==7.0.0
