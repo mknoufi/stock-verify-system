@@ -156,7 +156,7 @@ export interface SerialInput {
  * Each serial can have its own MRP and manufacturing date since
  * different units of the same item may have different values
  */
-export type DateFormatType = 'full' | 'month_year' | 'year_only' | 'none';
+export type DateFormatType = "full" | "month_year" | "year_only" | "none";
 
 export interface SerialEntryData {
   id: string;

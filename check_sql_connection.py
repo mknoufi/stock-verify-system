@@ -11,19 +11,19 @@ from backend.config import settings
 
 def check_connection():
     print("--- SQL Server Connection Diagnostic ---")
-    
+
     # 1. Check Configuration
     host = settings.SQL_SERVER_HOST
     port = settings.SQL_SERVER_PORT
     db = settings.SQL_SERVER_DATABASE
     user = settings.SQL_SERVER_USER
-    
+
     print(f"Configuration:")
     print(f"  Host: {host}")
     print(f"  Port: {port}")
     print(f"  Database: {db}")
     print(f"  User: {user}")
-    
+
     if not host:
         print("\n❌ SQL_SERVER_HOST is not set in configuration.")
         print("   If running in Dev mode, note that scripts/start_backend.sh disables it by default.")

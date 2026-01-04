@@ -18,7 +18,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "../../store/authStore";
 
-import { colors, spacing, typography, shadows, gradients } from "../../theme/modernDesign";
+import {
+  colors,
+  spacing,
+  typography,
+  shadows,
+  gradients,
+} from "../../theme/modernDesign";
 
 interface ModernHeaderProps {
   title?: string;

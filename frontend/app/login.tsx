@@ -37,7 +37,11 @@ import {
 // Safe Animated View for Web
 const SafeAnimatedView = ({ children, style, entering, ...props }: any) => {
   if (Platform.OS === "web") {
-    return <View style={style} {...props}>{children}</View>;
+    return (
+      <View style={style} {...props}>
+        {children}
+      </View>
+    );
   }
   return (
     <Animated.View style={style} entering={entering} {...props}>
@@ -98,11 +102,17 @@ export default function LoginScreen() {
   }, []);
 
   const handleForgotPin = useCallback(() => {
-    Alert.alert("Forgot PIN", "Please contact your administrator to reset your PIN.");
+    Alert.alert(
+      "Forgot PIN",
+      "Please contact your administrator to reset your PIN.",
+    );
   }, []);
 
   const handleForgotPassword = useCallback(() => {
-    Alert.alert("Forgot Password", "Please contact your administrator to reset your password.");
+    Alert.alert(
+      "Forgot Password",
+      "Please contact your administrator to reset your password.",
+    );
   }, []);
 
   const handleLogin = useCallback(async () => {

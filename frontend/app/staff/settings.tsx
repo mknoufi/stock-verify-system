@@ -67,7 +67,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
       }
       onValueChange?.(val);
     },
-    [onValueChange]
+    [onValueChange],
   );
 
   const renderRightContent = () => {
@@ -87,11 +87,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     }
     if (type === "navigation") {
       return (
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={colors.gray[400]}
-        />
+        <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
       );
     }
     return null;
@@ -119,7 +115,10 @@ const SettingRow: React.FC<SettingRowProps> = ({
         </View>
         <View style={styles.labelContainer}>
           <Text
-            style={[styles.settingLabel, destructive && styles.labelDestructive]}
+            style={[
+              styles.settingLabel,
+              destructive && styles.labelDestructive,
+            ]}
           >
             {label}
           </Text>
@@ -178,7 +177,11 @@ export default function StaffSettingsScreen() {
     <View style={styles.container}>
       <StatusBar style="dark" />
 
-      <ModernHeader title="Settings" showBackButton onBackPress={() => router.back()} />
+      <ModernHeader
+        title="Settings"
+        showBackButton
+        onBackPress={() => router.back()}
+      />
 
       <ScrollView
         style={styles.scrollView}

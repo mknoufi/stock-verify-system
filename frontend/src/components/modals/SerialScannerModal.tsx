@@ -4,18 +4,15 @@
  * Auto-increments quantity when new serials are scanned
  */
 import React, { useRef, useCallback, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
 import { CameraView } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ScanThrottleManager } from "../../config/scannerConfig";
-import { validateScannedSerial, normalizeSerialValue } from "../../utils/scanUtils";
+import {
+  validateScannedSerial,
+  normalizeSerialValue,
+} from "../../utils/scanUtils";
 import {
   colors,
   spacing,
@@ -46,7 +43,7 @@ export const SerialScannerModal: React.FC<SerialScannerModalProps> = ({
   onClose,
 }) => {
   const throttleManagerRef = useRef<ScanThrottleManager>(
-    new ScanThrottleManager()
+    new ScanThrottleManager(),
   );
 
   const [lastScanned, setLastScanned] = useState<string | null>(null);
@@ -110,7 +107,7 @@ export const SerialScannerModal: React.FC<SerialScannerModalProps> = ({
         manufacturing_date: undefined,
       });
     },
-    [existingSerials, defaultMrp, onSerialScanned]
+    [existingSerials, defaultMrp, onSerialScanned],
   );
 
   const getFeedbackStyle = () => {
@@ -190,8 +187,8 @@ export const SerialScannerModal: React.FC<SerialScannerModalProps> = ({
                     scanFeedback.type === "success"
                       ? "checkmark-circle"
                       : scanFeedback.type === "warning"
-                      ? "warning"
-                      : "close-circle"
+                        ? "warning"
+                        : "close-circle"
                   }
                   size={20}
                   color={colors.white}

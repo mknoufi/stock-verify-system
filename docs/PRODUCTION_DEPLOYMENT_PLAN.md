@@ -109,7 +109,7 @@ db.createUser({
 use stock_verify
 db.createUser({
   user: "app_user",
-  pwd: "CHANGE_TO_SECURE_PASSWORD",
+  pwd: "CHANGE_TO_SECURE_PASSWORD", -- pragma: allowlist secret
   roles: [{ role: "readWrite", db: "stock_verify" }]
 });
 ```

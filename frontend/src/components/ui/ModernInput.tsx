@@ -204,7 +204,6 @@ export const ModernInput: React.FC<ModernInputProps> = ({
             <Ionicons name={rightIcon} size={20} color={colors.gray[500]} />
           </TouchableOpacity>
         )}
-
       </Pressable>
 
       {error && <Text style={styles.errorText}>{error}</Text>}

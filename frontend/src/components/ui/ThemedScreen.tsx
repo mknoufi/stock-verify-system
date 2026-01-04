@@ -6,7 +6,15 @@
  */
 
 import React from "react";
-import { View, StyleSheet, ViewStyle, Text, TextStyle, TouchableWithoutFeedback, Keyboard } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ViewStyle,
+  Text,
+  TextStyle,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { PatternBackground } from "./PatternBackground";
@@ -69,27 +77,27 @@ export const ThemedScreen: React.FC<ThemedScreenProps> = ({
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={[containerStyle, style]}>
         {/* Pattern Background */}
-      {showPattern && pattern !== "none" && (
-        <PatternBackground
-          pattern={pattern}
-          color={theme.colors.accent}
-          secondaryColor={theme.colors.textSecondary}
-          opacity={patternOpacity}
-        />
-      )}
+        {showPattern && pattern !== "none" && (
+          <PatternBackground
+            pattern={pattern}
+            color={theme.colors.accent}
+            secondaryColor={theme.colors.textSecondary}
+            opacity={patternOpacity}
+          />
+        )}
 
-      {/* Gradient Overlay for glass variant */}
-      {variant === "glass" && (
-        <View
-          style={[
-            StyleSheet.absoluteFillObject,
-            { backgroundColor: `${theme.colors.background}E6` },
-          ]}
-        />
-      )}
+        {/* Gradient Overlay for glass variant */}
+        {variant === "glass" && (
+          <View
+            style={[
+              StyleSheet.absoluteFillObject,
+              { backgroundColor: `${theme.colors.background}E6` },
+            ]}
+          />
+        )}
 
-      {/* Content */}
-      <View style={contentStyle}>{children}</View>
+        {/* Content */}
+        <View style={contentStyle}>{children}</View>
       </View>
     </TouchableWithoutFeedback>
   );

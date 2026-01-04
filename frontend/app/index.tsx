@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo } from "react";
-import { ActivityIndicator, StyleSheet, View, Text, Platform } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+  Text,
+  Platform,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -14,7 +20,11 @@ import { getRouteForRole, UserRole } from "../src/utils/roleNavigation";
 // Safe wrapper for Animated.View to prevent web crashes
 const SafeAnimatedView = ({ children, style, entering, ...props }: any) => {
   if (Platform.OS === "web") {
-    return <View style={style} {...props}>{children}</View>;
+    return (
+      <View style={style} {...props}>
+        {children}
+      </View>
+    );
   }
   return (
     <Animated.View style={style} entering={entering} {...props}>
@@ -46,9 +56,7 @@ export default function Index() {
     <View style={styles.container}>
       <SafeAnimatedView
         entering={
-          Platform.OS === "web"
-            ? undefined
-            : FadeInDown.delay(300).springify()
+          Platform.OS === "web" ? undefined : FadeInDown.delay(300).springify()
         }
         style={styles.contentContainer}
       >
@@ -62,10 +70,7 @@ export default function Index() {
           </View>
 
           <View style={styles.loadingContainer}>
-            <ActivityIndicator
-              size="large"
-              color={theme.colors.accentLight}
-            />
+            <ActivityIndicator size="large" color={theme.colors.accentLight} />
             <Text style={styles.loadingText}>
               Initializing Secure Environment...
             </Text>

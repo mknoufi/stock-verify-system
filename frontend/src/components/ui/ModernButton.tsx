@@ -285,33 +285,37 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
     const isWeb = Platform.OS === "web";
     const Component = isWeb ? TouchableOpacity : AnimatedTouchableOpacity;
 
-    const webProps = isWeb ? {
-      onPress,
-      onPressIn: handlePressIn,
-      onPressOut: handlePressOut,
-      disabled: disabled || loading,
-      activeOpacity: 0.8,
-      style: buttonStyle,
-      testID,
-      accessibilityLabel: accessibilityLabel || title,
-      accessibilityHint,
-      accessibilityRole: "button" as "button",
-      accessibilityState: { disabled: disabled || loading },
-    } : {};
+    const webProps = isWeb
+      ? {
+          onPress,
+          onPressIn: handlePressIn,
+          onPressOut: handlePressOut,
+          disabled: disabled || loading,
+          activeOpacity: 0.8,
+          style: buttonStyle,
+          testID,
+          accessibilityLabel: accessibilityLabel || title,
+          accessibilityHint,
+          accessibilityRole: "button" as "button",
+          accessibilityState: { disabled: disabled || loading },
+        }
+      : {};
 
-    const nativeProps = !isWeb ? {
-      onPress,
-      onPressIn: handlePressIn,
-      onPressOut: handlePressOut,
-      disabled: disabled || loading,
-      activeOpacity: 1,
-      style: [animatedStyle, buttonStyle],
-      testID,
-      accessibilityLabel: accessibilityLabel || title,
-      accessibilityHint,
-      accessibilityRole: "button" as "button",
-      accessibilityState: { disabled: disabled || loading },
-    } : {};
+    const nativeProps = !isWeb
+      ? {
+          onPress,
+          onPressIn: handlePressIn,
+          onPressOut: handlePressOut,
+          disabled: disabled || loading,
+          activeOpacity: 1,
+          style: [animatedStyle, buttonStyle],
+          testID,
+          accessibilityLabel: accessibilityLabel || title,
+          accessibilityHint,
+          accessibilityRole: "button" as "button",
+          accessibilityState: { disabled: disabled || loading },
+        }
+      : {};
 
     const props = isWeb ? webProps : nativeProps;
 
@@ -337,7 +341,12 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
       return (
         <Component {...props}>
           {isWeb ? (
-            <View style={[styles.blur, { backgroundColor: "rgba(255, 255, 255, 0.1)" }]}>
+            <View
+              style={[
+                styles.blur,
+                { backgroundColor: "rgba(255, 255, 255, 0.1)" },
+              ]}
+            >
               {renderContent()}
             </View>
           ) : (
@@ -349,11 +358,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
       );
     }
 
-    return (
-      <Component {...props}>
-        {renderContent()}
-      </Component>
-    );
+    return <Component {...props}>{renderContent()}</Component>;
   };
 
   return renderButton();

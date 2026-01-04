@@ -30,14 +30,18 @@ export const validateSerialNumber = (serial: string): string | null => {
  */
 export const validateSerialNumbers = (
   serialNumbers: string[],
-  requiredCount: number
+  requiredCount: number,
 ): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
-  const normalizedSerials = serialNumbers.map(normalizeSerialValue).filter(Boolean);
+  const normalizedSerials = serialNumbers
+    .map(normalizeSerialValue)
+    .filter(Boolean);
 
   // Check count
   if (normalizedSerials.length < requiredCount) {
-    errors.push(`${requiredCount - normalizedSerials.length} more serial number(s) required`);
+    errors.push(
+      `${requiredCount - normalizedSerials.length} more serial number(s) required`,
+    );
   }
 
   // Check for duplicates
@@ -84,7 +88,7 @@ export const isSerialNumberFormat = (code: string): boolean => {
  */
 export const validateScannedSerial = (
   code: string,
-  existingSerials: string[]
+  existingSerials: string[],
 ): { valid: boolean; error?: string } => {
   const normalized = normalizeSerialValue(code);
 
@@ -92,7 +96,7 @@ export const validateScannedSerial = (
   if (!isSerialNumberFormat(code)) {
     return {
       valid: false,
-      error: "This appears to be a product barcode, not a serial number"
+      error: "This appears to be a product barcode, not a serial number",
     };
   }
 

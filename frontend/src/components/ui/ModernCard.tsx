@@ -291,38 +291,46 @@ export const ModernCard: React.FC<ModernCardProps> = ({
     // Use standard components on web to avoid Reanimated issues
     const isWeb = Platform.OS === "web";
     const Component = isWeb
-      ? (onPress ? TouchableOpacity : View)
-      : (onPress ? AnimatedTouchableOpacity : AnimatedView);
+      ? onPress
+        ? TouchableOpacity
+        : View
+      : onPress
+        ? AnimatedTouchableOpacity
+        : AnimatedView;
 
     // Web-specific props (remove animated props)
-    const webProps = isWeb ? {
-      onPress,
-      onLongPress,
-      delayLongPress,
-      onPressIn: handlePressIn,
-      onPressOut: handlePressOut,
-      style: cardStyle,
-      testID,
-      accessible: true,
-      accessibilityRole: onPress ? "button" : "none" as "button" | "none",
-      accessibilityLabel: accessibilityLabel || title,
-      accessibilityHint,
-    } : {};
+    const webProps = isWeb
+      ? {
+          onPress,
+          onLongPress,
+          delayLongPress,
+          onPressIn: handlePressIn,
+          onPressOut: handlePressOut,
+          style: cardStyle,
+          testID,
+          accessible: true,
+          accessibilityRole: onPress ? "button" : ("none" as "button" | "none"),
+          accessibilityLabel: accessibilityLabel || title,
+          accessibilityHint,
+        }
+      : {};
 
     // Native animated props
-    const nativeProps = !isWeb ? {
-      onPress,
-      onLongPress,
-      delayLongPress,
-      onPressIn: handlePressIn,
-      onPressOut: handlePressOut,
-      style: [animatedStyle, cardStyle],
-      testID,
-      accessible: true,
-      accessibilityRole: onPress ? "button" : "none" as "button" | "none",
-      accessibilityLabel: accessibilityLabel || title,
-      accessibilityHint,
-    } : {};
+    const nativeProps = !isWeb
+      ? {
+          onPress,
+          onLongPress,
+          delayLongPress,
+          onPressIn: handlePressIn,
+          onPressOut: handlePressOut,
+          style: [animatedStyle, cardStyle],
+          testID,
+          accessible: true,
+          accessibilityRole: onPress ? "button" : ("none" as "button" | "none"),
+          accessibilityLabel: accessibilityLabel || title,
+          accessibilityHint,
+        }
+      : {};
 
     const props = isWeb ? webProps : nativeProps;
 
@@ -348,9 +356,14 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       return (
         <Component {...props}>
           {isWeb ? (
-             <View style={[styles.blur, { backgroundColor: "rgba(255, 255, 255, 0.1)" }]}>
-               {renderContent()}
-             </View>
+            <View
+              style={[
+                styles.blur,
+                { backgroundColor: "rgba(255, 255, 255, 0.1)" },
+              ]}
+            >
+              {renderContent()}
+            </View>
           ) : (
             <BlurView intensity={intensity} tint="dark" style={styles.blur}>
               {renderContent()}
@@ -360,11 +373,7 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       );
     }
 
-    return (
-      <Component {...props}>
-        {renderContent()}
-      </Component>
-    );
+    return <Component {...props}>{renderContent()}</Component>;
   };
 
   return renderCard();

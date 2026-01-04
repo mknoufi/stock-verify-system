@@ -935,10 +935,10 @@ const styles = StyleSheet.create({
     color: colors.gray[500],
   },
   fabContainer: {
-    display: 'none',
+    display: "none",
   },
   fabButton: {
-    display: 'none',
+    display: "none",
   },
   recentSection: {
     marginBottom: spacing.lg,
@@ -987,7 +987,7 @@ const styles = StyleSheet.create({
   recentCode: {
     fontSize: typography.fontSize.xs,
     color: colors.gray[500],
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
   },
   footerSpacer: {
     height: 20,
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: spacing.lg,
-    paddingBottom: Platform.OS === 'ios' ? 34 : spacing.lg,
+    paddingBottom: Platform.OS === "ios" ? 34 : spacing.lg,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.gray[200],
@@ -1016,7 +1016,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: spacing.lg,
-    paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.lg,
+    paddingTop: Platform.OS === "android" ? spacing.xl : spacing.lg,
   },
   closeCameraButton: {
     padding: spacing.sm,
@@ -1139,7 +1139,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.gray[100],
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
   },
   emptyIconContainer: {
     width: 64,

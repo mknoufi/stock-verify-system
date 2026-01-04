@@ -287,7 +287,7 @@ done
 2. **Use read-only user** for SQL Server connection:
    ```sql
    -- SQL Server: Create read-only user
-   CREATE LOGIN readonly_user WITH PASSWORD = 'YourPassword'
+   CREATE LOGIN readonly_user WITH PASSWORD = 'YourPassword' -- pragma: allowlist secret
    USE YourDatabase
    CREATE USER readonly_user FOR LOGIN readonly_user
    ALTER ROLE db_datareader ADD MEMBER readonly_user

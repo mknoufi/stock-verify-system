@@ -319,7 +319,11 @@ export default function UsersScreen() {
     <View style={styles.filterBar}>
       {/* Search Input */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={auroraTheme.colors.neutral[400]} />
+        <Ionicons
+          name="search"
+          size={20}
+          color={auroraTheme.colors.neutral[400]}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search users..."
@@ -610,7 +614,11 @@ export default function UsersScreen() {
               style={styles.actionButton}
               onPress={() => setEditingUser(user)}
             >
-              <Ionicons name="pencil" size={18} color={auroraTheme.colors.primary[600]} />
+              <Ionicons
+                name="pencil"
+                size={18}
+                color={auroraTheme.colors.primary[600]}
+              />
             </AnimatedPressable>
             <AnimatedPressable
               style={styles.actionButton}
@@ -622,7 +630,9 @@ export default function UsersScreen() {
                 }
                 size={18}
                 color={
-                  user.isActive ? auroraTheme.colors.warning[600] : auroraTheme.colors.success[600]
+                  user.isActive
+                    ? auroraTheme.colors.warning[600]
+                    : auroraTheme.colors.success[600]
                 }
               />
             </AnimatedPressable>
@@ -658,7 +668,11 @@ export default function UsersScreen() {
           <Ionicons
             name="chevron-back"
             size={20}
-            color={page === 1 ? auroraTheme.colors.neutral[300] : auroraTheme.colors.primary[600]}
+            color={
+              page === 1
+                ? auroraTheme.colors.neutral[300]
+                : auroraTheme.colors.primary[600]
+            }
           />
         </AnimatedPressable>
         <Text style={styles.pageNumber}>
@@ -676,7 +690,9 @@ export default function UsersScreen() {
             name="chevron-forward"
             size={20}
             color={
-              page === totalPages ? auroraTheme.colors.neutral[300] : auroraTheme.colors.primary[600]
+              page === totalPages
+                ? auroraTheme.colors.neutral[300]
+                : auroraTheme.colors.primary[600]
             }
           />
         </AnimatedPressable>
@@ -703,7 +719,11 @@ export default function UsersScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTitle}>
-            <Ionicons name="people" size={28} color={auroraTheme.colors.primary[600]} />
+            <Ionicons
+              name="people"
+              size={28}
+              color={auroraTheme.colors.primary[600]}
+            />
             <Text style={styles.title}>User Management</Text>
           </View>
           <AnimatedPressable

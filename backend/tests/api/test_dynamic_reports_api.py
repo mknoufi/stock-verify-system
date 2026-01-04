@@ -8,11 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from backend.api.dynamic_reports_api import (
-    ReportField,
-    ReportGeneration,
-    ReportTemplate,
-)
+from backend.api.dynamic_reports_api import ReportField, ReportGeneration, ReportTemplate
 from backend.server import app
 
 

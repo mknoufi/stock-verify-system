@@ -6,16 +6,16 @@ This is the mobile frontend for the Stock Verify application, built with **React
 
 This project adheres to the versions specified in the [Official Documentation Verification](../agents/official-docs-verification.md).
 
-| Framework | Version | Official Docs |
-| --- | --- | --- |
-| **Expo SDK** | `~54.0.29` | [Expo Docs](https://docs.expo.dev/versions/v54.0.0/) |
-| **React Native** | `0.81.5` | [React Native Docs](https://reactnative.dev/docs/0.81/getting-started) |
-| **React** | `19.1.0` | [React Docs](https://react.dev/) |
-| **Expo Router** | `~6.0.19` | [Expo Router](https://docs.expo.dev/router/introduction/) |
-| **React Query** | `^5.59.16` | [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview) |
-| **Zustand** | `^5.0.9` | [Zustand Docs](https://docs.pmnd.rs/zustand/getting-started/introduction) |
-| **React Hook Form** | `^7.68.0` | [React Hook Form](https://react-hook-form.com/) |
-| **Zod** | `^4.2.1` | [Zod Docs](https://zod.dev/) |
+| Framework           | Version    | Official Docs                                                                     |
+| ------------------- | ---------- | --------------------------------------------------------------------------------- |
+| **Expo SDK**        | `~54.0.29` | [Expo Docs](https://docs.expo.dev/versions/v54.0.0/)                              |
+| **React Native**    | `0.81.5`   | [React Native Docs](https://reactnative.dev/docs/0.81/getting-started)            |
+| **React**           | `19.1.0`   | [React Docs](https://react.dev/)                                                  |
+| **Expo Router**     | `~6.0.19`  | [Expo Router](https://docs.expo.dev/router/introduction/)                         |
+| **React Query**     | `^5.59.16` | [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview) |
+| **Zustand**         | `^5.0.9`   | [Zustand Docs](https://docs.pmnd.rs/zustand/getting-started/introduction)         |
+| **React Hook Form** | `^7.68.0`  | [React Hook Form](https://react-hook-form.com/)                                   |
+| **Zod**             | `^4.2.1`   | [Zod Docs](https://zod.dev/)                                                      |
 
 ## 🚀 Getting Started
 

@@ -23,7 +23,11 @@ import { getRouteForRole, type UserRole } from "@/utils/roleNavigation";
 // Safe Animated View for Web
 const SafeAnimatedView = ({ children, style, entering, ...props }: any) => {
   if (Platform.OS === "web") {
-    return <View style={style} {...props}>{children}</View>;
+    return (
+      <View style={style} {...props}>
+        {children}
+      </View>
+    );
   }
   return (
     <Animated.View style={style} entering={entering} {...props}>
@@ -229,7 +233,10 @@ export default function WelcomeScreen() {
         </SafeAnimatedView>
 
         {/* Footer */}
-        <SafeAnimatedView entering={FadeInDown.delay(1200)} style={styles.footer}>
+        <SafeAnimatedView
+          entering={FadeInDown.delay(1200)}
+          style={styles.footer}
+        >
           <Text style={styles.footerText}>© 2024 Lavanya E-Mart</Text>
           <Text style={styles.footerSubtext}>Powered by Stock Verify</Text>
         </SafeAnimatedView>

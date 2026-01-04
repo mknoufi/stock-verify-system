@@ -33,7 +33,8 @@ export interface NetworkCheckResult {
  */
 export function getNetworkStatus(): NetworkCheckResult {
   const state = useNetworkStore.getState();
-  const { isOnline, isInternetReachable, connectionType, isRestrictedMode } = state;
+  const { isOnline, isInternetReachable, connectionType, isRestrictedMode } =
+    state;
 
   let status: NetworkStatus;
 
